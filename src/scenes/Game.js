@@ -31,6 +31,12 @@ export class GameScene extends Phaser.Scene {
     this.worldH = this.rows * TILE;
     this.cameras.main.setBackgroundColor('#1b1b22');
 
+    // UI camera: fixed (no zoom/follow) for HUD + controls. Created before
+    // any world objects so we can assign cameraFilter as they're created.
+    this.uiCam = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+    this.uiCam.setScroll(0, 0).setZoom(1).setRoundPixels(true);
+    this.uiCam.setBackgroundColor('rgba(0,0,0,0)');
+
     // The editor can paint with any indexed sheet, but Boot only preloads the
     // core ones. Pull in whatever this plan actually references, then redraw.
     this.ensurePlanSheets();
@@ -59,6 +65,7 @@ export class GameScene extends Phaser.Scene {
       this.input.keyboard?.destroy?.();
       this.mobileControls?.destroy();
       this.scale.off('resize', this._resizeCb);
+      this.cameras.remove(this.uiCam);
     });
   }
 
@@ -113,6 +120,8 @@ export class GameScene extends Phaser.Scene {
           .setOrigin(0.5).setAlpha(0.85).setDepth(1)
       );
     }
+    // World objects render only on the main (zoomed/following) camera.
+    this.worldOnly(this.floorTiles);
   }
 
   spawnWaiter() {
@@ -122,6 +131,7 @@ export class GameScene extends Phaser.Scene {
     this.waiter.tileY = s.y;
     this.waiter.facing = 'down';
     this.moving = false;
+    this.worldOnly(this.waiter);
   }
 
   setupInput() {
@@ -129,6 +139,25 @@ export class GameScene extends Phaser.Scene {
     this.wasd = this.input.keyboard.addKeys('W,A,S,D,E');
     this.input.keyboard.on('keydown-E', () => this.interact());
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+  }
+
+  /**
+   * Mark objects as UI-only: hidden from the main (zoomed/following) camera,
+   * visible only on the fixed UI camera.
+   */
+  uiOnly(...objs) {
+    const flat = objs.flat().filter(o => o);
+    if (flat.length) this.cameras.main.ignore(flat);
+  }
+
+  /**
+   * Mark objects as world-only: hidden from the UI camera, visible only on
+   * the main camera. Call this for every world object (floor tiles, waiter,
+   * guest sprites, patience bars, order bubbles).
+   */
+  worldOnly(...objs) {
+    const flat = objs.flat().filter(o => o);
+    if (flat.length) this.uiCam.ignore(flat);
   }
 
   /**
@@ -147,6 +176,8 @@ export class GameScene extends Phaser.Scene {
   fitCamera() {
     const cam = this.cameras.main;
     const vw = this.scale.width, vh = this.scale.height;
+    // Resize UI camera to match viewport so UI objects fill the screen.
+    this.uiCam.setSize(vw, vh);
     this.repositionHUD();
     // Target tiles visible: more on wide screens, fewer on narrow.
     const narrow = vw < 900;
@@ -173,6 +204,8 @@ export class GameScene extends Phaser.Scene {
       onInteract: () => this.interact(),
       onMenu: () => this.scene.start('Menu')
     });
+    // Controls render only on the fixed UI camera.
+    this.uiOnly(this.mobileControls.objects);
   }
 
   /** Reposition HUD elements after a viewport resize. */
@@ -186,11 +219,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   setupHUD() {
-    this.hudBg = this.add.rectangle(0, 0, this.scale.width, 36, 0x000000, 0.55).setOrigin(0).setDepth(1000).setScrollFactor(0);
-    this.scoreText = this.add.text(12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' }).setDepth(1001).setScrollFactor(0);
-    this.timeText = this.add.text(this.scale.width / 2, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001).setScrollFactor(0);
-    this.carryText = this.add.text(this.scale.width - 12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001).setScrollFactor(0);
-    this.hintText = this.add.text(this.scale.width / 2, this.scale.height - 24, '', { fontFamily: 'system-ui', fontSize: '13px', color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001).setScrollFactor(0);
+    this.hudBg = this.add.rectangle(0, 0, this.scale.width, 36, 0x000000, 0.55).setOrigin(0).setDepth(1000);
+    this.scoreText = this.add.text(12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' }).setDepth(1001);
+    this.timeText = this.add.text(this.scale.width / 2, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001);
+    this.carryText = this.add.text(this.scale.width - 12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001);
+    this.hintText = this.add.text(this.scale.width / 2, this.scale.height - 24, '', { fontFamily: 'system-ui', fontSize: '13px', color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001);
+    // HUD renders only on the fixed UI camera — no zoom/follow distortion.
+    this.uiOnly([this.hudBg, this.scoreText, this.timeText, this.carryText, this.hintText]);
     this.updateHUD();
   }
 
@@ -276,6 +311,7 @@ export class GameScene extends Phaser.Scene {
       orderBubble: null
     };
     this.guests.push(g);
+    this.worldOnly(g.sprite);
     this.walkGuestTo(g, seat.x, seat.y, () => {
       g.state = 'seated';
       // Swap to sitting sprite (48×96), facing the table.
@@ -285,6 +321,7 @@ export class GameScene extends Phaser.Scene {
       g.sprite.flipX = false;
       g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
       g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x6cff6c).setOrigin(0, 0.5).setDepth(51);
+      this.worldOnly(g.patienceBar, g.patienceFill);
     });
   }
 
@@ -426,6 +463,7 @@ export class GameScene extends Phaser.Scene {
     const bg = this.add.rectangle(0, 0, 40, 28, 0xffffff, 0.9).setStrokeStyle(1, 0x333333);
     const icon = this.add.image(0, 0, 'kitchen', this.menuFrameFor(g.def.order)).setDisplaySize(24, 24);
     g.orderBubble.add([bg, icon]);
+    this.worldOnly(g.orderBubble, bg, icon);
   }
 
   menuFrameFor(id) { return MENU_FRAMES[id] ?? 0; }

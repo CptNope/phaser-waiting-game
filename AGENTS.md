@@ -178,21 +178,33 @@ If the index fails to load, the editor falls back to the sheets Boot preloaded.
 ### On-Screen Controls (always visible in Game)
 
 On-screen controls are always visible in the Game scene — they're the primary
-input method on mobile and complement keyboard on desktop. They're rendered as
-Phaser game objects with `setScrollFactor(0)` so they stay fixed on screen
-regardless of camera position.
+input method on mobile and complement keyboard on desktop. They render on a
+**separate fixed UI camera** (`this.uiCam`) that doesn't zoom or follow, so
+they stay pinned to the screen regardless of the main camera's position or zoom.
 
 - **D-pad** (bottom-left) — hold a direction to walk. Multi-touch aware:
   each pointer tracks its own direction; releasing one doesn't cancel another.
 - **Action button** (bottom-right, labeled E) — tap to interact.
 - **Menu button** (top-right, ≡) — tap to return to menu.
 
-### Camera
+### Camera (two-camera system)
 
-The camera **always follows the waiter** with a zoom that adapts to screen size:
-~16×10 tiles on desktop, ~10×7 on mobile (clamped 0.5x–2.0x). `fitCamera()`
-recalculates on resize/orientation change. HUD elements use `setScrollFactor(0)`
-so they stay fixed under camera follow.
+The Game scene uses two cameras:
+
+- **Main camera** (`this.cameras.main`) — follows the waiter with adaptive zoom
+  (~16×10 tiles on desktop, ~10×7 on mobile, clamped 0.5x–2.0x). Renders all
+  world objects (floor tiles, waiter, guests, patience bars, order bubbles).
+- **UI camera** (`this.uiCam`) — fixed at zoom 1, scroll (0,0). Renders HUD and
+  mobile controls. Resizes to match the viewport on `fitCamera()`.
+
+Objects are assigned to cameras via `cameraFilter` (set by `camera.ignore()`):
+- `uiOnly(...objs)` — hides objects from the main camera (HUD, controls).
+- `worldOnly(...objs)` — hides objects from the UI camera (floor, waiter, guests).
+Call `worldOnly()` for every dynamically created world object (guest sprites,
+patience bars, order bubble containers and their children).
+
+`fitCamera()` recalculates on resize/orientation change. The UI camera is
+removed in the scene's shutdown handler.
 
 `src/core/MobileControls.js` exports the `MobileControls` class and
 `shouldShowMobileControls()` (touch device or screen < 900px, used by Menu

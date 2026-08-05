@@ -1,6 +1,6 @@
 // Touch controls for mobile play: virtual D-pad, action button, and menu button.
-// Renders Phaser game objects with setScrollFactor(0) so they stay fixed on screen
-// regardless of camera position. Auto-shows on touch devices or narrow screens.
+// Rendered on a separate fixed UI camera (no zoom/follow) so they stay pinned
+// to the screen regardless of the main game camera's position or zoom.
 
 const DIR_KEYS = { up: 'up', down: 'down', left: 'left', right: 'right' };
 
@@ -64,10 +64,9 @@ export class MobileControls {
       const y = dpadOriginY + relY * DPAD_UNIT;
       const bg = scene.add.rectangle(x, y, DPAD_BTN, DPAD_BTN, 0x2b2b39, 0.7)
         .setStrokeStyle(2, 0x4a4a5e)
-        .setDepth(DEPTH)
-        .setScrollFactor(0);
+        .setDepth(DEPTH);
       const txt = scene.add.text(x, y, label, style)
-        .setOrigin(0.5).setDepth(DEPTH + 1).setScrollFactor(0);
+        .setOrigin(0.5).setDepth(DEPTH + 1);
       bg.setInteractive({ useHandCursor: false });
       this._wireHold(bg, dir);
       this.objects.push(bg, txt);
@@ -86,10 +85,9 @@ export class MobileControls {
     const actionY = scene.scale.height - margin - ACTION_R - 20;
     this.actionBg = scene.add.circle(actionX, actionY, ACTION_R, 0x2b2b39, 0.7)
       .setStrokeStyle(2, 0x8fb6ff)
-      .setDepth(DEPTH)
-      .setScrollFactor(0);
+      .setDepth(DEPTH);
     this.actionTxt = scene.add.text(actionX, actionY, 'E', actionStyle)
-      .setOrigin(0.5).setDepth(DEPTH + 1).setScrollFactor(0);
+      .setOrigin(0.5).setDepth(DEPTH + 1);
     this.actionBg.setInteractive();
     this._wireTap(this.actionBg, this.actionTxt, () => this.onInteract());
     this.objects.push(this.actionBg, this.actionTxt);
@@ -99,10 +97,9 @@ export class MobileControls {
     const menuY = margin + MENU_BTN / 2 + 36; // below HUD bar
     this.menuBg = scene.add.rectangle(menuX, menuY, MENU_BTN, MENU_BTN, 0x2b2b39, 0.7)
       .setStrokeStyle(2, 0x4a4a5e)
-      .setDepth(DEPTH)
-      .setScrollFactor(0);
+      .setDepth(DEPTH);
     this.menuTxt = scene.add.text(menuX, menuY, '\u2261', menuStyle)
-      .setOrigin(0.5).setDepth(DEPTH + 1).setScrollFactor(0);
+      .setOrigin(0.5).setDepth(DEPTH + 1);
     this.menuBg.setInteractive();
     this._wireTap(this.menuBg, this.menuTxt, () => this.onMenu());
     this.objects.push(this.menuBg, this.menuTxt);
