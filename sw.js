@@ -16,6 +16,7 @@ const SHELL = [
   './src/data/assetIndex.js',
   './src/core/Storage.js',
   './src/core/Palette.js',
+  './src/core/MobileControls.js',
   // Summary only. Per-sheet detail under game-assets/asset-index/ and the themed
   // PNGs are fetched on demand and picked up by the runtime cache below.
   './game-assets/asset-index.json',

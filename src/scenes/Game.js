@@ -6,6 +6,7 @@ const CHAR_ORIGIN_Y = 0.75;
 import { loadAssetIndex, ensureSheetTexture } from '../data/assetIndex.js';
 import { Storage } from '../core/Storage.js';
 import { DEFAULT_FLOOR_PLAN, DEFAULT_GUESTS } from '../data/defaults.js';
+import { MobileControls, shouldShowMobileControls } from '../core/MobileControls.js';
 
 const DIRS = {
   up:    { x: 0, y: -1, anim: 'up' },
@@ -38,6 +39,8 @@ export class GameScene extends Phaser.Scene {
     this.spawnWaiter();
     this.setupInput();
     this.setupHUD();
+    this.setupCamera();
+    this.setupMobileControls();
 
     this.guests = [];
     this.queue = [...this.guestDefs];
@@ -52,7 +55,11 @@ export class GameScene extends Phaser.Scene {
     this.spawnEvery = 6;
 
     this.time.addEvent({ delay: 1000, loop: true, callback: this.tickShift, callbackScope: this });
-    this.events.on('shutdown', () => this.input.keyboard?.destroy?.());
+    this.events.on('shutdown', () => {
+      this.input.keyboard?.destroy?.();
+      this.mobileControls?.destroy();
+      this.scale.off('resize', this._resizeCb);
+    });
   }
 
   /**
@@ -124,12 +131,64 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
   }
 
+  /**
+   * Camera: on large screens the whole world fits at zoom 1 (centered).
+   * On small screens, follow the waiter with a zoom that shows ~12×8 tiles.
+   */
+  setupCamera() {
+    const cam = this.cameras.main;
+    cam.setBounds(0, 0, this.worldW, this.worldH);
+    this._resizeCb = () => this.fitCamera();
+    this.scale.on('resize', this._resizeCb);
+    this.fitCamera();
+  }
+
+  fitCamera() {
+    const cam = this.cameras.main;
+    const vw = this.scale.width, vh = this.scale.height;
+    this.repositionHUD();
+    const worldFits = vw >= this.worldW && vh >= this.worldH;
+    if (worldFits) {
+      cam.stopFollow();
+      cam.setZoom(1);
+      cam.centerOn(this.worldW / 2, this.worldH / 2);
+    } else {
+      // Show ~12×8 tiles, but never zoom in beyond what the world needs.
+      const targetW = Math.min(12, this.cols) * TILE;
+      const targetH = Math.min(8, this.rows) * TILE;
+      // Leave padding for HUD (top 40px) and controls (bottom 120px) on mobile.
+      const padTop = 40, padBottom = shouldShowMobileControls() ? 130 : 10, padSide = 10;
+      const availW = vw - padSide * 2;
+      const availH = vh - padTop - padBottom;
+      const zoom = Math.min(availW / targetW, availH / targetH, 1.5);
+      cam.setZoom(zoom);
+      cam.startFollow(this.waiter, true, 0.12, 0.12);
+    }
+  }
+
+  setupMobileControls() {
+    this.mobileControls = new MobileControls(this, {
+      onInteract: () => this.interact(),
+      onMenu: () => this.scene.start('Menu')
+    });
+  }
+
+  /** Reposition HUD elements after a viewport resize. */
+  repositionHUD() {
+    const w = this.scale.width, h = this.scale.height;
+    this.hudBg?.setSize(w, 36);
+    this.scoreText?.setPosition(12, 8);
+    this.timeText?.setPosition(w / 2, 8);
+    this.carryText?.setPosition(w - 12, 8);
+    this.hintText?.setPosition(w / 2, h - 24);
+  }
+
   setupHUD() {
-    this.hudBg = this.add.rectangle(0, 0, this.scale.width, 36, 0x000000, 0.55).setOrigin(0).setDepth(1000);
-    this.scoreText = this.add.text(12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' }).setDepth(1001);
-    this.timeText = this.add.text(this.scale.width / 2, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001);
-    this.carryText = this.add.text(this.scale.width - 12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001);
-    this.hintText = this.add.text(this.scale.width / 2, this.scale.height - 24, '', { fontFamily: 'system-ui', fontSize: '13px', color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001);
+    this.hudBg = this.add.rectangle(0, 0, this.scale.width, 36, 0x000000, 0.55).setOrigin(0).setDepth(1000).setScrollFactor(0);
+    this.scoreText = this.add.text(12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' }).setDepth(1001).setScrollFactor(0);
+    this.timeText = this.add.text(this.scale.width / 2, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001).setScrollFactor(0);
+    this.carryText = this.add.text(this.scale.width - 12, 8, '', { fontFamily: 'system-ui', fontSize: '16px', color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001).setScrollFactor(0);
+    this.hintText = this.add.text(this.scale.width / 2, this.scale.height - 24, '', { fontFamily: 'system-ui', fontSize: '13px', color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001).setScrollFactor(0);
     this.updateHUD();
   }
 
@@ -150,7 +209,10 @@ export class GameScene extends Phaser.Scene {
   handleMovement() {
     if (this.moving) return;
     let dir = null;
-    if (this.cursors.left.isDown || this.wasd.A.isDown) dir = DIRS.left;
+    const mDir = this.mobileControls?.heldDir;
+    if (mDir) {
+      dir = DIRS[mDir] || null;
+    } else if (this.cursors.left.isDown || this.wasd.A.isDown) dir = DIRS.left;
     else if (this.cursors.right.isDown || this.wasd.D.isDown) dir = DIRS.right;
     else if (this.cursors.up.isDown || this.wasd.W.isDown) dir = DIRS.up;
     else if (this.cursors.down.isDown || this.wasd.S.isDown) dir = DIRS.down;
@@ -414,7 +476,8 @@ export class GameScene extends Phaser.Scene {
 
   endShift() {
     this.shiftActive = false;
-    this.hint(`Shift over! Served ${this.served}, angry ${this.angry}, score ${this.score}. Press ESC for menu.`);
+    const backHint = shouldShowMobileControls() ? 'Tap \u2261 for menu' : 'Press ESC for menu';
+    this.hint(`Shift over! Served ${this.served}, angry ${this.angry}, score ${this.score}. ${backHint}`);
     for (const g of this.guests) {
       if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); }
       if (g.orderBubble) g.orderBubble.destroy();
