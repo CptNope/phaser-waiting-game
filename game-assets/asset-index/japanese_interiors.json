@@ -1,0 +1,4330 @@
+{
+ "key": "japanese_interiors",
+ "cols": 16,
+ "rows": 32,
+ "frames": {
+  "3": {
+   "col": 3,
+   "row": 0,
+   "fill": 0.051
+  },
+  "5": {
+   "col": 5,
+   "row": 0,
+   "fill": 0.879
+  },
+  "6": {
+   "col": 6,
+   "row": 0,
+   "fill": 0.879
+  },
+  "7": {
+   "col": 7,
+   "row": 0,
+   "fill": 0.938
+  },
+  "8": {
+   "col": 8,
+   "row": 0,
+   "fill": 0.879
+  },
+  "9": {
+   "col": 9,
+   "row": 0,
+   "fill": 0.879
+  },
+  "10": {
+   "col": 10,
+   "row": 0,
+   "fill": 0.938
+  },
+  "11": {
+   "col": 11,
+   "row": 0,
+   "fill": 0.879
+  },
+  "12": {
+   "col": 12,
+   "row": 0,
+   "fill": 0.879
+  },
+  "13": {
+   "col": 13,
+   "row": 0,
+   "fill": 0.938
+  },
+  "14": {
+   "col": 14,
+   "row": 0,
+   "fill": 0.215
+  },
+  "15": {
+   "col": 15,
+   "row": 0,
+   "fill": 0.215
+  },
+  "19": {
+   "col": 3,
+   "row": 1,
+   "fill": 0.078
+  },
+  "21": {
+   "col": 5,
+   "row": 1,
+   "fill": 0.879
+  },
+  "22": {
+   "col": 6,
+   "row": 1,
+   "fill": 0.879
+  },
+  "23": {
+   "col": 7,
+   "row": 1,
+   "fill": 0.938
+  },
+  "24": {
+   "col": 8,
+   "row": 1,
+   "fill": 0.879
+  },
+  "25": {
+   "col": 9,
+   "row": 1,
+   "fill": 0.879
+  },
+  "26": {
+   "col": 10,
+   "row": 1,
+   "fill": 0.938
+  },
+  "27": {
+   "col": 11,
+   "row": 1,
+   "fill": 0.879
+  },
+  "28": {
+   "col": 12,
+   "row": 1,
+   "fill": 0.879
+  },
+  "29": {
+   "col": 13,
+   "row": 1,
+   "fill": 0.938
+  },
+  "30": {
+   "col": 14,
+   "row": 1,
+   "fill": 0.371
+  },
+  "31": {
+   "col": 15,
+   "row": 1,
+   "fill": 0.371
+  },
+  "32": {
+   "col": 0,
+   "row": 2,
+   "fill": 1.0
+  },
+  "33": {
+   "col": 1,
+   "row": 2,
+   "fill": 1.0
+  },
+  "34": {
+   "col": 2,
+   "row": 2,
+   "fill": 1.0
+  },
+  "35": {
+   "col": 3,
+   "row": 2,
+   "fill": 1.0
+  },
+  "36": {
+   "col": 4,
+   "row": 2,
+   "fill": 1.0
+  },
+  "37": {
+   "col": 5,
+   "row": 2,
+   "fill": 0.82
+  },
+  "38": {
+   "col": 6,
+   "row": 2,
+   "fill": 0.82
+  },
+  "39": {
+   "col": 7,
+   "row": 2,
+   "fill": 0.875
+  },
+  "40": {
+   "col": 8,
+   "row": 2,
+   "fill": 0.82
+  },
+  "41": {
+   "col": 9,
+   "row": 2,
+   "fill": 0.82
+  },
+  "42": {
+   "col": 10,
+   "row": 2,
+   "fill": 0.875
+  },
+  "43": {
+   "col": 11,
+   "row": 2,
+   "fill": 0.82
+  },
+  "44": {
+   "col": 12,
+   "row": 2,
+   "fill": 0.82
+  },
+  "45": {
+   "col": 13,
+   "row": 2,
+   "fill": 0.875
+  },
+  "48": {
+   "col": 0,
+   "row": 3,
+   "fill": 1.0
+  },
+  "49": {
+   "col": 1,
+   "row": 3,
+   "fill": 1.0
+  },
+  "50": {
+   "col": 2,
+   "row": 3,
+   "fill": 1.0
+  },
+  "51": {
+   "col": 3,
+   "row": 3,
+   "fill": 1.0
+  },
+  "52": {
+   "col": 4,
+   "row": 3,
+   "fill": 1.0
+  },
+  "53": {
+   "col": 5,
+   "row": 3,
+   "fill": 0.32
+  },
+  "54": {
+   "col": 6,
+   "row": 3,
+   "fill": 0.32
+  },
+  "55": {
+   "col": 7,
+   "row": 3,
+   "fill": 0.363
+  },
+  "56": {
+   "col": 8,
+   "row": 3,
+   "fill": 0.359
+  },
+  "57": {
+   "col": 9,
+   "row": 3,
+   "fill": 0.234
+  },
+  "58": {
+   "col": 10,
+   "row": 3,
+   "fill": 0.234
+  },
+  "59": {
+   "col": 11,
+   "row": 3,
+   "fill": 0.188
+  },
+  "60": {
+   "col": 12,
+   "row": 3,
+   "fill": 0.215
+  },
+  "61": {
+   "col": 13,
+   "row": 3,
+   "fill": 0.215
+  },
+  "62": {
+   "col": 14,
+   "row": 3,
+   "fill": 0.215
+  },
+  "63": {
+   "col": 15,
+   "row": 3,
+   "fill": 0.141
+  },
+  "64": {
+   "col": 0,
+   "row": 4,
+   "fill": 0.367
+  },
+  "65": {
+   "col": 1,
+   "row": 4,
+   "fill": 0.66
+  },
+  "66": {
+   "col": 2,
+   "row": 4,
+   "fill": 0.59
+  },
+  "67": {
+   "col": 3,
+   "row": 4,
+   "fill": 0.219
+  },
+  "68": {
+   "col": 4,
+   "row": 4,
+   "fill": 0.188
+  },
+  "69": {
+   "col": 5,
+   "row": 4,
+   "fill": 0.41
+  },
+  "70": {
+   "col": 6,
+   "row": 4,
+   "fill": 0.41
+  },
+  "71": {
+   "col": 7,
+   "row": 4,
+   "fill": 0.41
+  },
+  "72": {
+   "col": 8,
+   "row": 4,
+   "fill": 0.41
+  },
+  "73": {
+   "col": 9,
+   "row": 4,
+   "fill": 0.449
+  },
+  "74": {
+   "col": 10,
+   "row": 4,
+   "fill": 0.449
+  },
+  "75": {
+   "col": 11,
+   "row": 4,
+   "fill": 0.195
+  },
+  "76": {
+   "col": 12,
+   "row": 4,
+   "fill": 0.219
+  },
+  "77": {
+   "col": 13,
+   "row": 4,
+   "fill": 0.219
+  },
+  "78": {
+   "col": 14,
+   "row": 4,
+   "fill": 0.219
+  },
+  "79": {
+   "col": 15,
+   "row": 4,
+   "fill": 0.117
+  },
+  "80": {
+   "col": 0,
+   "row": 5,
+   "fill": 0.258
+  },
+  "81": {
+   "col": 1,
+   "row": 5,
+   "fill": 0.406
+  },
+  "82": {
+   "col": 2,
+   "row": 5,
+   "fill": 0.375
+  },
+  "83": {
+   "col": 3,
+   "row": 5,
+   "fill": 0.234
+  },
+  "84": {
+   "col": 4,
+   "row": 5,
+   "fill": 0.188
+  },
+  "85": {
+   "col": 5,
+   "row": 5,
+   "fill": 0.363
+  },
+  "86": {
+   "col": 6,
+   "row": 5,
+   "fill": 0.355
+  },
+  "87": {
+   "col": 7,
+   "row": 5,
+   "fill": 0.363
+  },
+  "88": {
+   "col": 8,
+   "row": 5,
+   "fill": 0.355
+  },
+  "89": {
+   "col": 9,
+   "row": 5,
+   "fill": 0.473
+  },
+  "90": {
+   "col": 10,
+   "row": 5,
+   "fill": 0.473
+  },
+  "91": {
+   "col": 11,
+   "row": 5,
+   "fill": 0.215
+  },
+  "92": {
+   "col": 12,
+   "row": 5,
+   "fill": 0.559
+  },
+  "93": {
+   "col": 13,
+   "row": 5,
+   "fill": 0.691
+  },
+  "94": {
+   "col": 14,
+   "row": 5,
+   "fill": 0.367
+  },
+  "95": {
+   "col": 15,
+   "row": 5,
+   "fill": 0.355
+  },
+  "96": {
+   "col": 0,
+   "row": 6,
+   "fill": 0.66
+  },
+  "97": {
+   "col": 1,
+   "row": 6,
+   "fill": 0.688
+  },
+  "99": {
+   "col": 3,
+   "row": 6,
+   "fill": 0.227
+  },
+  "100": {
+   "col": 4,
+   "row": 6,
+   "fill": 0.184
+  },
+  "101": {
+   "col": 5,
+   "row": 6,
+   "fill": 0.41
+  },
+  "102": {
+   "col": 6,
+   "row": 6,
+   "fill": 0.41
+  },
+  "103": {
+   "col": 7,
+   "row": 6,
+   "fill": 0.41
+  },
+  "104": {
+   "col": 8,
+   "row": 6,
+   "fill": 0.41
+  },
+  "107": {
+   "col": 11,
+   "row": 6,
+   "fill": 0.418
+  },
+  "108": {
+   "col": 12,
+   "row": 6,
+   "fill": 0.344
+  },
+  "109": {
+   "col": 13,
+   "row": 6,
+   "fill": 0.438
+  },
+  "110": {
+   "col": 14,
+   "row": 6,
+   "fill": 0.258
+  },
+  "111": {
+   "col": 15,
+   "row": 6,
+   "fill": 0.293
+  },
+  "112": {
+   "col": 0,
+   "row": 7,
+   "fill": 0.508
+  },
+  "113": {
+   "col": 1,
+   "row": 7,
+   "fill": 0.547
+  },
+  "114": {
+   "col": 2,
+   "row": 7,
+   "fill": 0.867
+  },
+  "115": {
+   "col": 3,
+   "row": 7,
+   "fill": 0.867
+  },
+  "116": {
+   "col": 4,
+   "row": 7,
+   "fill": 0.867
+  },
+  "117": {
+   "col": 5,
+   "row": 7,
+   "fill": 0.867
+  },
+  "118": {
+   "col": 6,
+   "row": 7,
+   "fill": 0.434
+  },
+  "119": {
+   "col": 7,
+   "row": 7,
+   "fill": 0.488
+  },
+  "120": {
+   "col": 8,
+   "row": 7,
+   "fill": 0.48
+  },
+  "121": {
+   "col": 9,
+   "row": 7,
+   "fill": 0.453
+  },
+  "122": {
+   "col": 10,
+   "row": 7,
+   "fill": 0.562
+  },
+  "123": {
+   "col": 11,
+   "row": 7,
+   "fill": 0.453
+  },
+  "124": {
+   "col": 12,
+   "row": 7,
+   "fill": 0.559
+  },
+  "125": {
+   "col": 13,
+   "row": 7,
+   "fill": 0.699
+  },
+  "126": {
+   "col": 14,
+   "row": 7,
+   "fill": 0.07
+  },
+  "127": {
+   "col": 15,
+   "row": 7,
+   "fill": 0.398
+  },
+  "128": {
+   "col": 0,
+   "row": 8,
+   "fill": 0.312
+  },
+  "129": {
+   "col": 1,
+   "row": 8,
+   "fill": 0.32
+  },
+  "130": {
+   "col": 2,
+   "row": 8,
+   "fill": 0.676
+  },
+  "131": {
+   "col": 3,
+   "row": 8,
+   "fill": 0.676
+  },
+  "132": {
+   "col": 4,
+   "row": 8,
+   "fill": 0.676
+  },
+  "133": {
+   "col": 5,
+   "row": 8,
+   "fill": 0.676
+  },
+  "134": {
+   "col": 6,
+   "row": 8,
+   "fill": 0.219
+  },
+  "135": {
+   "col": 7,
+   "row": 8,
+   "fill": 0.113
+  },
+  "137": {
+   "col": 9,
+   "row": 8,
+   "fill": 0.711
+  },
+  "138": {
+   "col": 10,
+   "row": 8,
+   "fill": 0.875
+  },
+  "139": {
+   "col": 11,
+   "row": 8,
+   "fill": 0.711
+  },
+  "140": {
+   "col": 12,
+   "row": 8,
+   "fill": 0.578
+  },
+  "141": {
+   "col": 13,
+   "row": 8,
+   "fill": 0.578
+  },
+  "142": {
+   "col": 14,
+   "row": 8,
+   "fill": 0.293
+  },
+  "144": {
+   "col": 0,
+   "row": 9,
+   "fill": 0.867
+  },
+  "145": {
+   "col": 1,
+   "row": 9,
+   "fill": 0.867
+  },
+  "146": {
+   "col": 2,
+   "row": 9,
+   "fill": 0.867
+  },
+  "147": {
+   "col": 3,
+   "row": 9,
+   "fill": 0.867
+  },
+  "148": {
+   "col": 4,
+   "row": 9,
+   "fill": 0.867
+  },
+  "149": {
+   "col": 5,
+   "row": 9,
+   "fill": 0.859
+  },
+  "150": {
+   "col": 6,
+   "row": 9,
+   "fill": 0.59
+  },
+  "151": {
+   "col": 7,
+   "row": 9,
+   "fill": 0.801
+  },
+  "153": {
+   "col": 9,
+   "row": 9,
+   "fill": 0.039
+  },
+  "155": {
+   "col": 11,
+   "row": 9,
+   "fill": 0.039
+  },
+  "156": {
+   "col": 12,
+   "row": 9,
+   "fill": 0.438
+  },
+  "157": {
+   "col": 13,
+   "row": 9,
+   "fill": 0.438
+  },
+  "158": {
+   "col": 14,
+   "row": 9,
+   "fill": 0.297
+  },
+  "160": {
+   "col": 0,
+   "row": 10,
+   "fill": 0.676
+  },
+  "161": {
+   "col": 1,
+   "row": 10,
+   "fill": 0.676
+  },
+  "162": {
+   "col": 2,
+   "row": 10,
+   "fill": 0.676
+  },
+  "163": {
+   "col": 3,
+   "row": 10,
+   "fill": 0.676
+  },
+  "164": {
+   "col": 4,
+   "row": 10,
+   "fill": 0.676
+  },
+  "165": {
+   "col": 5,
+   "row": 10,
+   "fill": 0.676
+  },
+  "166": {
+   "col": 6,
+   "row": 10,
+   "fill": 0.203
+  },
+  "167": {
+   "col": 7,
+   "row": 10,
+   "fill": 0.203
+  },
+  "168": {
+   "col": 8,
+   "row": 10,
+   "fill": 0.938
+  },
+  "169": {
+   "col": 9,
+   "row": 10,
+   "fill": 0.938
+  },
+  "170": {
+   "col": 10,
+   "row": 10,
+   "fill": 0.586
+  },
+  "171": {
+   "col": 11,
+   "row": 10,
+   "fill": 0.625
+  },
+  "172": {
+   "col": 12,
+   "row": 10,
+   "fill": 0.312
+  },
+  "173": {
+   "col": 13,
+   "row": 10,
+   "fill": 0.176
+  },
+  "176": {
+   "col": 0,
+   "row": 11,
+   "fill": 0.867
+  },
+  "177": {
+   "col": 1,
+   "row": 11,
+   "fill": 0.867
+  },
+  "178": {
+   "col": 2,
+   "row": 11,
+   "fill": 0.867
+  },
+  "179": {
+   "col": 3,
+   "row": 11,
+   "fill": 0.867
+  },
+  "180": {
+   "col": 4,
+   "row": 11,
+   "fill": 0.867
+  },
+  "181": {
+   "col": 5,
+   "row": 11,
+   "fill": 0.867
+  },
+  "184": {
+   "col": 8,
+   "row": 11,
+   "fill": 0.938
+  },
+  "185": {
+   "col": 9,
+   "row": 11,
+   "fill": 0.938
+  },
+  "186": {
+   "col": 10,
+   "row": 11,
+   "fill": 0.41
+  },
+  "187": {
+   "col": 11,
+   "row": 11,
+   "fill": 0.469
+  },
+  "189": {
+   "col": 13,
+   "row": 11,
+   "fill": 0.312
+  },
+  "192": {
+   "col": 0,
+   "row": 12,
+   "fill": 0.676
+  },
+  "193": {
+   "col": 1,
+   "row": 12,
+   "fill": 0.676
+  },
+  "194": {
+   "col": 2,
+   "row": 12,
+   "fill": 0.676
+  },
+  "195": {
+   "col": 3,
+   "row": 12,
+   "fill": 0.676
+  },
+  "196": {
+   "col": 4,
+   "row": 12,
+   "fill": 0.676
+  },
+  "197": {
+   "col": 5,
+   "row": 12,
+   "fill": 0.676
+  },
+  "198": {
+   "col": 6,
+   "row": 12,
+   "fill": 0.527
+  },
+  "200": {
+   "col": 8,
+   "row": 12,
+   "fill": 0.527
+  },
+  "202": {
+   "col": 10,
+   "row": 12,
+   "fill": 0.84
+  },
+  "203": {
+   "col": 11,
+   "row": 12,
+   "fill": 0.277
+  },
+  "204": {
+   "col": 12,
+   "row": 12,
+   "fill": 0.277
+  },
+  "205": {
+   "col": 13,
+   "row": 12,
+   "fill": 0.277
+  },
+  "206": {
+   "col": 14,
+   "row": 12,
+   "fill": 0.277
+  },
+  "208": {
+   "col": 0,
+   "row": 13,
+   "fill": 0.375
+  },
+  "209": {
+   "col": 1,
+   "row": 13,
+   "fill": 0.355
+  },
+  "214": {
+   "col": 6,
+   "row": 13,
+   "fill": 0.938
+  },
+  "215": {
+   "col": 7,
+   "row": 13,
+   "fill": 0.18
+  },
+  "216": {
+   "col": 8,
+   "row": 13,
+   "fill": 0.988
+  },
+  "217": {
+   "col": 9,
+   "row": 13,
+   "fill": 0.129
+  },
+  "218": {
+   "col": 10,
+   "row": 13,
+   "fill": 0.305
+  },
+  "219": {
+   "col": 11,
+   "row": 13,
+   "fill": 0.305
+  },
+  "220": {
+   "col": 12,
+   "row": 13,
+   "fill": 0.305
+  },
+  "221": {
+   "col": 13,
+   "row": 13,
+   "fill": 0.305
+  },
+  "222": {
+   "col": 14,
+   "row": 13,
+   "fill": 0.305
+  },
+  "224": {
+   "col": 0,
+   "row": 14,
+   "fill": 0.578
+  },
+  "225": {
+   "col": 1,
+   "row": 14,
+   "fill": 0.328
+  },
+  "230": {
+   "col": 6,
+   "row": 14,
+   "fill": 0.562
+  },
+  "231": {
+   "col": 7,
+   "row": 14,
+   "fill": 0.035
+  },
+  "232": {
+   "col": 8,
+   "row": 14,
+   "fill": 0.562
+  },
+  "233": {
+   "col": 9,
+   "row": 14,
+   "fill": 0.031
+  },
+  "235": {
+   "col": 11,
+   "row": 14,
+   "fill": 0.277
+  },
+  "236": {
+   "col": 12,
+   "row": 14,
+   "fill": 0.277
+  },
+  "237": {
+   "col": 13,
+   "row": 14,
+   "fill": 0.277
+  },
+  "238": {
+   "col": 14,
+   "row": 14,
+   "fill": 0.277
+  },
+  "240": {
+   "col": 0,
+   "row": 15,
+   "fill": 0.367
+  },
+  "241": {
+   "col": 1,
+   "row": 15,
+   "fill": 0.367
+  },
+  "242": {
+   "col": 2,
+   "row": 15,
+   "fill": 0.367
+  },
+  "243": {
+   "col": 3,
+   "row": 15,
+   "fill": 0.367
+  },
+  "244": {
+   "col": 4,
+   "row": 15,
+   "fill": 0.367
+  },
+  "245": {
+   "col": 5,
+   "row": 15,
+   "fill": 0.367
+  },
+  "246": {
+   "col": 6,
+   "row": 15,
+   "fill": 0.367
+  },
+  "247": {
+   "col": 7,
+   "row": 15,
+   "fill": 0.367
+  },
+  "251": {
+   "col": 11,
+   "row": 15,
+   "fill": 0.305
+  },
+  "252": {
+   "col": 12,
+   "row": 15,
+   "fill": 0.305
+  },
+  "253": {
+   "col": 13,
+   "row": 15,
+   "fill": 0.305
+  },
+  "254": {
+   "col": 14,
+   "row": 15,
+   "fill": 0.305
+  },
+  "257": {
+   "col": 1,
+   "row": 16,
+   "fill": 0.539
+  },
+  "258": {
+   "col": 2,
+   "row": 16,
+   "fill": 0.539
+  },
+  "261": {
+   "col": 5,
+   "row": 16,
+   "fill": 0.539
+  },
+  "262": {
+   "col": 6,
+   "row": 16,
+   "fill": 0.539
+  },
+  "264": {
+   "col": 8,
+   "row": 16,
+   "fill": 0.492
+  },
+  "265": {
+   "col": 9,
+   "row": 16,
+   "fill": 0.09
+  },
+  "266": {
+   "col": 10,
+   "row": 16,
+   "fill": 0.25
+  },
+  "267": {
+   "col": 11,
+   "row": 16,
+   "fill": 0.25
+  },
+  "268": {
+   "col": 12,
+   "row": 16,
+   "fill": 0.328
+  },
+  "269": {
+   "col": 13,
+   "row": 16,
+   "fill": 0.328
+  },
+  "270": {
+   "col": 14,
+   "row": 16,
+   "fill": 0.188
+  },
+  "271": {
+   "col": 15,
+   "row": 16,
+   "fill": 0.188
+  },
+  "272": {
+   "col": 0,
+   "row": 17,
+   "fill": 1.0
+  },
+  "273": {
+   "col": 1,
+   "row": 17,
+   "fill": 1.0
+  },
+  "274": {
+   "col": 2,
+   "row": 17,
+   "fill": 1.0
+  },
+  "275": {
+   "col": 3,
+   "row": 17,
+   "fill": 1.0
+  },
+  "276": {
+   "col": 4,
+   "row": 17,
+   "fill": 1.0
+  },
+  "277": {
+   "col": 5,
+   "row": 17,
+   "fill": 1.0
+  },
+  "278": {
+   "col": 6,
+   "row": 17,
+   "fill": 1.0
+  },
+  "279": {
+   "col": 7,
+   "row": 17,
+   "fill": 1.0
+  },
+  "280": {
+   "col": 8,
+   "row": 17,
+   "fill": 0.656
+  },
+  "281": {
+   "col": 9,
+   "row": 17,
+   "fill": 0.129
+  },
+  "284": {
+   "col": 12,
+   "row": 17,
+   "fill": 0.328
+  },
+  "285": {
+   "col": 13,
+   "row": 17,
+   "fill": 0.328
+  },
+  "286": {
+   "col": 14,
+   "row": 17,
+   "fill": 1.0
+  },
+  "287": {
+   "col": 15,
+   "row": 17,
+   "fill": 1.0
+  },
+  "288": {
+   "col": 0,
+   "row": 18,
+   "fill": 1.0
+  },
+  "289": {
+   "col": 1,
+   "row": 18,
+   "fill": 1.0
+  },
+  "290": {
+   "col": 2,
+   "row": 18,
+   "fill": 1.0
+  },
+  "291": {
+   "col": 3,
+   "row": 18,
+   "fill": 1.0
+  },
+  "292": {
+   "col": 4,
+   "row": 18,
+   "fill": 1.0
+  },
+  "293": {
+   "col": 5,
+   "row": 18,
+   "fill": 1.0
+  },
+  "294": {
+   "col": 6,
+   "row": 18,
+   "fill": 1.0
+  },
+  "295": {
+   "col": 7,
+   "row": 18,
+   "fill": 1.0
+  },
+  "296": {
+   "col": 8,
+   "row": 18,
+   "fill": 0.422
+  },
+  "297": {
+   "col": 9,
+   "row": 18,
+   "fill": 0.098
+  },
+  "298": {
+   "col": 10,
+   "row": 18,
+   "fill": 1.0
+  },
+  "299": {
+   "col": 11,
+   "row": 18,
+   "fill": 1.0
+  },
+  "300": {
+   "col": 12,
+   "row": 18,
+   "fill": 0.469
+  },
+  "301": {
+   "col": 13,
+   "row": 18,
+   "fill": 0.234
+  },
+  "302": {
+   "col": 14,
+   "row": 18,
+   "fill": 1.0
+  },
+  "303": {
+   "col": 15,
+   "row": 18,
+   "fill": 1.0
+  },
+  "304": {
+   "col": 0,
+   "row": 19,
+   "fill": 1.0
+  },
+  "305": {
+   "col": 1,
+   "row": 19,
+   "fill": 1.0
+  },
+  "306": {
+   "col": 2,
+   "row": 19,
+   "fill": 1.0
+  },
+  "307": {
+   "col": 3,
+   "row": 19,
+   "fill": 1.0
+  },
+  "308": {
+   "col": 4,
+   "row": 19,
+   "fill": 1.0
+  },
+  "309": {
+   "col": 5,
+   "row": 19,
+   "fill": 1.0
+  },
+  "310": {
+   "col": 6,
+   "row": 19,
+   "fill": 1.0
+  },
+  "311": {
+   "col": 7,
+   "row": 19,
+   "fill": 1.0
+  },
+  "312": {
+   "col": 8,
+   "row": 19,
+   "fill": 0.375
+  },
+  "313": {
+   "col": 9,
+   "row": 19,
+   "fill": 0.012
+  },
+  "314": {
+   "col": 10,
+   "row": 19,
+   "fill": 1.0
+  },
+  "315": {
+   "col": 11,
+   "row": 19,
+   "fill": 1.0
+  },
+  "316": {
+   "col": 12,
+   "row": 19,
+   "fill": 0.355
+  },
+  "317": {
+   "col": 13,
+   "row": 19,
+   "fill": 0.355
+  },
+  "318": {
+   "col": 14,
+   "row": 19,
+   "fill": 0.234
+  },
+  "319": {
+   "col": 15,
+   "row": 19,
+   "fill": 0.234
+  },
+  "320": {
+   "col": 0,
+   "row": 20,
+   "fill": 1.0
+  },
+  "321": {
+   "col": 1,
+   "row": 20,
+   "fill": 1.0
+  },
+  "322": {
+   "col": 2,
+   "row": 20,
+   "fill": 1.0
+  },
+  "323": {
+   "col": 3,
+   "row": 20,
+   "fill": 1.0
+  },
+  "324": {
+   "col": 4,
+   "row": 20,
+   "fill": 1.0
+  },
+  "325": {
+   "col": 5,
+   "row": 20,
+   "fill": 1.0
+  },
+  "326": {
+   "col": 6,
+   "row": 20,
+   "fill": 1.0
+  },
+  "327": {
+   "col": 7,
+   "row": 20,
+   "fill": 1.0
+  },
+  "332": {
+   "col": 12,
+   "row": 20,
+   "fill": 0.195
+  },
+  "333": {
+   "col": 13,
+   "row": 20,
+   "fill": 0.195
+  },
+  "334": {
+   "col": 14,
+   "row": 20,
+   "fill": 0.73
+  },
+  "335": {
+   "col": 15,
+   "row": 20,
+   "fill": 0.77
+  },
+  "348": {
+   "col": 12,
+   "row": 21,
+   "fill": 0.355
+  },
+  "349": {
+   "col": 13,
+   "row": 21,
+   "fill": 0.355
+  },
+  "350": {
+   "col": 14,
+   "row": 21,
+   "fill": 0.648
+  },
+  "351": {
+   "col": 15,
+   "row": 21,
+   "fill": 0.711
+  },
+  "364": {
+   "col": 12,
+   "row": 22,
+   "fill": 0.469
+  },
+  "365": {
+   "col": 13,
+   "row": 22,
+   "fill": 0.234
+  },
+  "366": {
+   "col": 14,
+   "row": 22,
+   "fill": 0.234
+  },
+  "367": {
+   "col": 15,
+   "row": 22,
+   "fill": 0.234
+  },
+  "380": {
+   "col": 12,
+   "row": 23,
+   "fill": 0.355
+  },
+  "381": {
+   "col": 13,
+   "row": 23,
+   "fill": 0.355
+  },
+  "382": {
+   "col": 14,
+   "row": 23,
+   "fill": 0.73
+  },
+  "383": {
+   "col": 15,
+   "row": 23,
+   "fill": 0.77
+  },
+  "396": {
+   "col": 12,
+   "row": 24,
+   "fill": 0.195
+  },
+  "397": {
+   "col": 13,
+   "row": 24,
+   "fill": 0.195
+  },
+  "398": {
+   "col": 14,
+   "row": 24,
+   "fill": 0.648
+  },
+  "399": {
+   "col": 15,
+   "row": 24,
+   "fill": 0.711
+  },
+  "412": {
+   "col": 12,
+   "row": 25,
+   "fill": 0.355
+  },
+  "413": {
+   "col": 13,
+   "row": 25,
+   "fill": 0.355
+  },
+  "414": {
+   "col": 14,
+   "row": 25,
+   "fill": 0.234
+  },
+  "415": {
+   "col": 15,
+   "row": 25,
+   "fill": 0.234
+  },
+  "428": {
+   "col": 12,
+   "row": 26,
+   "fill": 0.469
+  },
+  "429": {
+   "col": 13,
+   "row": 26,
+   "fill": 0.234
+  },
+  "430": {
+   "col": 14,
+   "row": 26,
+   "fill": 0.73
+  },
+  "431": {
+   "col": 15,
+   "row": 26,
+   "fill": 0.77
+  },
+  "444": {
+   "col": 12,
+   "row": 27,
+   "fill": 0.355
+  },
+  "445": {
+   "col": 13,
+   "row": 27,
+   "fill": 0.355
+  },
+  "446": {
+   "col": 14,
+   "row": 27,
+   "fill": 0.648
+  },
+  "447": {
+   "col": 15,
+   "row": 27,
+   "fill": 0.711
+  },
+  "460": {
+   "col": 12,
+   "row": 28,
+   "fill": 0.195
+  },
+  "461": {
+   "col": 13,
+   "row": 28,
+   "fill": 0.195
+  },
+  "476": {
+   "col": 12,
+   "row": 29,
+   "fill": 0.355
+  },
+  "477": {
+   "col": 13,
+   "row": 29,
+   "fill": 0.355
+  }
+ },
+ "objects": [
+  {
+   "id": "japanese_interiors/obj_001",
+   "originFrame": 5,
+   "frames": [
+    5,
+    6,
+    21,
+    22
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 243,
+    "y": 3,
+    "w": 90,
+    "h": 90
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ccbb99",
+    "#ddbb99",
+    "#885555"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_002",
+   "originFrame": 7,
+   "frames": [
+    7,
+    23
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 336,
+    "y": 3,
+    "w": 48,
+    "h": 90
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ccbb99",
+    "#ddbb99",
+    "#885555"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_003",
+   "originFrame": 8,
+   "frames": [
+    8,
+    9,
+    24,
+    25
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 387,
+    "y": 3,
+    "w": 90,
+    "h": 90
+   },
+   "fill": 1.0,
+   "colors": [
+    "#aa9988",
+    "#aa9999",
+    "#776655"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_004",
+   "originFrame": 10,
+   "frames": [
+    10,
+    26
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 480,
+    "y": 3,
+    "w": 48,
+    "h": 90
+   },
+   "fill": 1.0,
+   "colors": [
+    "#aa9988",
+    "#aa9999",
+    "#776655"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_005",
+   "originFrame": 11,
+   "frames": [
+    11,
+    12,
+    27,
+    28
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 531,
+    "y": 3,
+    "w": 90,
+    "h": 90
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ccbb99",
+    "#ddbb99",
+    "#777766"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_006",
+   "originFrame": 13,
+   "frames": [
+    13,
+    29
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 624,
+    "y": 3,
+    "w": 48,
+    "h": 90
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ccbb99",
+    "#ddbb99",
+    "#777766"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_007",
+   "originFrame": 14,
+   "frames": [
+    14,
+    30
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 684,
+    "y": 18,
+    "w": 27,
+    "h": 69
+   },
+   "fill": 0.725,
+   "colors": [
+    "#333355",
+    "#ddbb99",
+    "#665555"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_008",
+   "originFrame": 15,
+   "frames": [
+    15,
+    31
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 732,
+    "y": 18,
+    "w": 27,
+    "h": 69
+   },
+   "fill": 0.725,
+   "colors": [
+    "#333355",
+    "#ccbb99",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_009",
+   "originFrame": 3,
+   "frames": [
+    3,
+    19
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 144,
+    "y": 33,
+    "w": 36,
+    "h": 39
+   },
+   "fill": 0.212,
+   "colors": [
+    "#333355"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_010",
+   "originFrame": 32,
+   "frames": [
+    32,
+    33,
+    34,
+    35,
+    36,
+    48,
+    49,
+    50,
+    51,
+    52
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 0,
+    "y": 96,
+    "w": 240,
+    "h": 96
+   },
+   "fill": 1.0,
+   "colors": [
+    "#bbaa88",
+    "#bbbb88",
+    "#ccbb88"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_011",
+   "originFrame": 37,
+   "frames": [
+    37,
+    38
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 243,
+    "y": 99,
+    "w": 90,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#885555",
+    "#ccbb99",
+    "#ddbb99"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_012",
+   "originFrame": 39,
+   "frames": [
+    39
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 336,
+    "y": 99,
+    "w": 48,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#885555",
+    "#ccbb99",
+    "#ddbb99"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_013",
+   "originFrame": 40,
+   "frames": [
+    40,
+    41
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 387,
+    "y": 99,
+    "w": 90,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#776655",
+    "#aa9988",
+    "#aa9999"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_014",
+   "originFrame": 42,
+   "frames": [
+    42
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 480,
+    "y": 99,
+    "w": 48,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#776655",
+    "#aa9988",
+    "#aa9999"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_015",
+   "originFrame": 43,
+   "frames": [
+    43,
+    44
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 531,
+    "y": 99,
+    "w": 90,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#777766",
+    "#ccbb99",
+    "#ddbb99"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_016",
+   "originFrame": 45,
+   "frames": [
+    45
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 624,
+    "y": 99,
+    "w": 48,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#777766",
+    "#ccbb99",
+    "#ddbb99"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_017",
+   "originFrame": 55,
+   "frames": [
+    55,
+    56,
+    71,
+    72
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 339,
+    "y": 165,
+    "w": 90,
+    "h": 48
+   },
+   "fill": 0.823,
+   "colors": [
+    "#cc8855",
+    "#333355",
+    "#bb7744"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_018",
+   "originFrame": 57,
+   "frames": [
+    57,
+    58,
+    73,
+    74
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 456,
+    "y": 165,
+    "w": 48,
+    "h": 45
+   },
+   "fill": 0.8,
+   "colors": [
+    "#ddccdd",
+    "#ddddee",
+    "#333355"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_019",
+   "originFrame": 53,
+   "frames": [
+    53,
+    54,
+    69,
+    70
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 243,
+    "y": 171,
+    "w": 90,
+    "h": 42
+   },
+   "fill": 0.89,
+   "colors": [
+    "#cc8855",
+    "#333355",
+    "#bb7744"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_020",
+   "originFrame": 59,
+   "frames": [
+    59,
+    75
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 537,
+    "y": 171,
+    "w": 30,
+    "h": 39
+   },
+   "fill": 0.754,
+   "colors": [
+    "#333355",
+    "#998877",
+    "#ddcccc"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_021",
+   "originFrame": 60,
+   "frames": [
+    60,
+    76
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 585,
+    "y": 171,
+    "w": 33,
+    "h": 39
+   },
+   "fill": 0.776,
+   "colors": [
+    "#333355",
+    "#9999bb",
+    "#ddddee"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_022",
+   "originFrame": 61,
+   "frames": [
+    61,
+    77
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 633,
+    "y": 171,
+    "w": 33,
+    "h": 39
+   },
+   "fill": 0.776,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#9999bb"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_023",
+   "originFrame": 62,
+   "frames": [
+    62,
+    78
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 681,
+    "y": 171,
+    "w": 33,
+    "h": 39
+   },
+   "fill": 0.776,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#9999bb"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_024",
+   "originFrame": 63,
+   "frames": [
+    63,
+    79
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 732,
+    "y": 174,
+    "w": 24,
+    "h": 30
+   },
+   "fill": 0.825,
+   "colors": [
+    "#333355",
+    "#665555",
+    "#ccbbaa"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_025",
+   "originFrame": 65,
+   "frames": [
+    65,
+    66,
+    81,
+    82
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 57,
+    "y": 201,
+    "w": 75,
+    "h": 63
+   },
+   "fill": 0.99,
+   "colors": [
+    "#666688",
+    "#333355",
+    "#555577"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_026",
+   "originFrame": 64,
+   "frames": [
+    64
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 18,
+    "y": 204,
+    "w": 30,
+    "h": 27
+   },
+   "fill": 0.889,
+   "colors": [
+    "#aa9999",
+    "#665555",
+    "#aa9988"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_027",
+   "originFrame": 67,
+   "frames": [
+    67,
+    68
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 171,
+    "y": 210,
+    "w": 39,
+    "h": 24
+   },
+   "fill": 1.0,
+   "colors": [
+    "#cc8855",
+    "#333355",
+    "#bb7744"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_028",
+   "originFrame": 73,
+   "frames": [
+    73,
+    74,
+    89,
+    90
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 435,
+    "y": 213,
+    "w": 90,
+    "h": 57
+   },
+   "fill": 0.702,
+   "colors": [
+    "#333355",
+    "#cc8855",
+    "#bb7744"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_029",
+   "originFrame": 64,
+   "frames": [
+    64,
+    80
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 18,
+    "y": 234,
+    "w": 30,
+    "h": 27
+   },
+   "fill": 0.889,
+   "colors": [
+    "#aa9999",
+    "#665555",
+    "#aa9988"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_030",
+   "originFrame": 92,
+   "frames": [
+    92,
+    93,
+    108,
+    109
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 591,
+    "y": 249,
+    "w": 75,
+    "h": 63
+   },
+   "fill": 0.99,
+   "colors": [
+    "#bb6644",
+    "#bb7744",
+    "#333355"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_031",
+   "originFrame": 94,
+   "frames": [
+    94
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 672,
+    "y": 252,
+    "w": 30,
+    "h": 27
+   },
+   "fill": 0.889,
+   "colors": [
+    "#aa9999",
+    "#665555",
+    "#aa9988"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_032",
+   "originFrame": 83,
+   "frames": [
+    83,
+    84
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 171,
+    "y": 255,
+    "w": 39,
+    "h": 27
+   },
+   "fill": 0.923,
+   "colors": [
+    "#333355",
+    "#bb7744",
+    "#444455"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_033",
+   "originFrame": 85,
+   "frames": [
+    85,
+    86,
+    101,
+    102
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 243,
+    "y": 261,
+    "w": 90,
+    "h": 48
+   },
+   "fill": 0.821,
+   "colors": [
+    "#cc8855",
+    "#333355",
+    "#bb7744"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_034",
+   "originFrame": 87,
+   "frames": [
+    87,
+    88,
+    103,
+    104
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 339,
+    "y": 261,
+    "w": 90,
+    "h": 48
+   },
+   "fill": 0.821,
+   "colors": [
+    "#cc8855",
+    "#333355",
+    "#bb7744"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_035",
+   "originFrame": 91,
+   "frames": [
+    91
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 528,
+    "y": 264,
+    "w": 48,
+    "h": 18
+   },
+   "fill": 0.562,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#889988"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_036",
+   "originFrame": 95,
+   "frames": [
+    95,
+    111
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 723,
+    "y": 264,
+    "w": 42,
+    "h": 48
+   },
+   "fill": 0.741,
+   "colors": [
+    "#333355",
+    "#665555",
+    "#ccbbaa"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_037",
+   "originFrame": 94,
+   "frames": [
+    94,
+    110
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 672,
+    "y": 282,
+    "w": 30,
+    "h": 27
+   },
+   "fill": 0.889,
+   "colors": [
+    "#aa9999",
+    "#665555",
+    "#aa9988"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_038",
+   "originFrame": 91,
+   "frames": [
+    91,
+    107
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 528,
+    "y": 285,
+    "w": 48,
+    "h": 18
+   },
+   "fill": 0.562,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#885555"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_039",
+   "originFrame": 96,
+   "frames": [
+    96,
+    97,
+    112,
+    113
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 9,
+    "y": 297,
+    "w": 81,
+    "h": 69
+   },
+   "fill": 0.99,
+   "colors": [
+    "#666688",
+    "#555577",
+    "#333355"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_040",
+   "originFrame": 99,
+   "frames": [
+    99,
+    100
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 168,
+    "y": 300,
+    "w": 45,
+    "h": 30
+   },
+   "fill": 0.7,
+   "colors": [
+    "#333355",
+    "#bb7744",
+    "#444455"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_041",
+   "originFrame": 107,
+   "frames": [
+    107
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 528,
+    "y": 306,
+    "w": 48,
+    "h": 18
+   },
+   "fill": 0.562,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#eeffff"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_042",
+   "originFrame": 119,
+   "frames": [
+    119,
+    120
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 336,
+    "y": 336,
+    "w": 93,
+    "h": 30
+   },
+   "fill": 0.8,
+   "colors": [
+    "#333355",
+    "#bb7744",
+    "#cc8855"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_043",
+   "originFrame": 114,
+   "frames": [
+    114,
+    115,
+    116,
+    117,
+    118,
+    130,
+    131,
+    132,
+    133,
+    134
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 96,
+    "y": 339,
+    "w": 237,
+    "h": 78
+   },
+   "fill": 0.851,
+   "colors": [
+    "#666688",
+    "#333355",
+    "#777788"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_044",
+   "originFrame": 124,
+   "frames": [
+    124,
+    125
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 591,
+    "y": 342,
+    "w": 75,
+    "h": 42
+   },
+   "fill": 0.92,
+   "colors": [
+    "#333355",
+    "#bb7744",
+    "#bb6644"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_045",
+   "originFrame": 127,
+   "frames": [
+    127
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 726,
+    "y": 345,
+    "w": 39,
+    "h": 33
+   },
+   "fill": 0.713,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#666688"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_046",
+   "originFrame": 126,
+   "frames": [
+    126
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 690,
+    "y": 354,
+    "w": 12,
+    "h": 15
+   },
+   "fill": 0.9,
+   "colors": [
+    "#333355",
+    "#aa9999",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_047",
+   "originFrame": 121,
+   "frames": [
+    121,
+    122,
+    123,
+    137,
+    138,
+    139,
+    153,
+    155
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 3
+   },
+   "px": {
+    "x": 438,
+    "y": 357,
+    "w": 132,
+    "h": 81
+   },
+   "fill": 0.828,
+   "colors": [
+    "#eeeeff",
+    "#333355",
+    "#444455"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_048",
+   "originFrame": 128,
+   "frames": [
+    128
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 9,
+    "y": 387,
+    "w": 30,
+    "h": 27
+   },
+   "fill": 0.889,
+   "colors": [
+    "#aa9999",
+    "#665555",
+    "#aa9988"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_049",
+   "originFrame": 129,
+   "frames": [
+    129
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 57,
+    "y": 387,
+    "w": 30,
+    "h": 27
+   },
+   "fill": 0.911,
+   "colors": [
+    "#aa9999",
+    "#665555",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_050",
+   "originFrame": 140,
+   "frames": [
+    140,
+    141,
+    156,
+    157
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 576,
+    "y": 402,
+    "w": 96,
+    "h": 51
+   },
+   "fill": 0.956,
+   "colors": [
+    "#99aabb",
+    "#333355",
+    "#bbbbcc"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_051",
+   "originFrame": 142,
+   "frames": [
+    142,
+    158
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 675,
+    "y": 411,
+    "w": 39,
+    "h": 39
+   },
+   "fill": 0.893,
+   "colors": [
+    "#333355",
+    "#eeeeff",
+    "#ccbbdd"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_052",
+   "originFrame": 135,
+   "frames": [
+    135,
+    151,
+    167
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 3
+   },
+   "px": {
+    "x": 336,
+    "y": 423,
+    "w": 48,
+    "h": 75
+   },
+   "fill": 0.715,
+   "colors": [
+    "#333355",
+    "#445566",
+    "#558866"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_053",
+   "originFrame": 144,
+   "frames": [
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    150,
+    160,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166
+   ],
+   "tiles": {
+    "w": 7,
+    "h": 2
+   },
+   "px": {
+    "x": 0,
+    "y": 435,
+    "w": 333,
+    "h": 78
+   },
+   "fill": 0.891,
+   "colors": [
+    "#eebb77",
+    "#333355",
+    "#ddaa66"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_054",
+   "originFrame": 168,
+   "frames": [
+    168,
+    169,
+    170,
+    171,
+    172,
+    184,
+    185,
+    186,
+    187
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 384,
+    "y": 483,
+    "w": 240,
+    "h": 90
+   },
+   "fill": 0.656,
+   "colors": [
+    "#333355",
+    "#eeddbb",
+    "#cc8855"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_055",
+   "originFrame": 173,
+   "frames": [
+    173,
+    189
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 633,
+    "y": 501,
+    "w": 15,
+    "h": 75
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#eebb77",
+    "#cc8855"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_056",
+   "originFrame": 176,
+   "frames": [
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    214,
+    230
+   ],
+   "tiles": {
+    "w": 7,
+    "h": 4
+   },
+   "px": {
+    "x": 0,
+    "y": 531,
+    "w": 336,
+    "h": 168
+   },
+   "fill": 0.461,
+   "colors": [
+    "#333355",
+    "#666688",
+    "#777788"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_057",
+   "originFrame": 202,
+   "frames": [
+    202
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 480,
+    "y": 576,
+    "w": 48,
+    "h": 27
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#cc8855",
+    "#bb7744"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_058",
+   "originFrame": 200,
+   "frames": [
+    200,
+    215,
+    216,
+    217,
+    231,
+    232,
+    233
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 3
+   },
+   "px": {
+    "x": 372,
+    "y": 597,
+    "w": 69,
+    "h": 102
+   },
+   "fill": 0.803,
+   "colors": [
+    "#333355",
+    "#ddaa66",
+    "#aa5544"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_059",
+   "originFrame": 202,
+   "frames": [
+    202,
+    218
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 483,
+    "y": 606,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#bbddee",
+    "#333355",
+    "#aabbdd"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_060",
+   "originFrame": 203,
+   "frames": [
+    203,
+    219
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 531,
+    "y": 606,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#bbaaaa",
+    "#aa9999",
+    "#333355"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_061",
+   "originFrame": 204,
+   "frames": [
+    204,
+    220
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 579,
+    "y": 606,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#77bb55",
+    "#333355",
+    "#66aa55"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_062",
+   "originFrame": 205,
+   "frames": [
+    205,
+    221
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 627,
+    "y": 606,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#bbddee",
+    "#333355",
+    "#aabbdd"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_063",
+   "originFrame": 206,
+   "frames": [
+    206,
+    222
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 675,
+    "y": 606,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#99aabb",
+    "#333355",
+    "#8888aa"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_064",
+   "originFrame": 208,
+   "frames": [
+    208
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 6,
+    "y": 630,
+    "w": 33,
+    "h": 36
+   },
+   "fill": 0.727,
+   "colors": [
+    "#333355",
+    "#554444",
+    "#776655"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_065",
+   "originFrame": 209,
+   "frames": [
+    209,
+    225
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 51,
+    "y": 651,
+    "w": 42,
+    "h": 39
+   },
+   "fill": 0.962,
+   "colors": [
+    "#333355",
+    "#996666",
+    "#bb8877"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_066",
+   "originFrame": 224,
+   "frames": [
+    224
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 3,
+    "y": 678,
+    "w": 39,
+    "h": 42
+   },
+   "fill": 0.813,
+   "colors": [
+    "#333355",
+    "#554444",
+    "#bb8877"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_067",
+   "originFrame": 235,
+   "frames": [
+    235,
+    251
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 531,
+    "y": 702,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#aa9999",
+    "#333355",
+    "#bbaaaa"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_068",
+   "originFrame": 236,
+   "frames": [
+    236,
+    252
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 579,
+    "y": 702,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#aa9999",
+    "#bbaaaa",
+    "#333355"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_069",
+   "originFrame": 237,
+   "frames": [
+    237,
+    253
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 627,
+    "y": 702,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#bbaaaa",
+    "#333355",
+    "#aa9999"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_070",
+   "originFrame": 238,
+   "frames": [
+    238,
+    254
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 675,
+    "y": 702,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.955,
+   "colors": [
+    "#333355",
+    "#bbaaaa",
+    "#aa9999"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_071",
+   "originFrame": 240,
+   "frames": [
+    240,
+    241
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 6,
+    "y": 747,
+    "w": 84,
+    "h": 21
+   },
+   "fill": 0.959,
+   "colors": [
+    "#333355",
+    "#bbddee",
+    "#aabbdd"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_072",
+   "originFrame": 242,
+   "frames": [
+    242,
+    243
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 102,
+    "y": 747,
+    "w": 84,
+    "h": 21
+   },
+   "fill": 0.959,
+   "colors": [
+    "#333355",
+    "#bb9966",
+    "#bb8855"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_073",
+   "originFrame": 244,
+   "frames": [
+    244,
+    245
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 198,
+    "y": 747,
+    "w": 84,
+    "h": 21
+   },
+   "fill": 0.959,
+   "colors": [
+    "#333355",
+    "#bbaaaa",
+    "#ccbbaa"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_074",
+   "originFrame": 246,
+   "frames": [
+    246,
+    247
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 294,
+    "y": 747,
+    "w": 84,
+    "h": 21
+   },
+   "fill": 0.959,
+   "colors": [
+    "#333355",
+    "#ddbb99",
+    "#bb9988"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_075",
+   "originFrame": 265,
+   "frames": [
+    265,
+    281,
+    297,
+    313
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 4
+   },
+   "px": {
+    "x": 450,
+    "y": 771,
+    "w": 27,
+    "h": 147
+   },
+   "fill": 0.19,
+   "colors": [
+    "#cc3333"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_076",
+   "originFrame": 268,
+   "frames": [
+    268
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 579,
+    "y": 774,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#666688"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_077",
+   "originFrame": 269,
+   "frames": [
+    269
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 627,
+    "y": 774,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#aa7766",
+    "#bb9977"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_078",
+   "originFrame": 268,
+   "frames": [
+    268
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 600,
+    "y": 777,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#666688"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_079",
+   "originFrame": 269,
+   "frames": [
+    269
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 648,
+    "y": 777,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#aa7766",
+    "#bb9977"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_080",
+   "originFrame": 257,
+   "frames": [
+    257,
+    258,
+    261,
+    262,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279,
+    288,
+    289,
+    290,
+    291,
+    292,
+    293,
+    294,
+    295,
+    304,
+    305,
+    306,
+    307,
+    308,
+    309,
+    310,
+    311,
+    320,
+    321,
+    322,
+    323,
+    324,
+    325,
+    326,
+    327
+   ],
+   "tiles": {
+    "w": 8,
+    "h": 5
+   },
+   "px": {
+    "x": 0,
+    "y": 789,
+    "w": 384,
+    "h": 219
+   },
+   "fill": 0.936,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#ccbbdd"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_081",
+   "originFrame": 264,
+   "frames": [
+    264,
+    280
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 387,
+    "y": 789,
+    "w": 42,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ddcccc",
+    "#333355",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_082",
+   "originFrame": 266,
+   "frames": [
+    266,
+    267
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 480,
+    "y": 804,
+    "w": 96,
+    "h": 12
+   },
+   "fill": 1.0,
+   "colors": [
+    "#776666",
+    "#666655",
+    "#333355"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_083",
+   "originFrame": 270,
+   "frames": [
+    270,
+    271,
+    286,
+    287,
+    302,
+    303
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 672,
+    "y": 807,
+    "w": 96,
+    "h": 105
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#99aabb",
+    "#aabbbb"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_084",
+   "originFrame": 284,
+   "frames": [
+    284
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 579,
+    "y": 822,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#aa7744",
+    "#bb8855"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_085",
+   "originFrame": 285,
+   "frames": [
+    285
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 627,
+    "y": 822,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#6699bb",
+    "#77aabb"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_086",
+   "originFrame": 284,
+   "frames": [
+    284
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 600,
+    "y": 825,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#aa7744",
+    "#bb8855"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_087",
+   "originFrame": 285,
+   "frames": [
+    285
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 648,
+    "y": 825,
+    "w": 18,
+    "h": 27
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#6699bb",
+    "#77aabb"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "japanese_interiors/obj_088",
+   "originFrame": 298,
+   "frames": [
+    298,
+    299,
+    314,
+    315
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 480,
+    "y": 864,
+    "w": 96,
+    "h": 96
+   },
+   "fill": 1.0,
+   "colors": [
+    "#bbaa88",
+    "#666666",
+    "#666655"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_089",
+   "originFrame": 300,
+   "frames": [
+    300,
+    316
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 582,
+    "y": 882,
+    "w": 39,
+    "h": 51
+   },
+   "fill": 0.955,
+   "colors": [
+    "#333355",
+    "#bb9988",
+    "#aaaabb"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_090",
+   "originFrame": 296,
+   "frames": [
+    296,
+    312
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 390,
+    "y": 885,
+    "w": 36,
+    "h": 51
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ddcccc",
+    "#333355",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_091",
+   "originFrame": 301,
+   "frames": [
+    301,
+    317
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 630,
+    "y": 897,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.968,
+   "colors": [
+    "#333355",
+    "#bb9988",
+    "#bb8877"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_092",
+   "originFrame": 318,
+   "frames": [
+    318,
+    319,
+    334,
+    335,
+    350,
+    351
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 681,
+    "y": 930,
+    "w": 81,
+    "h": 126
+   },
+   "fill": 0.751,
+   "colors": [
+    "#666688",
+    "#333355",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_093",
+   "originFrame": 332,
+   "frames": [
+    332,
+    333,
+    348,
+    349
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 585,
+    "y": 981,
+    "w": 78,
+    "h": 48
+   },
+   "fill": 0.678,
+   "colors": [
+    "#333355",
+    "#bbccdd",
+    "#aaaabb"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_094",
+   "originFrame": 364,
+   "frames": [
+    364,
+    380
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 582,
+    "y": 1074,
+    "w": 39,
+    "h": 51
+   },
+   "fill": 0.955,
+   "colors": [
+    "#333355",
+    "#aa9999",
+    "#bb8855"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_095",
+   "originFrame": 366,
+   "frames": [
+    366,
+    367,
+    382,
+    383,
+    398,
+    399
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 681,
+    "y": 1074,
+    "w": 81,
+    "h": 126
+   },
+   "fill": 0.751,
+   "colors": [
+    "#666688",
+    "#333355",
+    "#aa9999"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_096",
+   "originFrame": 365,
+   "frames": [
+    365,
+    381
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 630,
+    "y": 1089,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.968,
+   "colors": [
+    "#aa9999",
+    "#333355",
+    "#aa9988"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_097",
+   "originFrame": 396,
+   "frames": [
+    396,
+    397,
+    412,
+    413
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 585,
+    "y": 1173,
+    "w": 78,
+    "h": 48
+   },
+   "fill": 0.678,
+   "colors": [
+    "#333355",
+    "#aa9999",
+    "#bbaa66"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_098",
+   "originFrame": 414,
+   "frames": [
+    414,
+    415,
+    430,
+    431,
+    446,
+    447
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 681,
+    "y": 1218,
+    "w": 81,
+    "h": 126
+   },
+   "fill": 0.751,
+   "colors": [
+    "#666688",
+    "#333355",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_099",
+   "originFrame": 428,
+   "frames": [
+    428,
+    444
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 582,
+    "y": 1266,
+    "w": 39,
+    "h": 51
+   },
+   "fill": 0.955,
+   "colors": [
+    "#333355",
+    "#ddaa66",
+    "#cc8855"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_100",
+   "originFrame": 429,
+   "frames": [
+    429,
+    445
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 630,
+    "y": 1281,
+    "w": 39,
+    "h": 36
+   },
+   "fill": 0.968,
+   "colors": [
+    "#333355",
+    "#ddaa66",
+    "#cc8855"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "japanese_interiors/obj_101",
+   "originFrame": 460,
+   "frames": [
+    460,
+    461,
+    476,
+    477
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 585,
+    "y": 1365,
+    "w": 78,
+    "h": 48
+   },
+   "fill": 0.678,
+   "colors": [
+    "#333355",
+    "#559966",
+    "#558866"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  }
+ ]
+}

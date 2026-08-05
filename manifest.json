@@ -1,0 +1,19 @@
+{
+  "name": "Waiting Game",
+  "short_name": "Waiting Game",
+  "description": "A cozy waiting-tables sim built with Phaser + Modern Interiors.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#1b1b22",
+  "theme_color": "#2b2b39",
+  "icons": [
+    {
+      "src": "game-assets/ui/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

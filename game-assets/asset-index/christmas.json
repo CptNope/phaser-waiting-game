@@ -1,0 +1,4035 @@
+{
+ "key": "christmas",
+ "cols": 16,
+ "rows": 17,
+ "frames": {
+  "1": {
+   "col": 1,
+   "row": 0,
+   "fill": 0.066
+  },
+  "2": {
+   "col": 2,
+   "row": 0,
+   "fill": 0.066
+  },
+  "3": {
+   "col": 3,
+   "row": 0,
+   "fill": 0.066
+  },
+  "4": {
+   "col": 4,
+   "row": 0,
+   "fill": 0.066
+  },
+  "5": {
+   "col": 5,
+   "row": 0,
+   "fill": 0.066
+  },
+  "6": {
+   "col": 6,
+   "row": 0,
+   "fill": 0.066
+  },
+  "7": {
+   "col": 7,
+   "row": 0,
+   "fill": 0.066
+  },
+  "8": {
+   "col": 8,
+   "row": 0,
+   "fill": 0.066
+  },
+  "9": {
+   "col": 9,
+   "row": 0,
+   "fill": 0.105
+  },
+  "10": {
+   "col": 10,
+   "row": 0,
+   "fill": 0.105
+  },
+  "11": {
+   "col": 11,
+   "row": 0,
+   "fill": 0.383
+  },
+  "12": {
+   "col": 12,
+   "row": 0,
+   "fill": 0.383
+  },
+  "13": {
+   "col": 13,
+   "row": 0,
+   "fill": 0.383
+  },
+  "14": {
+   "col": 14,
+   "row": 0,
+   "fill": 0.312
+  },
+  "15": {
+   "col": 15,
+   "row": 0,
+   "fill": 0.312
+  },
+  "17": {
+   "col": 1,
+   "row": 1,
+   "fill": 0.695
+  },
+  "18": {
+   "col": 2,
+   "row": 1,
+   "fill": 0.695
+  },
+  "19": {
+   "col": 3,
+   "row": 1,
+   "fill": 0.695
+  },
+  "20": {
+   "col": 4,
+   "row": 1,
+   "fill": 0.695
+  },
+  "21": {
+   "col": 5,
+   "row": 1,
+   "fill": 0.695
+  },
+  "22": {
+   "col": 6,
+   "row": 1,
+   "fill": 0.695
+  },
+  "23": {
+   "col": 7,
+   "row": 1,
+   "fill": 0.695
+  },
+  "24": {
+   "col": 8,
+   "row": 1,
+   "fill": 0.695
+  },
+  "25": {
+   "col": 9,
+   "row": 1,
+   "fill": 0.219
+  },
+  "26": {
+   "col": 10,
+   "row": 1,
+   "fill": 0.219
+  },
+  "27": {
+   "col": 11,
+   "row": 1,
+   "fill": 0.297
+  },
+  "28": {
+   "col": 12,
+   "row": 1,
+   "fill": 0.391
+  },
+  "29": {
+   "col": 13,
+   "row": 1,
+   "fill": 0.289
+  },
+  "30": {
+   "col": 14,
+   "row": 1,
+   "fill": 0.895
+  },
+  "31": {
+   "col": 15,
+   "row": 1,
+   "fill": 0.895
+  },
+  "33": {
+   "col": 1,
+   "row": 2,
+   "fill": 0.68
+  },
+  "34": {
+   "col": 2,
+   "row": 2,
+   "fill": 0.68
+  },
+  "35": {
+   "col": 3,
+   "row": 2,
+   "fill": 0.68
+  },
+  "36": {
+   "col": 4,
+   "row": 2,
+   "fill": 0.68
+  },
+  "37": {
+   "col": 5,
+   "row": 2,
+   "fill": 0.398
+  },
+  "38": {
+   "col": 6,
+   "row": 2,
+   "fill": 0.398
+  },
+  "39": {
+   "col": 7,
+   "row": 2,
+   "fill": 0.398
+  },
+  "40": {
+   "col": 8,
+   "row": 2,
+   "fill": 0.398
+  },
+  "41": {
+   "col": 9,
+   "row": 2,
+   "fill": 0.105
+  },
+  "42": {
+   "col": 10,
+   "row": 2,
+   "fill": 0.105
+  },
+  "43": {
+   "col": 11,
+   "row": 2,
+   "fill": 0.383
+  },
+  "44": {
+   "col": 12,
+   "row": 2,
+   "fill": 0.383
+  },
+  "45": {
+   "col": 13,
+   "row": 2,
+   "fill": 0.383
+  },
+  "46": {
+   "col": 14,
+   "row": 2,
+   "fill": 0.383
+  },
+  "47": {
+   "col": 15,
+   "row": 2,
+   "fill": 0.41
+  },
+  "48": {
+   "col": 0,
+   "row": 3,
+   "fill": 0.445
+  },
+  "49": {
+   "col": 1,
+   "row": 3,
+   "fill": 0.449
+  },
+  "50": {
+   "col": 2,
+   "row": 3,
+   "fill": 0.445
+  },
+  "51": {
+   "col": 3,
+   "row": 3,
+   "fill": 0.07
+  },
+  "52": {
+   "col": 4,
+   "row": 3,
+   "fill": 0.141
+  },
+  "53": {
+   "col": 5,
+   "row": 3,
+   "fill": 0.137
+  },
+  "54": {
+   "col": 6,
+   "row": 3,
+   "fill": 0.039
+  },
+  "55": {
+   "col": 7,
+   "row": 3,
+   "fill": 0.281
+  },
+  "56": {
+   "col": 8,
+   "row": 3,
+   "fill": 0.281
+  },
+  "57": {
+   "col": 9,
+   "row": 3,
+   "fill": 0.219
+  },
+  "58": {
+   "col": 10,
+   "row": 3,
+   "fill": 0.219
+  },
+  "59": {
+   "col": 11,
+   "row": 3,
+   "fill": 0.297
+  },
+  "60": {
+   "col": 12,
+   "row": 3,
+   "fill": 0.391
+  },
+  "61": {
+   "col": 13,
+   "row": 3,
+   "fill": 0.289
+  },
+  "62": {
+   "col": 14,
+   "row": 3,
+   "fill": 0.312
+  },
+  "63": {
+   "col": 15,
+   "row": 3,
+   "fill": 0.312
+  },
+  "64": {
+   "col": 0,
+   "row": 4,
+   "fill": 0.445
+  },
+  "65": {
+   "col": 1,
+   "row": 4,
+   "fill": 0.32
+  },
+  "66": {
+   "col": 2,
+   "row": 4,
+   "fill": 0.445
+  },
+  "67": {
+   "col": 3,
+   "row": 4,
+   "fill": 0.316
+  },
+  "68": {
+   "col": 4,
+   "row": 4,
+   "fill": 0.781
+  },
+  "69": {
+   "col": 5,
+   "row": 4,
+   "fill": 0.828
+  },
+  "70": {
+   "col": 6,
+   "row": 4,
+   "fill": 0.09
+  },
+  "71": {
+   "col": 7,
+   "row": 4,
+   "fill": 0.328
+  },
+  "72": {
+   "col": 8,
+   "row": 4,
+   "fill": 0.328
+  },
+  "73": {
+   "col": 9,
+   "row": 4,
+   "fill": 0.105
+  },
+  "74": {
+   "col": 10,
+   "row": 4,
+   "fill": 0.531
+  },
+  "75": {
+   "col": 11,
+   "row": 4,
+   "fill": 0.559
+  },
+  "76": {
+   "col": 12,
+   "row": 4,
+   "fill": 0.426
+  },
+  "77": {
+   "col": 13,
+   "row": 4,
+   "fill": 0.559
+  },
+  "78": {
+   "col": 14,
+   "row": 4,
+   "fill": 0.895
+  },
+  "79": {
+   "col": 15,
+   "row": 4,
+   "fill": 0.895
+  },
+  "80": {
+   "col": 0,
+   "row": 5,
+   "fill": 0.25
+  },
+  "81": {
+   "col": 1,
+   "row": 5,
+   "fill": 0.25
+  },
+  "82": {
+   "col": 2,
+   "row": 5,
+   "fill": 0.25
+  },
+  "83": {
+   "col": 3,
+   "row": 5,
+   "fill": 0.176
+  },
+  "84": {
+   "col": 4,
+   "row": 5,
+   "fill": 0.211
+  },
+  "85": {
+   "col": 5,
+   "row": 5,
+   "fill": 0.344
+  },
+  "87": {
+   "col": 7,
+   "row": 5,
+   "fill": 0.375
+  },
+  "88": {
+   "col": 8,
+   "row": 5,
+   "fill": 0.375
+  },
+  "89": {
+   "col": 9,
+   "row": 5,
+   "fill": 0.219
+  },
+  "90": {
+   "col": 10,
+   "row": 5,
+   "fill": 0.762
+  },
+  "91": {
+   "col": 11,
+   "row": 5,
+   "fill": 0.789
+  },
+  "92": {
+   "col": 12,
+   "row": 5,
+   "fill": 0.793
+  },
+  "93": {
+   "col": 13,
+   "row": 5,
+   "fill": 0.777
+  },
+  "94": {
+   "col": 14,
+   "row": 5,
+   "fill": 0.383
+  },
+  "95": {
+   "col": 15,
+   "row": 5,
+   "fill": 0.41
+  },
+  "96": {
+   "col": 0,
+   "row": 6,
+   "fill": 0.129
+  },
+  "97": {
+   "col": 1,
+   "row": 6,
+   "fill": 0.129
+  },
+  "98": {
+   "col": 2,
+   "row": 6,
+   "fill": 0.137
+  },
+  "99": {
+   "col": 3,
+   "row": 6,
+   "fill": 0.137
+  },
+  "100": {
+   "col": 4,
+   "row": 6,
+   "fill": 0.137
+  },
+  "101": {
+   "col": 5,
+   "row": 6,
+   "fill": 0.141
+  },
+  "102": {
+   "col": 6,
+   "row": 6,
+   "fill": 0.105
+  },
+  "103": {
+   "col": 7,
+   "row": 6,
+   "fill": 0.109
+  },
+  "106": {
+   "col": 10,
+   "row": 6,
+   "fill": 0.152
+  },
+  "107": {
+   "col": 11,
+   "row": 6,
+   "fill": 0.152
+  },
+  "108": {
+   "col": 12,
+   "row": 6,
+   "fill": 0.047
+  },
+  "109": {
+   "col": 13,
+   "row": 6,
+   "fill": 0.152
+  },
+  "110": {
+   "col": 14,
+   "row": 6,
+   "fill": 0.051
+  },
+  "112": {
+   "col": 0,
+   "row": 7,
+   "fill": 0.266
+  },
+  "113": {
+   "col": 1,
+   "row": 7,
+   "fill": 0.281
+  },
+  "114": {
+   "col": 2,
+   "row": 7,
+   "fill": 0.379
+  },
+  "115": {
+   "col": 3,
+   "row": 7,
+   "fill": 0.355
+  },
+  "116": {
+   "col": 4,
+   "row": 7,
+   "fill": 0.375
+  },
+  "117": {
+   "col": 5,
+   "row": 7,
+   "fill": 0.305
+  },
+  "118": {
+   "col": 6,
+   "row": 7,
+   "fill": 0.363
+  },
+  "119": {
+   "col": 7,
+   "row": 7,
+   "fill": 0.293
+  },
+  "120": {
+   "col": 8,
+   "row": 7,
+   "fill": 0.766
+  },
+  "122": {
+   "col": 10,
+   "row": 7,
+   "fill": 0.723
+  },
+  "123": {
+   "col": 11,
+   "row": 7,
+   "fill": 0.77
+  },
+  "124": {
+   "col": 12,
+   "row": 7,
+   "fill": 0.75
+  },
+  "125": {
+   "col": 13,
+   "row": 7,
+   "fill": 0.766
+  },
+  "126": {
+   "col": 14,
+   "row": 7,
+   "fill": 0.461
+  },
+  "127": {
+   "col": 15,
+   "row": 7,
+   "fill": 0.438
+  },
+  "128": {
+   "col": 0,
+   "row": 8,
+   "fill": 0.152
+  },
+  "129": {
+   "col": 1,
+   "row": 8,
+   "fill": 0.145
+  },
+  "130": {
+   "col": 2,
+   "row": 8,
+   "fill": 0.191
+  },
+  "131": {
+   "col": 3,
+   "row": 8,
+   "fill": 0.191
+  },
+  "132": {
+   "col": 4,
+   "row": 8,
+   "fill": 0.191
+  },
+  "133": {
+   "col": 5,
+   "row": 8,
+   "fill": 0.199
+  },
+  "134": {
+   "col": 6,
+   "row": 8,
+   "fill": 0.191
+  },
+  "135": {
+   "col": 7,
+   "row": 8,
+   "fill": 0.199
+  },
+  "136": {
+   "col": 8,
+   "row": 8,
+   "fill": 0.766
+  },
+  "137": {
+   "col": 9,
+   "row": 8,
+   "fill": 0.875
+  },
+  "138": {
+   "col": 10,
+   "row": 8,
+   "fill": 0.418
+  },
+  "139": {
+   "col": 11,
+   "row": 8,
+   "fill": 0.422
+  },
+  "140": {
+   "col": 12,
+   "row": 8,
+   "fill": 0.438
+  },
+  "141": {
+   "col": 13,
+   "row": 8,
+   "fill": 0.422
+  },
+  "143": {
+   "col": 15,
+   "row": 8,
+   "fill": 0.195
+  },
+  "148": {
+   "col": 4,
+   "row": 9,
+   "fill": 0.223
+  },
+  "149": {
+   "col": 5,
+   "row": 9,
+   "fill": 0.223
+  },
+  "150": {
+   "col": 6,
+   "row": 9,
+   "fill": 0.109
+  },
+  "151": {
+   "col": 7,
+   "row": 9,
+   "fill": 0.109
+  },
+  "153": {
+   "col": 9,
+   "row": 9,
+   "fill": 0.086
+  },
+  "155": {
+   "col": 11,
+   "row": 9,
+   "fill": 0.352
+  },
+  "156": {
+   "col": 12,
+   "row": 9,
+   "fill": 0.375
+  },
+  "157": {
+   "col": 13,
+   "row": 9,
+   "fill": 0.352
+  },
+  "158": {
+   "col": 14,
+   "row": 9,
+   "fill": 0.586
+  },
+  "159": {
+   "col": 15,
+   "row": 9,
+   "fill": 0.703
+  },
+  "160": {
+   "col": 0,
+   "row": 10,
+   "fill": 0.656
+  },
+  "161": {
+   "col": 1,
+   "row": 10,
+   "fill": 0.656
+  },
+  "162": {
+   "col": 2,
+   "row": 10,
+   "fill": 0.656
+  },
+  "163": {
+   "col": 3,
+   "row": 10,
+   "fill": 0.656
+  },
+  "164": {
+   "col": 4,
+   "row": 10,
+   "fill": 0.191
+  },
+  "165": {
+   "col": 5,
+   "row": 10,
+   "fill": 0.188
+  },
+  "166": {
+   "col": 6,
+   "row": 10,
+   "fill": 0.258
+  },
+  "167": {
+   "col": 7,
+   "row": 10,
+   "fill": 0.258
+  },
+  "168": {
+   "col": 8,
+   "row": 10,
+   "fill": 0.031
+  },
+  "169": {
+   "col": 9,
+   "row": 10,
+   "fill": 0.938
+  },
+  "170": {
+   "col": 10,
+   "row": 10,
+   "fill": 0.031
+  },
+  "171": {
+   "col": 11,
+   "row": 10,
+   "fill": 0.938
+  },
+  "172": {
+   "col": 12,
+   "row": 10,
+   "fill": 1.0
+  },
+  "173": {
+   "col": 13,
+   "row": 10,
+   "fill": 0.992
+  },
+  "175": {
+   "col": 15,
+   "row": 10,
+   "fill": 0.051
+  },
+  "176": {
+   "col": 0,
+   "row": 11,
+   "fill": 0.309
+  },
+  "177": {
+   "col": 1,
+   "row": 11,
+   "fill": 0.172
+  },
+  "178": {
+   "col": 2,
+   "row": 11,
+   "fill": 0.309
+  },
+  "179": {
+   "col": 3,
+   "row": 11,
+   "fill": 0.172
+  },
+  "180": {
+   "col": 4,
+   "row": 11,
+   "fill": 0.062
+  },
+  "181": {
+   "col": 5,
+   "row": 11,
+   "fill": 0.562
+  },
+  "182": {
+   "col": 6,
+   "row": 11,
+   "fill": 0.016
+  },
+  "184": {
+   "col": 8,
+   "row": 11,
+   "fill": 0.16
+  },
+  "185": {
+   "col": 9,
+   "row": 11,
+   "fill": 1.0
+  },
+  "186": {
+   "col": 10,
+   "row": 11,
+   "fill": 0.16
+  },
+  "187": {
+   "col": 11,
+   "row": 11,
+   "fill": 0.938
+  },
+  "188": {
+   "col": 12,
+   "row": 11,
+   "fill": 1.0
+  },
+  "189": {
+   "col": 13,
+   "row": 11,
+   "fill": 1.0
+  },
+  "190": {
+   "col": 14,
+   "row": 11,
+   "fill": 0.363
+  },
+  "191": {
+   "col": 15,
+   "row": 11,
+   "fill": 0.312
+  },
+  "192": {
+   "col": 0,
+   "row": 12,
+   "fill": 0.277
+  },
+  "193": {
+   "col": 1,
+   "row": 12,
+   "fill": 0.238
+  },
+  "194": {
+   "col": 2,
+   "row": 12,
+   "fill": 0.277
+  },
+  "195": {
+   "col": 3,
+   "row": 12,
+   "fill": 0.238
+  },
+  "197": {
+   "col": 5,
+   "row": 12,
+   "fill": 0.277
+  },
+  "200": {
+   "col": 8,
+   "row": 12,
+   "fill": 0.176
+  },
+  "201": {
+   "col": 9,
+   "row": 12,
+   "fill": 0.18
+  },
+  "202": {
+   "col": 10,
+   "row": 12,
+   "fill": 0.145
+  },
+  "203": {
+   "col": 11,
+   "row": 12,
+   "fill": 0.145
+  },
+  "204": {
+   "col": 12,
+   "row": 12,
+   "fill": 1.0
+  },
+  "207": {
+   "col": 15,
+   "row": 12,
+   "fill": 0.258
+  },
+  "208": {
+   "col": 0,
+   "row": 13,
+   "fill": 0.406
+  },
+  "209": {
+   "col": 1,
+   "row": 13,
+   "fill": 0.527
+  },
+  "210": {
+   "col": 2,
+   "row": 13,
+   "fill": 0.434
+  },
+  "211": {
+   "col": 3,
+   "row": 13,
+   "fill": 0.516
+  },
+  "212": {
+   "col": 4,
+   "row": 13,
+   "fill": 0.309
+  },
+  "213": {
+   "col": 5,
+   "row": 13,
+   "fill": 0.387
+  },
+  "214": {
+   "col": 6,
+   "row": 13,
+   "fill": 0.488
+  },
+  "215": {
+   "col": 7,
+   "row": 13,
+   "fill": 0.488
+  },
+  "216": {
+   "col": 8,
+   "row": 13,
+   "fill": 0.355
+  },
+  "217": {
+   "col": 9,
+   "row": 13,
+   "fill": 0.379
+  },
+  "218": {
+   "col": 10,
+   "row": 13,
+   "fill": 0.355
+  },
+  "219": {
+   "col": 11,
+   "row": 13,
+   "fill": 0.379
+  },
+  "223": {
+   "col": 15,
+   "row": 13,
+   "fill": 0.461
+  },
+  "224": {
+   "col": 0,
+   "row": 14,
+   "fill": 0.672
+  },
+  "225": {
+   "col": 1,
+   "row": 14,
+   "fill": 0.07
+  },
+  "226": {
+   "col": 2,
+   "row": 14,
+   "fill": 0.586
+  },
+  "227": {
+   "col": 3,
+   "row": 14,
+   "fill": 0.039
+  },
+  "228": {
+   "col": 4,
+   "row": 14,
+   "fill": 0.59
+  },
+  "229": {
+   "col": 5,
+   "row": 14,
+   "fill": 0.617
+  },
+  "230": {
+   "col": 6,
+   "row": 14,
+   "fill": 0.617
+  },
+  "240": {
+   "col": 0,
+   "row": 15,
+   "fill": 0.441
+  },
+  "241": {
+   "col": 1,
+   "row": 15,
+   "fill": 0.652
+  },
+  "242": {
+   "col": 2,
+   "row": 15,
+   "fill": 0.441
+  },
+  "243": {
+   "col": 3,
+   "row": 15,
+   "fill": 0.684
+  },
+  "244": {
+   "col": 4,
+   "row": 15,
+   "fill": 0.57
+  },
+  "245": {
+   "col": 5,
+   "row": 15,
+   "fill": 0.438
+  },
+  "246": {
+   "col": 6,
+   "row": 15,
+   "fill": 0.191
+  }
+ },
+ "objects": [
+  {
+   "id": "christmas/obj_001",
+   "originFrame": 11,
+   "frames": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    27,
+    28,
+    29,
+    30,
+    31,
+    46,
+    47
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 3
+   },
+   "px": {
+    "x": 528,
+    "y": 21,
+    "w": 240,
+    "h": 96
+   },
+   "fill": 0.533,
+   "colors": [
+    "#333355",
+    "#ccbbdd",
+    "#eeeeff"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_002",
+   "originFrame": 9,
+   "frames": [
+    9,
+    25
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 441,
+    "y": 30,
+    "w": 30,
+    "h": 45
+   },
+   "fill": 0.553,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#558877"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_003",
+   "originFrame": 10,
+   "frames": [
+    10,
+    26
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 489,
+    "y": 30,
+    "w": 30,
+    "h": 45
+   },
+   "fill": 0.553,
+   "colors": [
+    "#333355",
+    "#aa9999",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_004",
+   "originFrame": 1,
+   "frames": [
+    1,
+    2,
+    17,
+    18,
+    33,
+    34
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 51,
+    "y": 36,
+    "w": 90,
+    "h": 105
+   },
+   "fill": 0.703,
+   "colors": [
+    "#aa9999",
+    "#446666",
+    "#445555"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_005",
+   "originFrame": 3,
+   "frames": [
+    3,
+    4,
+    19,
+    20,
+    35,
+    36
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 147,
+    "y": 36,
+    "w": 90,
+    "h": 105
+   },
+   "fill": 0.703,
+   "colors": [
+    "#aa9999",
+    "#334455",
+    "#446677"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_006",
+   "originFrame": 5,
+   "frames": [
+    5,
+    6,
+    21,
+    22,
+    37,
+    38
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 243,
+    "y": 36,
+    "w": 90,
+    "h": 87
+   },
+   "fill": 0.683,
+   "colors": [
+    "#446666",
+    "#445555",
+    "#558866"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_007",
+   "originFrame": 7,
+   "frames": [
+    7,
+    8,
+    23,
+    24,
+    39,
+    40
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 339,
+    "y": 36,
+    "w": 90,
+    "h": 87
+   },
+   "fill": 0.683,
+   "colors": [
+    "#334455",
+    "#446677",
+    "#449988"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_008",
+   "originFrame": 43,
+   "frames": [
+    43,
+    44,
+    45,
+    59,
+    60,
+    61
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 528,
+    "y": 117,
+    "w": 144,
+    "h": 57
+   },
+   "fill": 0.596,
+   "colors": [
+    "#333355",
+    "#446677",
+    "#445566"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_009",
+   "originFrame": 41,
+   "frames": [
+    41,
+    57
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 441,
+    "y": 126,
+    "w": 30,
+    "h": 45
+   },
+   "fill": 0.553,
+   "colors": [
+    "#333355",
+    "#ee3333",
+    "#dd3333"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_010",
+   "originFrame": 42,
+   "frames": [
+    42,
+    58
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 489,
+    "y": 126,
+    "w": 30,
+    "h": 45
+   },
+   "fill": 0.553,
+   "colors": [
+    "#333355",
+    "#558877",
+    "#447766"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_011",
+   "originFrame": 48,
+   "frames": [
+    48
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 12,
+    "y": 147,
+    "w": 30,
+    "h": 36
+   },
+   "fill": 0.95,
+   "colors": [
+    "#ee3333",
+    "#333355",
+    "#dd3333"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_012",
+   "originFrame": 49,
+   "frames": [
+    49
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 54,
+    "y": 147,
+    "w": 36,
+    "h": 30
+   },
+   "fill": 0.958,
+   "colors": [
+    "#ff5544",
+    "#ee3333",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_013",
+   "originFrame": 50,
+   "frames": [
+    50
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 108,
+    "y": 147,
+    "w": 30,
+    "h": 36
+   },
+   "fill": 0.95,
+   "colors": [
+    "#4499ee",
+    "#55aaee",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_014",
+   "originFrame": 55,
+   "frames": [
+    55,
+    56
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 348,
+    "y": 165,
+    "w": 72,
+    "h": 24
+   },
+   "fill": 0.75,
+   "colors": [
+    "#aa9999",
+    "#555577",
+    "#333355"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_015",
+   "originFrame": 51,
+   "frames": [
+    51,
+    52,
+    53,
+    54,
+    67,
+    68,
+    69,
+    70,
+    84,
+    85
+   ],
+   "tiles": {
+    "w": 4,
+    "h": 3
+   },
+   "px": {
+    "x": 174,
+    "y": 174,
+    "w": 123,
+    "h": 87
+   },
+   "fill": 0.637,
+   "colors": [
+    "#444455",
+    "#333355",
+    "#aa9999"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_016",
+   "originFrame": 62,
+   "frames": [
+    62,
+    63,
+    78,
+    79,
+    94,
+    95
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 672,
+    "y": 177,
+    "w": 96,
+    "h": 84
+   },
+   "fill": 0.916,
+   "colors": [
+    "#ccbbdd",
+    "#eeeeff",
+    "#444455"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_017",
+   "originFrame": 64,
+   "frames": [
+    64
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 12,
+    "y": 195,
+    "w": 30,
+    "h": 36
+   },
+   "fill": 0.95,
+   "colors": [
+    "#eeeeff",
+    "#333355",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_018",
+   "originFrame": 65,
+   "frames": [
+    65
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 60,
+    "y": 195,
+    "w": 24,
+    "h": 33
+   },
+   "fill": 0.932,
+   "colors": [
+    "#333355",
+    "#aa9999",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_019",
+   "originFrame": 66,
+   "frames": [
+    66
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 108,
+    "y": 195,
+    "w": 30,
+    "h": 36
+   },
+   "fill": 0.95,
+   "colors": [
+    "#558877",
+    "#333355",
+    "#447766"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_020",
+   "originFrame": 74,
+   "frames": [
+    74,
+    90
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 483,
+    "y": 198,
+    "w": 45,
+    "h": 90
+   },
+   "fill": 0.736,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_021",
+   "originFrame": 75,
+   "frames": [
+    75,
+    91
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 531,
+    "y": 198,
+    "w": 45,
+    "h": 90
+   },
+   "fill": 0.767,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_022",
+   "originFrame": 77,
+   "frames": [
+    77,
+    93
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 627,
+    "y": 198,
+    "w": 45,
+    "h": 90
+   },
+   "fill": 0.76,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_023",
+   "originFrame": 76,
+   "frames": [
+    76,
+    92
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 579,
+    "y": 207,
+    "w": 45,
+    "h": 81
+   },
+   "fill": 0.77,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#aa9999"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_024",
+   "originFrame": 71,
+   "frames": [
+    71,
+    87
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 342,
+    "y": 219,
+    "w": 36,
+    "h": 45
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#ffffff",
+    "#bb7744"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_025",
+   "originFrame": 72,
+   "frames": [
+    72,
+    88
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 390,
+    "y": 219,
+    "w": 36,
+    "h": 45
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#ffffff",
+    "#bb7744"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_026",
+   "originFrame": 73,
+   "frames": [
+    73,
+    89
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 441,
+    "y": 222,
+    "w": 30,
+    "h": 45
+   },
+   "fill": 0.553,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#ee3333"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_027",
+   "originFrame": 80,
+   "frames": [
+    80
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 15,
+    "y": 243,
+    "w": 18,
+    "h": 36
+   },
+   "fill": 0.889,
+   "colors": [
+    "#333355",
+    "#447766",
+    "#aa9999"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_028",
+   "originFrame": 81,
+   "frames": [
+    81
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 63,
+    "y": 243,
+    "w": 18,
+    "h": 36
+   },
+   "fill": 0.889,
+   "colors": [
+    "#333355",
+    "#ff9988",
+    "#aa9999"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_029",
+   "originFrame": 82,
+   "frames": [
+    82
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 114,
+    "y": 243,
+    "w": 18,
+    "h": 36
+   },
+   "fill": 0.889,
+   "colors": [
+    "#333355",
+    "#ee3333",
+    "#aa9999"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_030",
+   "originFrame": 83,
+   "frames": [
+    83
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 159,
+    "y": 243,
+    "w": 18,
+    "h": 24
+   },
+   "fill": 0.938,
+   "colors": [
+    "#aa9999",
+    "#444455",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_031",
+   "originFrame": 102,
+   "frames": [
+    102,
+    103
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 318,
+    "y": 303,
+    "w": 36,
+    "h": 27
+   },
+   "fill": 0.5,
+   "colors": [
+    "#ffff99",
+    "#ffffff",
+    "#555577"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_032",
+   "originFrame": 98,
+   "frames": [
+    98,
+    99,
+    114,
+    115
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 126,
+    "y": 306,
+    "w": 36,
+    "h": 36
+   },
+   "fill": 0.528,
+   "colors": [
+    "#333355",
+    "#99eeee",
+    "#bbffee"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_033",
+   "originFrame": 100,
+   "frames": [
+    100,
+    101,
+    116,
+    117,
+    132,
+    133
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 204,
+    "y": 306,
+    "w": 69,
+    "h": 84
+   },
+   "fill": 0.418,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_034",
+   "originFrame": 96,
+   "frames": [
+    96,
+    97,
+    112,
+    113
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 30,
+    "y": 309,
+    "w": 36,
+    "h": 36
+   },
+   "fill": 0.528,
+   "colors": [
+    "#333355",
+    "#ffbb22",
+    "#ffdd33"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_035",
+   "originFrame": 106,
+   "frames": [
+    106,
+    122,
+    138
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 3
+   },
+   "px": {
+    "x": 480,
+    "y": 321,
+    "w": 45,
+    "h": 90
+   },
+   "fill": 0.736,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_036",
+   "originFrame": 107,
+   "frames": [
+    107,
+    123,
+    139
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 3
+   },
+   "px": {
+    "x": 528,
+    "y": 321,
+    "w": 45,
+    "h": 90
+   },
+   "fill": 0.764,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_037",
+   "originFrame": 109,
+   "frames": [
+    109,
+    125,
+    141
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 3
+   },
+   "px": {
+    "x": 624,
+    "y": 321,
+    "w": 45,
+    "h": 90
+   },
+   "fill": 0.762,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_038",
+   "originFrame": 110,
+   "frames": [
+    110,
+    126
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 678,
+    "y": 327,
+    "w": 36,
+    "h": 57
+   },
+   "fill": 0.575,
+   "colors": [
+    "#333355",
+    "#445555",
+    "#446666"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_039",
+   "originFrame": 108,
+   "frames": [
+    108,
+    124,
+    140
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 3
+   },
+   "px": {
+    "x": 576,
+    "y": 330,
+    "w": 45,
+    "h": 81
+   },
+   "fill": 0.78,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#aa9999"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_040",
+   "originFrame": 103,
+   "frames": [
+    103,
+    118,
+    119,
+    134,
+    135
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 300,
+    "y": 333,
+    "w": 69,
+    "h": 57
+   },
+   "fill": 0.442,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_041",
+   "originFrame": 114,
+   "frames": [
+    114,
+    115,
+    130,
+    131
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 105,
+    "y": 339,
+    "w": 72,
+    "h": 75
+   },
+   "fill": 0.373,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_042",
+   "originFrame": 127,
+   "frames": [
+    127
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 726,
+    "y": 339,
+    "w": 36,
+    "h": 45
+   },
+   "fill": 0.622,
+   "colors": [
+    "#333355",
+    "#445555",
+    "#446666"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_043",
+   "originFrame": 112,
+   "frames": [
+    112
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 24,
+    "y": 342,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_044",
+   "originFrame": 113,
+   "frames": [
+    113
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 60,
+    "y": 342,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_045",
+   "originFrame": 120,
+   "frames": [
+    120,
+    136
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 387,
+    "y": 342,
+    "w": 42,
+    "h": 84
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ee5555",
+    "#ee3333",
+    "#333355"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_046",
+   "originFrame": 112,
+   "frames": [
+    112
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 6,
+    "y": 348,
+    "w": 15,
+    "h": 24
+   },
+   "fill": 0.6,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_047",
+   "originFrame": 113,
+   "frames": [
+    113
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 75,
+    "y": 348,
+    "w": 15,
+    "h": 24
+   },
+   "fill": 0.6,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_048",
+   "originFrame": 112,
+   "frames": [
+    112
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 33,
+    "y": 354,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_049",
+   "originFrame": 113,
+   "frames": [
+    113
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 51,
+    "y": 354,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_050",
+   "originFrame": 112,
+   "frames": [
+    112
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 21,
+    "y": 366,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_051",
+   "originFrame": 113,
+   "frames": [
+    113
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 63,
+    "y": 366,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.688,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_052",
+   "originFrame": 113,
+   "frames": [
+    113,
+    129
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 81,
+    "y": 378,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_053",
+   "originFrame": 114,
+   "frames": [
+    114,
+    130
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 99,
+    "y": 378,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_054",
+   "originFrame": 115,
+   "frames": [
+    115,
+    131
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 177,
+    "y": 378,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_055",
+   "originFrame": 112,
+   "frames": [
+    112,
+    128
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 3,
+    "y": 381,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_056",
+   "originFrame": 112,
+   "frames": [
+    112,
+    128
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 33,
+    "y": 381,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.562,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#ffff99"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_057",
+   "originFrame": 113,
+   "frames": [
+    113,
+    129
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 51,
+    "y": 381,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_058",
+   "originFrame": 137,
+   "frames": [
+    137
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 435,
+    "y": 384,
+    "w": 42,
+    "h": 48
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ee5555",
+    "#ee3333",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_059",
+   "originFrame": 128,
+   "frames": [
+    128
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 18,
+    "y": 390,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.562,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#ffff99"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_060",
+   "originFrame": 129,
+   "frames": [
+    129
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 66,
+    "y": 390,
+    "w": 12,
+    "h": 12
+   },
+   "fill": 0.562,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#ff5544"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_061",
+   "originFrame": 130,
+   "frames": [
+    130
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 108,
+    "y": 393,
+    "w": 15,
+    "h": 21
+   },
+   "fill": 0.686,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#bbffee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_062",
+   "originFrame": 132,
+   "frames": [
+    132
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 204,
+    "y": 393,
+    "w": 15,
+    "h": 21
+   },
+   "fill": 0.686,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#bbffee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_063",
+   "originFrame": 133,
+   "frames": [
+    133
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 258,
+    "y": 393,
+    "w": 15,
+    "h": 21
+   },
+   "fill": 0.686,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#ffee77"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_064",
+   "originFrame": 134,
+   "frames": [
+    134
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 300,
+    "y": 393,
+    "w": 15,
+    "h": 21
+   },
+   "fill": 0.686,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#bbffee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_065",
+   "originFrame": 135,
+   "frames": [
+    135
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 354,
+    "y": 393,
+    "w": 15,
+    "h": 21
+   },
+   "fill": 0.686,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#ffee77"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_066",
+   "originFrame": 128,
+   "frames": [
+    128,
+    129
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 36,
+    "y": 399,
+    "w": 24,
+    "h": 12
+   },
+   "fill": 0.75,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_067",
+   "originFrame": 130,
+   "frames": [
+    130
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 126,
+    "y": 399,
+    "w": 12,
+    "h": 9
+   },
+   "fill": 0.667,
+   "colors": [
+    "#333355",
+    "#ffdd33",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_068",
+   "originFrame": 133,
+   "frames": [
+    133
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 246,
+    "y": 399,
+    "w": 9,
+    "h": 18
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_069",
+   "originFrame": 135,
+   "frames": [
+    135
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 342,
+    "y": 399,
+    "w": 9,
+    "h": 18
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_070",
+   "originFrame": 132,
+   "frames": [
+    132
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 225,
+    "y": 405,
+    "w": 9,
+    "h": 18
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_071",
+   "originFrame": 134,
+   "frames": [
+    134
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 321,
+    "y": 405,
+    "w": 9,
+    "h": 18
+   },
+   "fill": 0.778,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_072",
+   "originFrame": 143,
+   "frames": [
+    143,
+    159
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 726,
+    "y": 417,
+    "w": 42,
+    "h": 63
+   },
+   "fill": 0.782,
+   "colors": [
+    "#333355",
+    "#7755aa",
+    "#9955bb"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_073",
+   "originFrame": 158,
+   "frames": [
+    158
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 678,
+    "y": 441,
+    "w": 42,
+    "h": 39
+   },
+   "fill": 0.824,
+   "colors": [
+    "#9955bb",
+    "#333355",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_074",
+   "originFrame": 148,
+   "frames": [
+    148,
+    164
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 195,
+    "y": 453,
+    "w": 36,
+    "h": 51
+   },
+   "fill": 0.52,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#bbffff"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_075",
+   "originFrame": 149,
+   "frames": [
+    149,
+    165
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 249,
+    "y": 453,
+    "w": 36,
+    "h": 48
+   },
+   "fill": 0.547,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#bbffff"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_076",
+   "originFrame": 155,
+   "frames": [
+    155,
+    156,
+    157,
+    171,
+    172,
+    173,
+    187,
+    188,
+    189,
+    204
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 4
+   },
+   "px": {
+    "x": 531,
+    "y": 462,
+    "w": 141,
+    "h": 162
+   },
+   "fill": 0.801,
+   "colors": [
+    "#ff8877",
+    "#ff9988",
+    "#ffaa99"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_077",
+   "originFrame": 150,
+   "frames": [
+    150,
+    166
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 288,
+    "y": 468,
+    "w": 33,
+    "h": 36
+   },
+   "fill": 0.712,
+   "colors": [
+    "#333355",
+    "#bb9988",
+    "#ddbb99"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_078",
+   "originFrame": 151,
+   "frames": [
+    151,
+    167
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 348,
+    "y": 468,
+    "w": 33,
+    "h": 36
+   },
+   "fill": 0.712,
+   "colors": [
+    "#333355",
+    "#bb9988",
+    "#ddbb99"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_079",
+   "originFrame": 153,
+   "frames": [
+    153,
+    168,
+    169,
+    170,
+    184,
+    185,
+    186
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 3
+   },
+   "px": {
+    "x": 423,
+    "y": 474,
+    "w": 66,
+    "h": 102
+   },
+   "fill": 0.824,
+   "colors": [
+    "#dd3355",
+    "#ee3355",
+    "#333355"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_080",
+   "originFrame": 160,
+   "frames": [
+    160
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 0,
+    "y": 480,
+    "w": 48,
+    "h": 48
+   },
+   "fill": 0.656,
+   "colors": [
+    "#444455",
+    "#558877",
+    "#447766"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_081",
+   "originFrame": 161,
+   "frames": [
+    161
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 48,
+    "y": 480,
+    "w": 48,
+    "h": 48
+   },
+   "fill": 0.656,
+   "colors": [
+    "#444455",
+    "#333355",
+    "#eeeeff"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_082",
+   "originFrame": 162,
+   "frames": [
+    162
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 96,
+    "y": 480,
+    "w": 48,
+    "h": 48
+   },
+   "fill": 0.656,
+   "colors": [
+    "#444455",
+    "#ee3333",
+    "#dd3333"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_083",
+   "originFrame": 163,
+   "frames": [
+    163
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 144,
+    "y": 480,
+    "w": 48,
+    "h": 48
+   },
+   "fill": 0.656,
+   "colors": [
+    "#444455",
+    "#55aaee",
+    "#4499ee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_084",
+   "originFrame": 175,
+   "frames": [
+    175,
+    191
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 729,
+    "y": 516,
+    "w": 30,
+    "h": 39
+   },
+   "fill": 0.715,
+   "colors": [
+    "#333355",
+    "#eeeeff",
+    "#444455"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_085",
+   "originFrame": 180,
+   "frames": [
+    180,
+    181
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 228,
+    "y": 528,
+    "w": 24,
+    "h": 24
+   },
+   "fill": 0.5,
+   "colors": [
+    "#eeeeff",
+    "#333355",
+    "#555577"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_086",
+   "originFrame": 181,
+   "frames": [
+    181,
+    182
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 240,
+    "y": 528,
+    "w": 54,
+    "h": 48
+   },
+   "fill": 0.458,
+   "colors": [
+    "#333355",
+    "#eeeeff",
+    "#555577"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_087",
+   "originFrame": 190,
+   "frames": [
+    190
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 681,
+    "y": 537,
+    "w": 30,
+    "h": 39
+   },
+   "fill": 0.715,
+   "colors": [
+    "#333355",
+    "#eeeeff",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_088",
+   "originFrame": 176,
+   "frames": [
+    176,
+    177,
+    192,
+    193
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 18,
+    "y": 543,
+    "w": 57,
+    "h": 60
+   },
+   "fill": 0.671,
+   "colors": [
+    "#333355",
+    "#cc8855",
+    "#cc6644"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_089",
+   "originFrame": 178,
+   "frames": [
+    178,
+    179,
+    194,
+    195
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 114,
+    "y": 543,
+    "w": 57,
+    "h": 60
+   },
+   "fill": 0.671,
+   "colors": [
+    "#333355",
+    "#cc8855",
+    "#cc6644"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_090",
+   "originFrame": 197,
+   "frames": [
+    197
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 240,
+    "y": 594,
+    "w": 36,
+    "h": 30
+   },
+   "fill": 0.592,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_091",
+   "originFrame": 200,
+   "frames": [
+    200,
+    201,
+    216,
+    217
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 402,
+    "y": 600,
+    "w": 66,
+    "h": 57
+   },
+   "fill": 0.667,
+   "colors": [
+    "#333355",
+    "#dd3333",
+    "#aa9999"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_092",
+   "originFrame": 207,
+   "frames": [
+    207,
+    223
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 726,
+    "y": 600,
+    "w": 36,
+    "h": 57
+   },
+   "fill": 0.807,
+   "colors": [
+    "#333355",
+    "#bb5577",
+    "#ffbb22"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_093",
+   "originFrame": 202,
+   "frames": [
+    202,
+    203,
+    218,
+    219
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 498,
+    "y": 606,
+    "w": 66,
+    "h": 51
+   },
+   "fill": 0.701,
+   "colors": [
+    "#333355",
+    "#dd3333",
+    "#cc2222"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_094",
+   "originFrame": 209,
+   "frames": [
+    209
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 54,
+    "y": 624,
+    "w": 42,
+    "h": 42
+   },
+   "fill": 0.689,
+   "colors": [
+    "#bb7744",
+    "#333355",
+    "#eebb77"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_095",
+   "originFrame": 211,
+   "frames": [
+    211
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 150,
+    "y": 624,
+    "w": 42,
+    "h": 42
+   },
+   "fill": 0.673,
+   "colors": [
+    "#333355",
+    "#eecc99",
+    "#ffeebb"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_096",
+   "originFrame": 214,
+   "frames": [
+    214
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 294,
+    "y": 624,
+    "w": 36,
+    "h": 36
+   },
+   "fill": 0.868,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#eeaa55"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_097",
+   "originFrame": 212,
+   "frames": [
+    212
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 198,
+    "y": 627,
+    "w": 36,
+    "h": 27
+   },
+   "fill": 0.731,
+   "colors": [
+    "#885533",
+    "#333355",
+    "#996644"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_098",
+   "originFrame": 213,
+   "frames": [
+    213
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 249,
+    "y": 627,
+    "w": 33,
+    "h": 33
+   },
+   "fill": 0.818,
+   "colors": [
+    "#333355",
+    "#885533",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_099",
+   "originFrame": 208,
+   "frames": [
+    208
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 9,
+    "y": 630,
+    "w": 30,
+    "h": 36
+   },
+   "fill": 0.867,
+   "colors": [
+    "#bb7744",
+    "#333355",
+    "#eebb77"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_100",
+   "originFrame": 210,
+   "frames": [
+    210
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 102,
+    "y": 630,
+    "w": 36,
+    "h": 39
+   },
+   "fill": 0.712,
+   "colors": [
+    "#ffddaa",
+    "#eecc99",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_101",
+   "originFrame": 215,
+   "frames": [
+    215
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 342,
+    "y": 630,
+    "w": 36,
+    "h": 36
+   },
+   "fill": 0.868,
+   "colors": [
+    "#333355",
+    "#cc8855",
+    "#bb7744"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_102",
+   "originFrame": 224,
+   "frames": [
+    224
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 3,
+    "y": 672,
+    "w": 42,
+    "h": 45
+   },
+   "fill": 0.819,
+   "colors": [
+    "#333355",
+    "#bb7744",
+    "#ddddee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_103",
+   "originFrame": 226,
+   "frames": [
+    226
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 102,
+    "y": 672,
+    "w": 36,
+    "h": 45
+   },
+   "fill": 0.833,
+   "colors": [
+    "#333355",
+    "#eecc99",
+    "#ffddaa"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_104",
+   "originFrame": 230,
+   "frames": [
+    230
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 291,
+    "y": 672,
+    "w": 42,
+    "h": 45
+   },
+   "fill": 0.752,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_105",
+   "originFrame": 228,
+   "frames": [
+    228
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 195,
+    "y": 675,
+    "w": 42,
+    "h": 36
+   },
+   "fill": 0.899,
+   "colors": [
+    "#333355",
+    "#ccccdd",
+    "#885533"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_106",
+   "originFrame": 229,
+   "frames": [
+    229
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 243,
+    "y": 675,
+    "w": 42,
+    "h": 39
+   },
+   "fill": 0.868,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#885533"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_107",
+   "originFrame": 225,
+   "frames": [
+    225,
+    241
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 51,
+    "y": 711,
+    "w": 42,
+    "h": 48
+   },
+   "fill": 0.826,
+   "colors": [
+    "#333355",
+    "#bb7744",
+    "#eebb77"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_108",
+   "originFrame": 227,
+   "frames": [
+    227,
+    243
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 147,
+    "y": 714,
+    "w": 42,
+    "h": 48
+   },
+   "fill": 0.826,
+   "colors": [
+    "#333355",
+    "#eecc99",
+    "#ffeebb"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "christmas/obj_109",
+   "originFrame": 244,
+   "frames": [
+    244
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 195,
+    "y": 726,
+    "w": 42,
+    "h": 33
+   },
+   "fill": 0.948,
+   "colors": [
+    "#ccccdd",
+    "#ddddee",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_110",
+   "originFrame": 240,
+   "frames": [
+    240
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 6,
+    "y": 729,
+    "w": 36,
+    "h": 33
+   },
+   "fill": 0.856,
+   "colors": [
+    "#333355",
+    "#ccccdd",
+    "#ddddee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_111",
+   "originFrame": 242,
+   "frames": [
+    242
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 102,
+    "y": 729,
+    "w": 36,
+    "h": 33
+   },
+   "fill": 0.856,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#ccccdd"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_112",
+   "originFrame": 245,
+   "frames": [
+    245
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 246,
+    "y": 732,
+    "w": 36,
+    "h": 30
+   },
+   "fill": 0.933,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#444455"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "christmas/obj_113",
+   "originFrame": 246,
+   "frames": [
+    246
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 294,
+    "y": 741,
+    "w": 39,
+    "h": 18
+   },
+   "fill": 0.628,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#ff5544"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  }
+ ]
+}

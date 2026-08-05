@@ -1,0 +1,1367 @@
+{
+ "key": "birthday_party",
+ "cols": 12,
+ "rows": 7,
+ "frames": {
+  "1": {
+   "col": 1,
+   "row": 0,
+   "fill": 0.434
+  },
+  "2": {
+   "col": 2,
+   "row": 0,
+   "fill": 0.469
+  },
+  "3": {
+   "col": 3,
+   "row": 0,
+   "fill": 0.406
+  },
+  "4": {
+   "col": 4,
+   "row": 0,
+   "fill": 0.473
+  },
+  "5": {
+   "col": 5,
+   "row": 0,
+   "fill": 0.41
+  },
+  "6": {
+   "col": 6,
+   "row": 0,
+   "fill": 0.473
+  },
+  "7": {
+   "col": 7,
+   "row": 0,
+   "fill": 0.473
+  },
+  "8": {
+   "col": 8,
+   "row": 0,
+   "fill": 0.473
+  },
+  "9": {
+   "col": 9,
+   "row": 0,
+   "fill": 0.473
+  },
+  "10": {
+   "col": 10,
+   "row": 0,
+   "fill": 0.258
+  },
+  "11": {
+   "col": 11,
+   "row": 0,
+   "fill": 0.258
+  },
+  "13": {
+   "col": 1,
+   "row": 1,
+   "fill": 0.301
+  },
+  "14": {
+   "col": 2,
+   "row": 1,
+   "fill": 0.434
+  },
+  "15": {
+   "col": 3,
+   "row": 1,
+   "fill": 0.262
+  },
+  "16": {
+   "col": 4,
+   "row": 1,
+   "fill": 0.262
+  },
+  "17": {
+   "col": 5,
+   "row": 1,
+   "fill": 0.562
+  },
+  "18": {
+   "col": 6,
+   "row": 1,
+   "fill": 0.066
+  },
+  "19": {
+   "col": 7,
+   "row": 1,
+   "fill": 0.055
+  },
+  "20": {
+   "col": 8,
+   "row": 1,
+   "fill": 0.098
+  },
+  "21": {
+   "col": 9,
+   "row": 1,
+   "fill": 0.098
+  },
+  "22": {
+   "col": 10,
+   "row": 1,
+   "fill": 0.344
+  },
+  "23": {
+   "col": 11,
+   "row": 1,
+   "fill": 0.344
+  },
+  "24": {
+   "col": 0,
+   "row": 2,
+   "fill": 0.082
+  },
+  "25": {
+   "col": 1,
+   "row": 2,
+   "fill": 0.066
+  },
+  "26": {
+   "col": 2,
+   "row": 2,
+   "fill": 0.301
+  },
+  "27": {
+   "col": 3,
+   "row": 2,
+   "fill": 0.34
+  },
+  "28": {
+   "col": 4,
+   "row": 2,
+   "fill": 0.234
+  },
+  "29": {
+   "col": 5,
+   "row": 2,
+   "fill": 0.113
+  },
+  "30": {
+   "col": 6,
+   "row": 2,
+   "fill": 0.801
+  },
+  "31": {
+   "col": 7,
+   "row": 2,
+   "fill": 0.801
+  },
+  "32": {
+   "col": 8,
+   "row": 2,
+   "fill": 0.582
+  },
+  "33": {
+   "col": 9,
+   "row": 2,
+   "fill": 0.105
+  },
+  "34": {
+   "col": 10,
+   "row": 2,
+   "fill": 0.281
+  },
+  "35": {
+   "col": 11,
+   "row": 2,
+   "fill": 0.281
+  },
+  "36": {
+   "col": 0,
+   "row": 3,
+   "fill": 0.512
+  },
+  "37": {
+   "col": 1,
+   "row": 3,
+   "fill": 0.449
+  },
+  "39": {
+   "col": 3,
+   "row": 3,
+   "fill": 0.566
+  },
+  "40": {
+   "col": 4,
+   "row": 3,
+   "fill": 0.535
+  },
+  "41": {
+   "col": 5,
+   "row": 3,
+   "fill": 0.012
+  },
+  "42": {
+   "col": 6,
+   "row": 3,
+   "fill": 0.422
+  },
+  "43": {
+   "col": 7,
+   "row": 3,
+   "fill": 0.422
+  },
+  "46": {
+   "col": 10,
+   "row": 3,
+   "fill": 0.375
+  },
+  "47": {
+   "col": 11,
+   "row": 3,
+   "fill": 0.375
+  },
+  "48": {
+   "col": 0,
+   "row": 4,
+   "fill": 0.125
+  },
+  "49": {
+   "col": 1,
+   "row": 4,
+   "fill": 0.141
+  },
+  "50": {
+   "col": 2,
+   "row": 4,
+   "fill": 0.113
+  },
+  "51": {
+   "col": 3,
+   "row": 4,
+   "fill": 0.145
+  },
+  "52": {
+   "col": 4,
+   "row": 4,
+   "fill": 0.125
+  },
+  "53": {
+   "col": 5,
+   "row": 4,
+   "fill": 0.746
+  },
+  "54": {
+   "col": 6,
+   "row": 4,
+   "fill": 0.699
+  },
+  "55": {
+   "col": 7,
+   "row": 4,
+   "fill": 0.742
+  },
+  "56": {
+   "col": 8,
+   "row": 4,
+   "fill": 0.516
+  },
+  "57": {
+   "col": 9,
+   "row": 4,
+   "fill": 0.531
+  },
+  "60": {
+   "col": 0,
+   "row": 5,
+   "fill": 0.609
+  },
+  "61": {
+   "col": 1,
+   "row": 5,
+   "fill": 0.609
+  },
+  "62": {
+   "col": 2,
+   "row": 5,
+   "fill": 0.609
+  },
+  "63": {
+   "col": 3,
+   "row": 5,
+   "fill": 0.609
+  },
+  "64": {
+   "col": 4,
+   "row": 5,
+   "fill": 0.066
+  },
+  "65": {
+   "col": 5,
+   "row": 5,
+   "fill": 0.848
+  },
+  "66": {
+   "col": 6,
+   "row": 5,
+   "fill": 0.801
+  },
+  "67": {
+   "col": 7,
+   "row": 5,
+   "fill": 0.844
+  },
+  "69": {
+   "col": 9,
+   "row": 5,
+   "fill": 0.227
+  },
+  "72": {
+   "col": 0,
+   "row": 6,
+   "fill": 0.109
+  },
+  "73": {
+   "col": 1,
+   "row": 6,
+   "fill": 0.109
+  },
+  "74": {
+   "col": 2,
+   "row": 6,
+   "fill": 0.109
+  },
+  "75": {
+   "col": 3,
+   "row": 6,
+   "fill": 0.109
+  },
+  "76": {
+   "col": 4,
+   "row": 6,
+   "fill": 0.066
+  },
+  "77": {
+   "col": 5,
+   "row": 6,
+   "fill": 0.195
+  },
+  "78": {
+   "col": 6,
+   "row": 6,
+   "fill": 0.195
+  },
+  "79": {
+   "col": 7,
+   "row": 6,
+   "fill": 0.18
+  }
+ },
+ "objects": [
+  {
+   "id": "birthday_party/obj_001",
+   "originFrame": 2,
+   "frames": [
+    2,
+    3
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 114,
+    "y": 0,
+    "w": 57,
+    "h": 48
+   },
+   "fill": 0.737,
+   "colors": [
+    "#333355",
+    "#99eeee",
+    "#bbffee"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_002",
+   "originFrame": 4,
+   "frames": [
+    4,
+    5
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 210,
+    "y": 0,
+    "w": 57,
+    "h": 48
+   },
+   "fill": 0.743,
+   "colors": [
+    "#333355",
+    "#ee7777",
+    "#554499"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_003",
+   "originFrame": 6,
+   "frames": [
+    6,
+    18
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 294,
+    "y": 3,
+    "w": 33,
+    "h": 87
+   },
+   "fill": 0.433,
+   "colors": [
+    "#ddddee",
+    "#333355",
+    "#ccbbdd"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_004",
+   "originFrame": 7,
+   "frames": [
+    7,
+    19
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 342,
+    "y": 3,
+    "w": 33,
+    "h": 78
+   },
+   "fill": 0.472,
+   "colors": [
+    "#ee7777",
+    "#333355",
+    "#bb5577"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_005",
+   "originFrame": 8,
+   "frames": [
+    8
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 390,
+    "y": 3,
+    "w": 33,
+    "h": 45
+   },
+   "fill": 0.733,
+   "colors": [
+    "#55aaee",
+    "#333355",
+    "#4499ee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_006",
+   "originFrame": 9,
+   "frames": [
+    9
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 438,
+    "y": 3,
+    "w": 33,
+    "h": 45
+   },
+   "fill": 0.733,
+   "colors": [
+    "#ee3333",
+    "#333355",
+    "#dd3333"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_007",
+   "originFrame": 1,
+   "frames": [
+    1,
+    13
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 48,
+    "y": 21,
+    "w": 45,
+    "h": 48
+   },
+   "fill": 0.783,
+   "colors": [
+    "#333355",
+    "#ffdd33",
+    "#aa2222"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_008",
+   "originFrame": 10,
+   "frames": [
+    10,
+    22
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 486,
+    "y": 30,
+    "w": 33,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#ee3333",
+    "#aa2222"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_009",
+   "originFrame": 11,
+   "frames": [
+    11,
+    23
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 534,
+    "y": 30,
+    "w": 33,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#55aaee",
+    "#4488dd"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_010",
+   "originFrame": 15,
+   "frames": [
+    15
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 144,
+    "y": 54,
+    "w": 24,
+    "h": 33
+   },
+   "fill": 0.761,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#55aaee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_011",
+   "originFrame": 16,
+   "frames": [
+    16
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 216,
+    "y": 54,
+    "w": 24,
+    "h": 33
+   },
+   "fill": 0.761,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#55aaee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_012",
+   "originFrame": 17,
+   "frames": [
+    17
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 243,
+    "y": 57,
+    "w": 42,
+    "h": 33
+   },
+   "fill": 0.935,
+   "colors": [
+    "#333355",
+    "#eebb77",
+    "#ffffff"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_013",
+   "originFrame": 20,
+   "frames": [
+    20,
+    21
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 393,
+    "y": 66,
+    "w": 78,
+    "h": 21
+   },
+   "fill": 0.275,
+   "colors": [
+    "#ffffff",
+    "#ee3333",
+    "#99cc44"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_014",
+   "originFrame": 14,
+   "frames": [
+    14,
+    26
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 96,
+    "y": 69,
+    "w": 45,
+    "h": 48
+   },
+   "fill": 0.783,
+   "colors": [
+    "#333355",
+    "#ffdd33",
+    "#4488dd"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_015",
+   "originFrame": 30,
+   "frames": [
+    30
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 291,
+    "y": 96,
+    "w": 45,
+    "h": 48
+   },
+   "fill": 0.854,
+   "colors": [
+    "#ffffff",
+    "#ddddee",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_016",
+   "originFrame": 31,
+   "frames": [
+    31
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 339,
+    "y": 96,
+    "w": 45,
+    "h": 48
+   },
+   "fill": 0.854,
+   "colors": [
+    "#ddddee",
+    "#ffffff",
+    "#333355"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_022",
+   "originFrame": 27,
+   "frames": [
+    27,
+    28
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 165,
+    "y": 108,
+    "w": 36,
+    "h": 30
+   },
+   "fill": 0.95,
+   "colors": [
+    "#333355",
+    "#ddddee",
+    "#ccbbdd"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_023",
+   "originFrame": 32,
+   "frames": [
+    32
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 387,
+    "y": 108,
+    "w": 45,
+    "h": 36
+   },
+   "fill": 0.828,
+   "colors": [
+    "#ffffff",
+    "#333355",
+    "#ddddee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_029",
+   "originFrame": 28,
+   "frames": [
+    28
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 204,
+    "y": 117,
+    "w": 21,
+    "h": 24
+   },
+   "fill": 0.589,
+   "colors": [
+    "#333355",
+    "#aa9999",
+    "#eecc77"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_031",
+   "originFrame": 33,
+   "frames": [
+    33
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 447,
+    "y": 117,
+    "w": 6,
+    "h": 9
+   },
+   "fill": 0.5,
+   "colors": [
+    "#ffdd33",
+    "#554499",
+    "#558866"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_032",
+   "originFrame": 33,
+   "frames": [
+    33
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 459,
+    "y": 120,
+    "w": 12,
+    "h": 6
+   },
+   "fill": 0.5,
+   "colors": [
+    "#ee3333",
+    "#558866",
+    "#55aaee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_035",
+   "originFrame": 34,
+   "frames": [
+    34,
+    46
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 486,
+    "y": 126,
+    "w": 36,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#aa2222",
+    "#ee3333"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_036",
+   "originFrame": 35,
+   "frames": [
+    35,
+    47
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 534,
+    "y": 126,
+    "w": 36,
+    "h": 42
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#4488dd",
+    "#55aaee"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_037",
+   "originFrame": 29,
+   "frames": [
+    29,
+    41
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 252,
+    "y": 129,
+    "w": 33,
+    "h": 24
+   },
+   "fill": 0.364,
+   "colors": [
+    "#eecc77",
+    "#ffdd33",
+    "#ffbb22"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_038",
+   "originFrame": 24,
+   "frames": [
+    24,
+    25,
+    36,
+    37
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 18,
+    "y": 132,
+    "w": 57,
+    "h": 60
+   },
+   "fill": 0.747,
+   "colors": [
+    "#ffffff",
+    "#333355",
+    "#eeeecc"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_045",
+   "originFrame": 39,
+   "frames": [
+    39,
+    40
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 156,
+    "y": 150,
+    "w": 78,
+    "h": 39
+   },
+   "fill": 0.834,
+   "colors": [
+    "#333355",
+    "#eebb77",
+    "#bb9988"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_046",
+   "originFrame": 43,
+   "frames": [
+    43,
+    53,
+    55,
+    65,
+    66,
+    67,
+    77,
+    78,
+    79
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 4
+   },
+   "px": {
+    "x": 240,
+    "y": 156,
+    "w": 144,
+    "h": 150
+   },
+   "fill": 0.53,
+   "colors": [
+    "#333355",
+    "#665555",
+    "#ffeedd"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_047",
+   "originFrame": 42,
+   "frames": [
+    42
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 297,
+    "y": 156,
+    "w": 27,
+    "h": 36
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#ee7777",
+    "#bb5577"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_048",
+   "originFrame": 54,
+   "frames": [
+    54
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 291,
+    "y": 195,
+    "w": 42,
+    "h": 45
+   },
+   "fill": 0.852,
+   "colors": [
+    "#333355",
+    "#665555",
+    "#ffeedd"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_049",
+   "originFrame": 56,
+   "frames": [
+    56
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 393,
+    "y": 198,
+    "w": 30,
+    "h": 42
+   },
+   "fill": 0.943,
+   "colors": [
+    "#444455",
+    "#333355",
+    "#eeeeff"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_050",
+   "originFrame": 57,
+   "frames": [
+    57,
+    69
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 441,
+    "y": 198,
+    "w": 39,
+    "h": 60
+   },
+   "fill": 0.746,
+   "colors": [
+    "#444455",
+    "#eeeeff",
+    "#ffffff"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_051",
+   "originFrame": 48,
+   "frames": [
+    48,
+    49
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 1
+   },
+   "px": {
+    "x": 9,
+    "y": 210,
+    "w": 78,
+    "h": 24
+   },
+   "fill": 0.327,
+   "colors": [
+    "#ffffff",
+    "#333355",
+    "#663333"
+   ],
+   "footprint": "wide prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_052",
+   "originFrame": 50,
+   "frames": [
+    50,
+    51,
+    52
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 1
+   },
+   "px": {
+    "x": 105,
+    "y": 210,
+    "w": 126,
+    "h": 30
+   },
+   "fill": 0.233,
+   "colors": [
+    "#ffffff",
+    "#333355",
+    "#663333"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_053",
+   "originFrame": 60,
+   "frames": [
+    60,
+    72
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 6,
+    "y": 246,
+    "w": 39,
+    "h": 90
+   },
+   "fill": 0.472,
+   "colors": [
+    "#ffdd33",
+    "#dd7711",
+    "#ffbb22"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_054",
+   "originFrame": 61,
+   "frames": [
+    61,
+    73
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 54,
+    "y": 246,
+    "w": 39,
+    "h": 90
+   },
+   "fill": 0.472,
+   "colors": [
+    "#3355dd",
+    "#55aaee",
+    "#4499ee"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_055",
+   "originFrame": 62,
+   "frames": [
+    62,
+    74
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 102,
+    "y": 246,
+    "w": 39,
+    "h": 90
+   },
+   "fill": 0.472,
+   "colors": [
+    "#aa2222",
+    "#ff5544",
+    "#ee3333"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_056",
+   "originFrame": 63,
+   "frames": [
+    63,
+    75
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 150,
+    "y": 246,
+    "w": 39,
+    "h": 90
+   },
+   "fill": 0.472,
+   "colors": [
+    "#99cc44",
+    "#558866",
+    "#77bb55"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "birthday_party/obj_066",
+   "originFrame": 64,
+   "frames": [
+    64
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 225,
+    "y": 273,
+    "w": 6,
+    "h": 9
+   },
+   "fill": 0.5,
+   "colors": [
+    "#55aaee",
+    "#558866",
+    "#77bb55"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "birthday_party/obj_079",
+   "originFrame": 76,
+   "frames": [
+    76
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 201,
+    "y": 324,
+    "w": 9,
+    "h": 6
+   },
+   "fill": 0.5,
+   "colors": [
+    "#558866",
+    "#77bb55",
+    "#55aaee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "_readme": "Hand-written names merged into asset-index.json by tools/index_assets.py. Safe to edit; never overwritten. Two key forms: '<sheet>/obj_NNN' labels a detected object, '<sheet>#<frame>' labels a single frame. Prefer frame keys when props merge into one component (e.g. kitchen counters). Fields: name, tags[], solid.",
+ "_example": { "name": "Fridge", "tags": ["appliance"], "solid": true },
+
+ "kitchen#32": { "name": "Counter (light)", "tags": ["counter", "surface"], "solid": true },
+ "kitchen#48": { "name": "Counter (light variant)", "tags": ["counter", "surface"], "solid": true },
+ "kitchen#44": { "name": "Dining table (tan)", "tags": ["table", "seating"], "solid": true },
+ "kitchen#46": { "name": "Dining table (wood)", "tags": ["table", "seating"], "solid": true },
+ "kitchen#80": { "name": "Fridge (blue)", "tags": ["appliance"], "solid": true },
+ "kitchen#82": { "name": "Stove (red)", "tags": ["appliance"], "solid": true },
+ "kitchen#1": { "name": "Burger plate", "tags": ["food", "menu-icon"], "solid": false },
+ "kitchen#2": { "name": "Salad plate", "tags": ["food", "menu-icon"], "solid": false },
+ "kitchen#6": { "name": "Coffee cup", "tags": ["food", "menu-icon"], "solid": false },
+ "kitchen#7": { "name": "Cake slice", "tags": ["food", "menu-icon"], "solid": false },
+
+ "generic#78": { "name": "Potted plant", "tags": ["decor"], "solid": true },
+
+ "room_floors#34": { "name": "Dining floor (warm beige)", "tags": ["floor"], "solid": false },
+ "room_floors#30": { "name": "Kitchen floor (blue-gray)", "tags": ["floor"], "solid": false },
+ "room_walls#0": { "name": "Wall (flat gray)", "tags": ["wall"], "solid": true },
+ "room_3d#8": { "name": "Wall (3D, camera-facing)", "tags": ["wall"], "solid": true }
+}

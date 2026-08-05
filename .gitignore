@@ -1,0 +1,23 @@
+# Upstream asset pack — too large for git (156 MB) and not ours to relicense.
+# Get it from https://limezu.itch.io/moderninteriors and unpack under assets/.
+# The game only uses the curated subset in game-assets/, which IS committed.
+assets/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Python (for tools/index_assets.py)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local-only notes / scratch
+.scratch/

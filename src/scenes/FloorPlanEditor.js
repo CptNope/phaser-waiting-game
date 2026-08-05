@@ -1,0 +1,525 @@
+import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
+import { TILE, SHEETS } from '../data/catalog.js';
+import { Storage } from '../core/Storage.js';
+import { Palette } from '../core/Palette.js';
+import { DEFAULT_FLOOR_PLAN } from '../data/defaults.js';
+import {
+  loadAssetIndex, loadSheetDetail, ensureSheetTexture, nonEmptyFrames, describeFrame
+} from '../data/assetIndex.js';
+
+const PALETTE_W = 208;
+const TOOLBAR_H = 96; // two rows: tools on top, layers/size below
+
+const MIN_COLS = 4, MAX_COLS = 60;
+const MIN_ROWS = 4, MAX_ROWS = 40;
+
+// `short` is used when the viewport is too narrow for full labels.
+const TOOLS = [
+  { id: 'ground',  label: 'Ground',  short: 'Grnd' },
+  { id: 'object',  label: 'Object',  short: 'Obj' },
+  { id: 'erase',   label: 'Erase',   short: 'Ers' },
+  { id: 'solid',   label: 'Solid',   short: 'Sld' },
+  { id: 'spawn',   label: 'Spawn',   short: 'Spwn' },
+  { id: 'kitchen', label: 'Kitchen', short: 'Ktch' },
+  { id: 'door',    label: 'Door',    short: 'Door' },
+  { id: 'table',   label: 'Table',   short: 'Tbl' }
+];
+
+const LAYERS = [
+  { id: 'ground',  label: 'Ground' },
+  { id: 'objects', label: 'Objects' },
+  { id: 'markers', label: 'Markers' }
+];
+
+export class FloorPlanEditorScene extends Phaser.Scene {
+  constructor() { super('FloorPlanEditor'); }
+
+  create() {
+    this.cameras.main.setBackgroundColor('#23232c');
+    this.plan = Storage.loadPlan() || JSON.parse(JSON.stringify(DEFAULT_FLOOR_PLAN));
+    this.tool = 'ground';
+    this.selectedFrame = 0;
+    this.layers = { ground: true, objects: true, markers: true };
+    this.sheetDetail = null;
+
+    // Until the generated index loads, fall back to the sheets Boot preloaded.
+    this.sheetList = SHEETS.map(s => ({
+      key: s.key, path: s.path, tile: s.frameW, kind: 'objects'
+    }));
+    this.sheetKey = 'generic';
+
+    const { width, height } = this.scale;
+    this.gridX = PALETTE_W + 12;
+    this.gridY = TOOLBAR_H + 12;
+    this.cols = this.plan.cols;
+    this.rows = this.plan.rows;
+    this.pendingCols = this.cols;
+    this.pendingRows = this.rows;
+
+    this.buildToolbar(width);
+    this.buildPalette();
+    this.buildGrid();
+    this.buildHelp(height);
+
+    this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+
+    this.initIndex();
+  }
+
+  // ---------------------------------------------------------------- asset index
+
+  async initIndex() {
+    const index = await loadAssetIndex();
+    if (!index?.sheets?.length) {
+      this.setStatus('asset index unavailable — using preloaded sheets');
+      return;
+    }
+    this.sheetList = index.sheets;
+    const cur = this.sheetList.findIndex(s => s.key === this.sheetKey);
+    this.sheetIdx = cur >= 0 ? cur : 0;
+    await this.selectSheet(this.sheetIdx);
+  }
+
+  currentSheet() {
+    return this.sheetList.find(s => s.key === this.sheetKey) || this.sheetList[0];
+  }
+
+  /** Loads a sheet's PNG + detail on demand, then rebuilds the palette. */
+  async selectSheet(i) {
+    const sheet = this.sheetList[(i + this.sheetList.length) % this.sheetList.length];
+    if (!sheet) return;
+    this.sheetIdx = this.sheetList.indexOf(sheet);
+    this.sheetKey = sheet.key;
+    this.refreshSheetLabel('loading…');
+
+    try {
+      await ensureSheetTexture(this, sheet);
+    } catch (e) {
+      this.refreshSheetLabel('load failed');
+      this.setStatus(`could not load ${sheet.key}`);
+      return;
+    }
+    this.sheetDetail = await loadSheetDetail(sheet);
+
+    this.selectedFrame = nonEmptyFrames(this.sheetDetail)[0] ?? 0;
+    this.palette?.destroy();
+    this.buildPalette();
+    this.refreshSheetLabel();
+    this.setStatus(describeFrame(this.sheetDetail, this.selectedFrame));
+  }
+
+  /** Row 1 stays short; per-sheet counts go in the palette footer instead. */
+  refreshSheetLabel(suffix) {
+    const n = this.sheetList.length;
+    const pos = this.sheetIdx != null ? `${this.sheetIdx + 1}/${n} ` : '';
+    this.sheetLabel.setText(`${pos}${this.sheetKey}${suffix ? ` (${suffix})` : ''}`);
+    this.refreshPaletteInfo();
+  }
+
+  refreshPaletteInfo() {
+    if (!this.paletteInfo) return;
+    const s = this.currentSheet();
+    const parts = [];
+    if (s?.theme) parts.push(s.theme.replace(/_/g, ' '));
+    if (s?.nonEmptyCount != null) parts.push(`${s.nonEmptyCount} tiles`);
+    if (s?.objectCount) parts.push(`${s.objectCount} objects`);
+    parts.push('wheel to scroll');
+    this.paletteInfo.setText(parts.join(' · '));
+  }
+
+  // ------------------------------------------------------------------- toolbar
+
+  buildToolbar(width) {
+    this.add.rectangle(0, 0, width, TOOLBAR_H, 0x1b1b22).setOrigin(0, 0).setDepth(100);
+
+    // Right-side actions are laid out first so the tool row knows its budget.
+    const actionW = 68, actionGap = 6;
+    const actionsW = actionW * 4 + actionGap * 3;
+    const actionsX = Math.max(12, width - 12 - actionsW);
+
+    // Row 1: sheet selector + tools, sized to whatever space is left.
+    this.add.text(12, 6, 'Sheet', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
+      .setDepth(101);
+    this.makeBtn(12, 20, 24, 22, '◀', () => this.selectSheet(this.sheetIdx - 1));
+    this.makeBtn(38, 20, 24, 22, '▶', () => this.selectSheet(this.sheetIdx + 1));
+    this.sheetLabel = this.add.text(68, 25, this.sheetKey, {
+      fontFamily: 'system-ui', fontSize: '13px', color: '#ffe9a8'
+    }).setDepth(101);
+
+    const toolsX = 200;
+    const budget = Math.max(0, actionsX - 8 - toolsX);
+    const btnW = Phaser.Math.Clamp(Math.floor(budget / TOOLS.length) - 4, 38, 72);
+    const useShort = btnW < 58;
+
+    this.toolBtns = {};
+    TOOLS.forEach((t, i) => {
+      const bx = toolsX + i * (btnW + 4);
+      this.toolBtns[t.id] = this.makeBtn(bx, 20, btnW, 22,
+        useShort ? t.short : t.label, () => this.setTool(t.id));
+    });
+    this.refreshToolBtns();
+
+    // Row 2: layer toggles + grid size.
+    let x2 = 12;
+    this.add.text(x2, 54, 'Layers', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
+      .setDepth(101);
+    x2 += 48;
+    this.layerBtns = {};
+    LAYERS.forEach((l) => {
+      this.layerBtns[l.id] = this.makeBtn(x2, 52, 66, 22, l.label, () => this.toggleLayer(l.id));
+      x2 += 70;
+    });
+    this.refreshLayerBtns();
+    x2 += 16;
+
+    this.add.text(x2, 54, 'Size', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
+      .setDepth(101);
+    x2 += 34;
+    this.makeBtn(x2, 52, 22, 22, '-', () => this.nudgeSize(-1, 0));
+    this.makeBtn(x2 + 24, 52, 22, 22, '+', () => this.nudgeSize(1, 0));
+    this.makeBtn(x2 + 52, 52, 22, 22, '-', () => this.nudgeSize(0, -1));
+    this.makeBtn(x2 + 76, 52, 22, 22, '+', () => this.nudgeSize(0, 1));
+    this.sizeLabel = this.add.text(x2 + 104, 57, '', {
+      fontFamily: 'system-ui', fontSize: '12px', color: '#e6e6f0'
+    }).setDepth(101);
+    this.applyBtn = this.makeBtn(x2 + 186, 52, 60, 22, 'Apply', () => this.applyResize());
+    this.refreshSizeLabel();
+
+    this.statusText = this.add.text(x2 + 258, 57, '', {
+      fontFamily: 'system-ui', fontSize: '12px', color: '#8fb6ff'
+    }).setDepth(101);
+
+    const actions = [
+      ['Menu', () => this.scene.start('Menu')],
+      ['Import', () => this.importPlan()],
+      ['Export', () => Storage.downloadJSON(this.plan, 'floor-plan.json')],
+      ['Save', () => this.save()]
+    ];
+    actions.forEach(([label, fn], i) => {
+      this.makeBtn(actionsX + i * (actionW + actionGap), 20, actionW, 22, label, fn);
+    });
+  }
+
+  makeBtn(x, y, w, h, label, onClick) {
+    const bg = this.add.rectangle(x, y, w, h, 0x2b2b39).setOrigin(0, 0)
+      .setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true }).setDepth(101);
+    const txt = this.add.text(x + w / 2, y + h / 2, label, {
+      fontFamily: 'system-ui', fontSize: Math.min(13, Math.max(10, h - 8)) + 'px', color: '#e6e6f0'
+    }).setOrigin(0.5).setDepth(102);
+    bg.on('pointerover', () => bg.setFillStyle(0x3a3a4d));
+    bg.on('pointerout', () => bg.setFillStyle(0x2b2b39));
+    bg.on('pointerdown', onClick);
+    return { bg, txt };
+  }
+
+  setStatus(msg) { this.statusText?.setText(msg || ''); }
+
+  setTool(id) { this.tool = id; this.refreshToolBtns(); }
+
+  refreshToolBtns() {
+    for (const t of TOOLS) {
+      const b = this.toolBtns[t.id];
+      b.bg.setFillStyle(t.id === this.tool ? 0x4a4a5e : 0x2b2b39);
+      b.txt.setColor(t.id === this.tool ? '#ffe9a8' : '#e6e6f0');
+    }
+  }
+
+  // -------------------------------------------------------------------- layers
+
+  toggleLayer(id) {
+    this.layers[id] = !this.layers[id];
+    this.refreshLayerBtns();
+    this.applyLayerVisibility();
+  }
+
+  refreshLayerBtns() {
+    for (const l of LAYERS) {
+      const b = this.layerBtns[l.id];
+      const on = this.layers[l.id];
+      b.bg.setFillStyle(on ? 0x3c5a3c : 0x2b2b39);
+      b.txt.setColor(on ? '#9aff9a' : '#7a7a8a');
+    }
+  }
+
+  /** Layer flags only affect display; plan data is untouched. */
+  applyLayerVisibility() {
+    for (let i = 0; i < this.cols * this.rows; i++) {
+      const g = this.cellGround[i], o = this.cellObject[i], m = this.cellMarker[i];
+      if (g) g.setVisible(this.layers.ground && !!this.plan.ground[i]);
+      if (o) o.setVisible(this.layers.objects && !!this.plan.objects[i]);
+      if (m) {
+        m.setAlpha(this.layers.markers ? 1 : 0);
+        if (m.label) m.label.setVisible(this.layers.markers);
+      }
+    }
+  }
+
+  // --------------------------------------------------------------- grid resize
+
+  nudgeSize(dc, dr) {
+    this.pendingCols = Phaser.Math.Clamp(this.pendingCols + dc, MIN_COLS, MAX_COLS);
+    this.pendingRows = Phaser.Math.Clamp(this.pendingRows + dr, MIN_ROWS, MAX_ROWS);
+    this.refreshSizeLabel();
+  }
+
+  refreshSizeLabel() {
+    const dirty = this.pendingCols !== this.cols || this.pendingRows !== this.rows;
+    this.sizeLabel.setText(`${this.pendingCols}x${this.pendingRows}`);
+    this.sizeLabel.setColor(dirty ? '#ffe9a8' : '#e6e6f0');
+    this.applyBtn?.txt.setColor(dirty ? '#ffe9a8' : '#7a7a8a');
+  }
+
+  applyResize() {
+    const nc = this.pendingCols, nr = this.pendingRows;
+    if (nc === this.cols && nr === this.rows) return;
+    this.resizePlan(nc, nr);
+    this.cols = nc;
+    this.rows = nr;
+    this.gridContainer.destroy();
+    this.buildGrid();
+    this.refreshSizeLabel();
+    this.setStatus(`resized to ${nc}x${nr}`);
+  }
+
+  /**
+   * Re-lays out the plan arrays for a new grid size. Overlapping cells keep
+   * their content; growing pads with empties, shrinking crops. Markers are
+   * clamped inside the new bounds and out-of-range tables are dropped.
+   */
+  resizePlan(nc, nr) {
+    const oc = this.cols, or = this.rows;
+    const size = nc * nr;
+    const ground = new Array(size).fill(null);
+    const objects = new Array(size).fill(null);
+    const solids = new Array(size).fill(false);
+
+    const copyCols = Math.min(oc, nc);
+    const copyRows = Math.min(or, nr);
+    for (let y = 0; y < copyRows; y++) {
+      for (let x = 0; x < copyCols; x++) {
+        const from = y * oc + x;
+        const to = y * nc + x;
+        ground[to] = this.plan.ground[from] ?? null;
+        objects[to] = this.plan.objects[from] ?? null;
+        solids[to] = !!this.plan.solids[from];
+      }
+    }
+
+    this.plan.ground = ground;
+    this.plan.objects = objects;
+    this.plan.solids = solids;
+    this.plan.cols = nc;
+    this.plan.rows = nr;
+    this.plan.tables = (this.plan.tables || []).filter(t => t.x < nc && t.y < nr);
+    for (const key of ['spawn', 'kitchen', 'door']) {
+      const p = this.plan[key];
+      if (p) {
+        p.x = Phaser.Math.Clamp(p.x, 0, nc - 1);
+        p.y = Phaser.Math.Clamp(p.y, 0, nr - 1);
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------- palette
+
+  buildPalette() {
+    const sheet = this.currentSheet();
+    if (!sheet || !this.textures.exists(sheet.key)) return;
+    const tile = sheet.tile || TILE;
+
+    // Skip blank frames when the index tells us which ones are empty — some
+    // sheets are 8500+ frames and rendering every one is far too slow.
+    const only = nonEmptyFrames(this.sheetDetail);
+
+    this.palette = new Palette(this, sheet.key, tile, tile,
+      (frameIdx) => {
+        this.selectedFrame = frameIdx;
+        this.setStatus(describeFrame(this.sheetDetail, frameIdx));
+      },
+      { cols: 4, only });
+
+    const panelX = 8;
+    const panelY = TOOLBAR_H + 12;
+    const panelW = PALETTE_W - 16;
+    const panelH = this.scale.height - panelY - 40;
+    this.palette.container.setPosition(panelX, panelY);
+    this.palette.container.setDepth(50);
+
+    const maskShape = this.make.graphics({ x: 0, y: 0 });
+    maskShape.fillStyle(0xffffff, 1).fillRect(panelX, panelY, panelW, panelH);
+    this.palette.container.setMask(maskShape.createGeometryMask());
+
+    if (this.paletteWheel) this.input.off('wheel', this.paletteWheel);
+    this.paletteWheel = (pointer, over, dx, dy) => {
+      if (pointer.x < panelX || pointer.x > panelX + panelW) return;
+      const minY = Math.min(panelY, panelY + panelH - this.palette.contentHeight - 8);
+      this.palette.container.y =
+        Phaser.Math.Clamp(this.palette.container.y - Math.sign(dy) * 60, minY, panelY);
+    };
+    this.input.on('wheel', this.paletteWheel);
+
+    if (!this.paletteInfo) {
+      this.paletteInfo = this.add.text(panelX + 4, this.scale.height - 34, '', {
+        fontFamily: 'system-ui', fontSize: '11px', color: '#6b6b7a',
+        wordWrap: { width: panelW }
+      }).setDepth(60);
+    }
+    this.refreshPaletteInfo();
+  }
+
+  // ---------------------------------------------------------------------- grid
+
+  buildGrid() {
+    this.gridContainer = this.add.container(this.gridX, this.gridY).setDepth(10);
+    this.cellGround = [];
+    this.cellObject = [];
+    this.cellMarker = [];
+
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        const cell = this.add.rectangle(x * TILE, y * TILE, TILE, TILE,
+          (x + y) % 2 ? 0x2a2a35 : 0x262630).setOrigin(0, 0);
+        cell.setInteractive({
+          hitArea: new Phaser.Geom.Rectangle(0, 0, TILE, TILE),
+          useHandCursor: true
+        });
+        cell.on('pointerdown', () => this.applyTool(x, y));
+        cell.on('pointerover', (p) => { if (p.isDown) this.applyTool(x, y); });
+        this.gridContainer.add(cell);
+
+        const g = this.add.image(x * TILE, y * TILE, '__pixel').setOrigin(0, 0).setVisible(false);
+        const o = this.add.image(x * TILE, y * TILE, '__pixel').setOrigin(0, 0).setVisible(false);
+        const m = this.add.rectangle(x * TILE + TILE / 2, y * TILE + TILE / 2,
+          TILE - 6, TILE - 6, 0x000000, 0.001).setOrigin(0.5);
+        this.gridContainer.add([g, o, m]);
+        this.cellGround.push(g);
+        this.cellObject.push(o);
+        this.cellMarker.push(m);
+      }
+    }
+
+    const gfx = this.add.graphics().lineStyle(1, 0x3a3a4d, 0.5);
+    for (let x = 0; x <= this.cols; x++) gfx.lineBetween(x * TILE, 0, x * TILE, this.rows * TILE);
+    for (let y = 0; y <= this.rows; y++) gfx.lineBetween(0, y * TILE, this.cols * TILE, y * TILE);
+    this.gridContainer.add(gfx);
+
+    this.fitGrid();
+    this.renderAll();
+  }
+
+  /** Scales the grid so any size stays fully visible in the available area. */
+  fitGrid() {
+    const availW = this.scale.width - this.gridX - 12;
+    const availH = this.scale.height - this.gridY - 84;
+    const scale = Math.min(1, availW / (this.cols * TILE), availH / (this.rows * TILE));
+    this.gridScale = scale;
+    this.gridContainer.setScale(scale);
+  }
+
+  renderAll() {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) this.renderCell(x, y);
+    }
+  }
+
+  renderCell(x, y) {
+    const i = y * this.cols + x;
+    const g = this.cellGround[i], o = this.cellObject[i], m = this.cellMarker[i];
+
+    const gv = this.plan.ground[i];
+    if (gv && this.textures.exists(gv.s)) {
+      g.setTexture(gv.s, gv.f).setVisible(this.layers.ground);
+      g.clearTint();
+    } else g.setVisible(false);
+
+    const ov = this.plan.objects[i];
+    if (ov && this.textures.exists(ov.s)) {
+      o.setTexture(ov.s, ov.f).setVisible(this.layers.objects);
+      o.clearTint();
+    } else o.setVisible(false);
+
+    m.setFillStyle(0x000000, 0.001);
+    let label = null, color = 0xffffff;
+    if (this.plan.spawn?.x === x && this.plan.spawn?.y === y) { label = 'S'; color = 0x6cff6c; }
+    else if (this.plan.kitchen?.x === x && this.plan.kitchen?.y === y) { label = 'K'; color = 0xff8a8a; }
+    else if (this.plan.door?.x === x && this.plan.door?.y === y) { label = 'D'; color = 0x8fb6ff; }
+    else if (this.plan.tables?.some(t => t.x === x && t.y === y)) { label = 'T'; color = 0xffe9a8; }
+
+    if (label) {
+      m.setFillStyle(color, 0.45);
+      if (m.label) m.label.destroy();
+      m.label = this.add.text(m.x, m.y, label, {
+        fontFamily: 'system-ui', fontSize: '20px', fontStyle: 'bold', color: '#111'
+      }).setOrigin(0.5).setDepth(20);
+      this.gridContainer.add(m.label);
+      m.label.setVisible(this.layers.markers);
+    } else if (m.label) { m.label.destroy(); m.label = null; }
+
+    if (this.plan.solids[i]) m.setFillStyle(0xff4d4d, 0.25);
+    m.setAlpha(this.layers.markers ? 1 : 0);
+  }
+
+  applyTool(x, y) {
+    const i = y * this.cols + x;
+    const t = this.tool;
+    if (t === 'ground') this.plan.ground[i] = { s: this.sheetKey, f: this.selectedFrame };
+    else if (t === 'object') {
+      this.plan.objects[i] = { s: this.sheetKey, f: this.selectedFrame };
+      this.plan.solids[i] = false;
+    } else if (t === 'erase') {
+      this.plan.ground[i] = null;
+      this.plan.objects[i] = null;
+      this.plan.solids[i] = false;
+      this.plan.tables = this.plan.tables.filter(p => !(p.x === x && p.y === y));
+    } else if (t === 'solid') {
+      this.plan.solids[i] = !this.plan.solids[i];
+    } else if (t === 'spawn') this.plan.spawn = { x, y };
+    else if (t === 'kitchen') this.plan.kitchen = { x, y };
+    else if (t === 'door') this.plan.door = { x, y };
+    else if (t === 'table') {
+      const ex = this.plan.tables.findIndex(p => p.x === x && p.y === y);
+      if (ex >= 0) this.plan.tables.splice(ex, 1);
+      else this.plan.tables.push({ x, y });
+    }
+    this.renderCell(x, y);
+  }
+
+  buildHelp(height) {
+    const lines = [
+      'Pick a frame in the left palette, choose a tool, then click/drag on the grid.',
+      'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
+      'Spawn = waiter start, Kitchen = pickup, Door = guest entry, Table = seat anchor.',
+      'Sheet ◀ ▶ browses all indexed sheets (loaded on demand). Blank frames are hidden.',
+      'Layers hide artwork while editing. Size +/- then Apply resizes (content is kept).'
+    ];
+    // Sits in the band fitGrid() reserves at the bottom; depth keeps it above
+    // the grid container, which would otherwise cover it on tall layouts.
+    this.add.text(PALETTE_W + 16, height - 6, lines.join('\n'), {
+      fontFamily: 'system-ui', fontSize: '12px', color: '#7a7a8a', lineSpacing: 2
+    }).setOrigin(0, 1).setDepth(60);
+  }
+
+  save() {
+    Storage.savePlan(this.plan);
+    this.flash('Floor plan saved.');
+  }
+
+  async importPlan() {
+    try {
+      const data = await Storage.pickJSON();
+      this.plan = data;
+      Storage.savePlan(data);
+      this.scene.restart();
+    } catch (e) {
+      if (e && e.message !== 'No file selected') this.flash('Import failed: ' + e.message);
+    }
+  }
+
+  flash(msg) {
+    if (this.flashText) this.flashText.destroy();
+    this.flashText = this.add.text(this.scale.width / 2, this.scale.height - 16, msg, {
+      fontFamily: 'system-ui', fontSize: '14px', color: '#9aff9a'
+    }).setOrigin(0.5).setDepth(200);
+    this.time.delayedCall(2000, () => this.flashText?.setText(''));
+  }
+}

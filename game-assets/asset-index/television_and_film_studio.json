@@ -1,0 +1,1869 @@
+{
+ "key": "television_and_film_studio",
+ "cols": 16,
+ "rows": 14,
+ "frames": {
+  "0": {
+   "col": 0,
+   "row": 0,
+   "fill": 0.234
+  },
+  "1": {
+   "col": 1,
+   "row": 0,
+   "fill": 0.164
+  },
+  "2": {
+   "col": 2,
+   "row": 0,
+   "fill": 0.227
+  },
+  "3": {
+   "col": 3,
+   "row": 0,
+   "fill": 0.371
+  },
+  "4": {
+   "col": 4,
+   "row": 0,
+   "fill": 0.121
+  },
+  "5": {
+   "col": 5,
+   "row": 0,
+   "fill": 0.57
+  },
+  "6": {
+   "col": 6,
+   "row": 0,
+   "fill": 0.57
+  },
+  "7": {
+   "col": 7,
+   "row": 0,
+   "fill": 0.121
+  },
+  "8": {
+   "col": 8,
+   "row": 0,
+   "fill": 0.598
+  },
+  "9": {
+   "col": 9,
+   "row": 0,
+   "fill": 0.598
+  },
+  "10": {
+   "col": 10,
+   "row": 0,
+   "fill": 0.07
+  },
+  "11": {
+   "col": 11,
+   "row": 0,
+   "fill": 0.227
+  },
+  "12": {
+   "col": 12,
+   "row": 0,
+   "fill": 0.328
+  },
+  "13": {
+   "col": 13,
+   "row": 0,
+   "fill": 0.227
+  },
+  "14": {
+   "col": 14,
+   "row": 0,
+   "fill": 0.125
+  },
+  "15": {
+   "col": 15,
+   "row": 0,
+   "fill": 0.07
+  },
+  "16": {
+   "col": 0,
+   "row": 1,
+   "fill": 0.363
+  },
+  "17": {
+   "col": 1,
+   "row": 1,
+   "fill": 0.301
+  },
+  "18": {
+   "col": 2,
+   "row": 1,
+   "fill": 0.66
+  },
+  "19": {
+   "col": 3,
+   "row": 1,
+   "fill": 0.449
+  },
+  "21": {
+   "col": 5,
+   "row": 1,
+   "fill": 0.359
+  },
+  "22": {
+   "col": 6,
+   "row": 1,
+   "fill": 0.359
+  },
+  "24": {
+   "col": 8,
+   "row": 1,
+   "fill": 0.355
+  },
+  "25": {
+   "col": 9,
+   "row": 1,
+   "fill": 0.355
+  },
+  "26": {
+   "col": 10,
+   "row": 1,
+   "fill": 0.879
+  },
+  "27": {
+   "col": 11,
+   "row": 1,
+   "fill": 0.938
+  },
+  "28": {
+   "col": 12,
+   "row": 1,
+   "fill": 0.879
+  },
+  "29": {
+   "col": 13,
+   "row": 1,
+   "fill": 0.82
+  },
+  "30": {
+   "col": 14,
+   "row": 1,
+   "fill": 0.441
+  },
+  "31": {
+   "col": 15,
+   "row": 1,
+   "fill": 0.441
+  },
+  "32": {
+   "col": 0,
+   "row": 2,
+   "fill": 0.164
+  },
+  "33": {
+   "col": 1,
+   "row": 2,
+   "fill": 0.234
+  },
+  "34": {
+   "col": 2,
+   "row": 2,
+   "fill": 0.227
+  },
+  "35": {
+   "col": 3,
+   "row": 2,
+   "fill": 0.301
+  },
+  "36": {
+   "col": 4,
+   "row": 2,
+   "fill": 0.703
+  },
+  "37": {
+   "col": 5,
+   "row": 2,
+   "fill": 0.328
+  },
+  "38": {
+   "col": 6,
+   "row": 2,
+   "fill": 0.328
+  },
+  "40": {
+   "col": 8,
+   "row": 2,
+   "fill": 0.328
+  },
+  "41": {
+   "col": 9,
+   "row": 2,
+   "fill": 0.328
+  },
+  "42": {
+   "col": 10,
+   "row": 2,
+   "fill": 0.352
+  },
+  "43": {
+   "col": 11,
+   "row": 2,
+   "fill": 0.375
+  },
+  "44": {
+   "col": 12,
+   "row": 2,
+   "fill": 0.352
+  },
+  "45": {
+   "col": 13,
+   "row": 2,
+   "fill": 0.328
+  },
+  "46": {
+   "col": 14,
+   "row": 2,
+   "fill": 0.219
+  },
+  "47": {
+   "col": 15,
+   "row": 2,
+   "fill": 0.441
+  },
+  "48": {
+   "col": 0,
+   "row": 3,
+   "fill": 0.301
+  },
+  "49": {
+   "col": 1,
+   "row": 3,
+   "fill": 0.363
+  },
+  "50": {
+   "col": 2,
+   "row": 3,
+   "fill": 0.66
+  },
+  "51": {
+   "col": 3,
+   "row": 3,
+   "fill": 0.512
+  },
+  "52": {
+   "col": 4,
+   "row": 3,
+   "fill": 0.621
+  },
+  "53": {
+   "col": 5,
+   "row": 3,
+   "fill": 0.301
+  },
+  "54": {
+   "col": 6,
+   "row": 3,
+   "fill": 0.301
+  },
+  "55": {
+   "col": 7,
+   "row": 3,
+   "fill": 0.301
+  },
+  "56": {
+   "col": 8,
+   "row": 3,
+   "fill": 0.301
+  },
+  "58": {
+   "col": 10,
+   "row": 3,
+   "fill": 0.879
+  },
+  "59": {
+   "col": 11,
+   "row": 3,
+   "fill": 0.938
+  },
+  "60": {
+   "col": 12,
+   "row": 3,
+   "fill": 0.938
+  },
+  "61": {
+   "col": 13,
+   "row": 3,
+   "fill": 0.938
+  },
+  "62": {
+   "col": 14,
+   "row": 3,
+   "fill": 0.879
+  },
+  "64": {
+   "col": 0,
+   "row": 4,
+   "fill": 0.625
+  },
+  "65": {
+   "col": 1,
+   "row": 4,
+   "fill": 0.625
+  },
+  "66": {
+   "col": 2,
+   "row": 4,
+   "fill": 0.625
+  },
+  "67": {
+   "col": 3,
+   "row": 4,
+   "fill": 0.938
+  },
+  "68": {
+   "col": 4,
+   "row": 4,
+   "fill": 0.938
+  },
+  "69": {
+   "col": 5,
+   "row": 4,
+   "fill": 0.578
+  },
+  "70": {
+   "col": 6,
+   "row": 4,
+   "fill": 0.578
+  },
+  "71": {
+   "col": 7,
+   "row": 4,
+   "fill": 0.578
+  },
+  "72": {
+   "col": 8,
+   "row": 4,
+   "fill": 0.578
+  },
+  "74": {
+   "col": 10,
+   "row": 4,
+   "fill": 0.352
+  },
+  "75": {
+   "col": 11,
+   "row": 4,
+   "fill": 0.375
+  },
+  "76": {
+   "col": 12,
+   "row": 4,
+   "fill": 0.375
+  },
+  "77": {
+   "col": 13,
+   "row": 4,
+   "fill": 0.375
+  },
+  "78": {
+   "col": 14,
+   "row": 4,
+   "fill": 0.352
+  },
+  "80": {
+   "col": 0,
+   "row": 5,
+   "fill": 1.0
+  },
+  "81": {
+   "col": 1,
+   "row": 5,
+   "fill": 1.0
+  },
+  "82": {
+   "col": 2,
+   "row": 5,
+   "fill": 1.0
+  },
+  "83": {
+   "col": 3,
+   "row": 5,
+   "fill": 0.938
+  },
+  "84": {
+   "col": 4,
+   "row": 5,
+   "fill": 0.938
+  },
+  "85": {
+   "col": 5,
+   "row": 5,
+   "fill": 0.301
+  },
+  "86": {
+   "col": 6,
+   "row": 5,
+   "fill": 0.301
+  },
+  "87": {
+   "col": 7,
+   "row": 5,
+   "fill": 0.301
+  },
+  "88": {
+   "col": 8,
+   "row": 5,
+   "fill": 0.301
+  },
+  "89": {
+   "col": 9,
+   "row": 5,
+   "fill": 0.879
+  },
+  "90": {
+   "col": 10,
+   "row": 5,
+   "fill": 0.938
+  },
+  "91": {
+   "col": 11,
+   "row": 5,
+   "fill": 0.879
+  },
+  "92": {
+   "col": 12,
+   "row": 5,
+   "fill": 0.879
+  },
+  "93": {
+   "col": 13,
+   "row": 5,
+   "fill": 0.938
+  },
+  "96": {
+   "col": 0,
+   "row": 6,
+   "fill": 1.0
+  },
+  "97": {
+   "col": 1,
+   "row": 6,
+   "fill": 1.0
+  },
+  "98": {
+   "col": 2,
+   "row": 6,
+   "fill": 1.0
+  },
+  "99": {
+   "col": 3,
+   "row": 6,
+   "fill": 0.875
+  },
+  "100": {
+   "col": 4,
+   "row": 6,
+   "fill": 0.875
+  },
+  "101": {
+   "col": 5,
+   "row": 6,
+   "fill": 0.578
+  },
+  "102": {
+   "col": 6,
+   "row": 6,
+   "fill": 0.578
+  },
+  "103": {
+   "col": 7,
+   "row": 6,
+   "fill": 0.578
+  },
+  "104": {
+   "col": 8,
+   "row": 6,
+   "fill": 0.578
+  },
+  "105": {
+   "col": 9,
+   "row": 6,
+   "fill": 0.352
+  },
+  "106": {
+   "col": 10,
+   "row": 6,
+   "fill": 0.375
+  },
+  "107": {
+   "col": 11,
+   "row": 6,
+   "fill": 0.352
+  },
+  "108": {
+   "col": 12,
+   "row": 6,
+   "fill": 0.352
+  },
+  "109": {
+   "col": 13,
+   "row": 6,
+   "fill": 0.375
+  },
+  "112": {
+   "col": 0,
+   "row": 7,
+   "fill": 0.938
+  },
+  "113": {
+   "col": 1,
+   "row": 7,
+   "fill": 0.938
+  },
+  "114": {
+   "col": 2,
+   "row": 7,
+   "fill": 0.938
+  },
+  "115": {
+   "col": 3,
+   "row": 7,
+   "fill": 0.875
+  },
+  "116": {
+   "col": 4,
+   "row": 7,
+   "fill": 0.875
+  },
+  "121": {
+   "col": 9,
+   "row": 7,
+   "fill": 0.879
+  },
+  "122": {
+   "col": 10,
+   "row": 7,
+   "fill": 0.938
+  },
+  "123": {
+   "col": 11,
+   "row": 7,
+   "fill": 0.879
+  },
+  "128": {
+   "col": 0,
+   "row": 8,
+   "fill": 0.395
+  },
+  "129": {
+   "col": 1,
+   "row": 8,
+   "fill": 0.375
+  },
+  "130": {
+   "col": 2,
+   "row": 8,
+   "fill": 0.41
+  },
+  "131": {
+   "col": 3,
+   "row": 8,
+   "fill": 0.367
+  },
+  "132": {
+   "col": 4,
+   "row": 8,
+   "fill": 0.375
+  },
+  "133": {
+   "col": 5,
+   "row": 8,
+   "fill": 0.375
+  },
+  "134": {
+   "col": 6,
+   "row": 8,
+   "fill": 0.375
+  },
+  "135": {
+   "col": 7,
+   "row": 8,
+   "fill": 0.219
+  },
+  "136": {
+   "col": 8,
+   "row": 8,
+   "fill": 0.82
+  },
+  "137": {
+   "col": 9,
+   "row": 8,
+   "fill": 0.352
+  },
+  "138": {
+   "col": 10,
+   "row": 8,
+   "fill": 0.375
+  },
+  "139": {
+   "col": 11,
+   "row": 8,
+   "fill": 0.352
+  },
+  "144": {
+   "col": 0,
+   "row": 9,
+   "fill": 0.638
+  },
+  "145": {
+   "col": 1,
+   "row": 9,
+   "fill": 0.875
+  },
+  "146": {
+   "col": 2,
+   "row": 9,
+   "fill": 0.674
+  },
+  "147": {
+   "col": 3,
+   "row": 9,
+   "fill": 0.857
+  },
+  "148": {
+   "col": 4,
+   "row": 9,
+   "fill": 0.875
+  },
+  "149": {
+   "col": 5,
+   "row": 9,
+   "fill": 0.898
+  },
+  "150": {
+   "col": 6,
+   "row": 9,
+   "fill": 0.875
+  },
+  "151": {
+   "col": 7,
+   "row": 9,
+   "fill": 0.112
+  },
+  "152": {
+   "col": 8,
+   "row": 9,
+   "fill": 0.803
+  },
+  "153": {
+   "col": 9,
+   "row": 9,
+   "fill": 0.017
+  },
+  "160": {
+   "col": 0,
+   "row": 10,
+   "fill": 0.395
+  },
+  "161": {
+   "col": 1,
+   "row": 10,
+   "fill": 0.375
+  },
+  "162": {
+   "col": 2,
+   "row": 10,
+   "fill": 0.41
+  },
+  "163": {
+   "col": 3,
+   "row": 10,
+   "fill": 0.367
+  },
+  "164": {
+   "col": 4,
+   "row": 10,
+   "fill": 0.375
+  },
+  "165": {
+   "col": 5,
+   "row": 10,
+   "fill": 0.375
+  },
+  "166": {
+   "col": 6,
+   "row": 10,
+   "fill": 0.375
+  },
+  "167": {
+   "col": 7,
+   "row": 10,
+   "fill": 0.219
+  },
+  "168": {
+   "col": 8,
+   "row": 10,
+   "fill": 0.82
+  },
+  "176": {
+   "col": 0,
+   "row": 11,
+   "fill": 0.638
+  },
+  "177": {
+   "col": 1,
+   "row": 11,
+   "fill": 0.875
+  },
+  "178": {
+   "col": 2,
+   "row": 11,
+   "fill": 0.674
+  },
+  "179": {
+   "col": 3,
+   "row": 11,
+   "fill": 0.857
+  },
+  "180": {
+   "col": 4,
+   "row": 11,
+   "fill": 0.875
+  },
+  "181": {
+   "col": 5,
+   "row": 11,
+   "fill": 0.898
+  },
+  "182": {
+   "col": 6,
+   "row": 11,
+   "fill": 0.875
+  },
+  "183": {
+   "col": 7,
+   "row": 11,
+   "fill": 0.112
+  },
+  "184": {
+   "col": 8,
+   "row": 11,
+   "fill": 0.803
+  },
+  "185": {
+   "col": 9,
+   "row": 11,
+   "fill": 0.017
+  },
+  "192": {
+   "col": 0,
+   "row": 12,
+   "fill": 0.395
+  },
+  "193": {
+   "col": 1,
+   "row": 12,
+   "fill": 0.375
+  },
+  "194": {
+   "col": 2,
+   "row": 12,
+   "fill": 0.41
+  },
+  "195": {
+   "col": 3,
+   "row": 12,
+   "fill": 0.367
+  },
+  "196": {
+   "col": 4,
+   "row": 12,
+   "fill": 0.375
+  },
+  "197": {
+   "col": 5,
+   "row": 12,
+   "fill": 0.375
+  },
+  "198": {
+   "col": 6,
+   "row": 12,
+   "fill": 0.375
+  },
+  "199": {
+   "col": 7,
+   "row": 12,
+   "fill": 0.219
+  },
+  "200": {
+   "col": 8,
+   "row": 12,
+   "fill": 0.82
+  },
+  "208": {
+   "col": 0,
+   "row": 13,
+   "fill": 0.638
+  },
+  "209": {
+   "col": 1,
+   "row": 13,
+   "fill": 0.875
+  },
+  "210": {
+   "col": 2,
+   "row": 13,
+   "fill": 0.674
+  },
+  "211": {
+   "col": 3,
+   "row": 13,
+   "fill": 0.857
+  },
+  "212": {
+   "col": 4,
+   "row": 13,
+   "fill": 0.875
+  },
+  "213": {
+   "col": 5,
+   "row": 13,
+   "fill": 0.898
+  },
+  "214": {
+   "col": 6,
+   "row": 13,
+   "fill": 0.875
+  },
+  "215": {
+   "col": 7,
+   "row": 13,
+   "fill": 0.112
+  },
+  "216": {
+   "col": 8,
+   "row": 13,
+   "fill": 0.803
+  },
+  "217": {
+   "col": 9,
+   "row": 13,
+   "fill": 0.017
+  }
+ },
+ "objects": [
+  {
+   "id": "television_and_film_studio/obj_001",
+   "originFrame": 4,
+   "frames": [
+    4,
+    5,
+    6,
+    7,
+    21,
+    22,
+    37,
+    38
+   ],
+   "tiles": {
+    "w": 4,
+    "h": 3
+   },
+   "px": {
+    "x": 231,
+    "y": 0,
+    "w": 114,
+    "h": 120
+   },
+   "fill": 0.464,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_002",
+   "originFrame": 8,
+   "frames": [
+    8,
+    9,
+    24,
+    25,
+    40,
+    41
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 3
+   },
+   "px": {
+    "x": 384,
+    "y": 0,
+    "w": 96,
+    "h": 120
+   },
+   "fill": 0.512,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#444455"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_003",
+   "originFrame": 3,
+   "frames": [
+    3,
+    19
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 147,
+    "y": 9,
+    "w": 39,
+    "h": 75
+   },
+   "fill": 0.646,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_004",
+   "originFrame": 0,
+   "frames": [
+    0,
+    1,
+    16,
+    17
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 18,
+    "y": 21,
+    "w": 51,
+    "h": 72
+   },
+   "fill": 0.667,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_005",
+   "originFrame": 10,
+   "frames": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "tiles": {
+    "w": 6,
+    "h": 1
+   },
+   "px": {
+    "x": 501,
+    "y": 24,
+    "w": 246,
+    "h": 24
+   },
+   "fill": 0.409,
+   "colors": [
+    "#555577",
+    "#333355",
+    "#444455"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_006",
+   "originFrame": 2,
+   "frames": [
+    2,
+    18
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 96,
+    "y": 30,
+    "w": 48,
+    "h": 63
+   },
+   "fill": 0.676,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_007",
+   "originFrame": 26,
+   "frames": [
+    26,
+    27,
+    28,
+    42,
+    43,
+    44
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 483,
+    "y": 51,
+    "w": 138,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_008",
+   "originFrame": 29,
+   "frames": [
+    29,
+    45
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 627,
+    "y": 51,
+    "w": 42,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_009",
+   "originFrame": 30,
+   "frames": [
+    30,
+    46
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 675,
+    "y": 63,
+    "w": 39,
+    "h": 57
+   },
+   "fill": 0.684,
+   "colors": [
+    "#333355",
+    "#ff5544",
+    "#dd3333"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_010",
+   "originFrame": 31,
+   "frames": [
+    31
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 723,
+    "y": 63,
+    "w": 39,
+    "h": 33
+   },
+   "fill": 0.79,
+   "colors": [
+    "#333355",
+    "#559966",
+    "#77bb55"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "television_and_film_studio/obj_011",
+   "originFrame": 36,
+   "frames": [
+    36,
+    52
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 195,
+    "y": 96,
+    "w": 42,
+    "h": 93
+   },
+   "fill": 0.781,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#ddddee"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_012",
+   "originFrame": 47,
+   "frames": [
+    47
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 1
+   },
+   "px": {
+    "x": 723,
+    "y": 111,
+    "w": 39,
+    "h": 33
+   },
+   "fill": 0.79,
+   "colors": [
+    "#333355",
+    "#4488dd",
+    "#55aaee"
+   ],
+   "footprint": "small prop",
+   "solidGuess": false
+  },
+  {
+   "id": "television_and_film_studio/obj_013",
+   "originFrame": 32,
+   "frames": [
+    32,
+    33,
+    48,
+    49
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 27,
+    "y": 117,
+    "w": 51,
+    "h": 72
+   },
+   "fill": 0.667,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_014",
+   "originFrame": 35,
+   "frames": [
+    35,
+    51
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 150,
+    "y": 117,
+    "w": 39,
+    "h": 72
+   },
+   "fill": 0.667,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_015",
+   "originFrame": 34,
+   "frames": [
+    34,
+    50
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 96,
+    "y": 126,
+    "w": 48,
+    "h": 63
+   },
+   "fill": 0.676,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_016",
+   "originFrame": 58,
+   "frames": [
+    58,
+    59,
+    60,
+    61,
+    62,
+    74,
+    75,
+    76,
+    77,
+    78
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 483,
+    "y": 147,
+    "w": 234,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_017",
+   "originFrame": 53,
+   "frames": [
+    53,
+    54,
+    69,
+    70
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 255,
+    "y": 165,
+    "w": 66,
+    "h": 69
+   },
+   "fill": 0.889,
+   "colors": [
+    "#333355",
+    "#665555",
+    "#ddbb99"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_018",
+   "originFrame": 55,
+   "frames": [
+    55,
+    56,
+    71,
+    72
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 351,
+    "y": 165,
+    "w": 66,
+    "h": 69
+   },
+   "fill": 0.889,
+   "colors": [
+    "#333355",
+    "#555577",
+    "#ddddee"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_019",
+   "originFrame": 67,
+   "frames": [
+    67,
+    68,
+    83,
+    84,
+    99,
+    100,
+    115,
+    116
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 4
+   },
+   "px": {
+    "x": 147,
+    "y": 192,
+    "w": 90,
+    "h": 192
+   },
+   "fill": 0.967,
+   "colors": [
+    "#11bb11",
+    "#88dd33",
+    "#33cc11"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_020",
+   "originFrame": 64,
+   "frames": [
+    64,
+    65,
+    66,
+    80,
+    81,
+    82,
+    96,
+    97,
+    98,
+    112,
+    113,
+    114
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 4
+   },
+   "px": {
+    "x": 0,
+    "y": 210,
+    "w": 144,
+    "h": 171
+   },
+   "fill": 1.0,
+   "colors": [
+    "#88dd33",
+    "#11bb11",
+    "#333355"
+   ],
+   "footprint": "large furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_021",
+   "originFrame": 89,
+   "frames": [
+    89,
+    90,
+    91,
+    105,
+    106,
+    107
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 435,
+    "y": 243,
+    "w": 138,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_022",
+   "originFrame": 92,
+   "frames": [
+    92,
+    93,
+    108,
+    109
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 579,
+    "y": 243,
+    "w": 93,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#ddddee",
+    "#333355",
+    "#aabbdd"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_023",
+   "originFrame": 85,
+   "frames": [
+    85,
+    86,
+    101,
+    102
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 255,
+    "y": 261,
+    "w": 66,
+    "h": 69
+   },
+   "fill": 0.889,
+   "colors": [
+    "#cc8855",
+    "#333355",
+    "#665555"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_024",
+   "originFrame": 87,
+   "frames": [
+    87,
+    88,
+    103,
+    104
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 2
+   },
+   "px": {
+    "x": 351,
+    "y": 261,
+    "w": 66,
+    "h": 69
+   },
+   "fill": 0.889,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#bbbbcc"
+   ],
+   "footprint": "medium furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_025",
+   "originFrame": 121,
+   "frames": [
+    121,
+    122,
+    123,
+    137,
+    138,
+    139
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 435,
+    "y": 339,
+    "w": 138,
+    "h": 63
+   },
+   "fill": 1.0,
+   "colors": [
+    "#333355",
+    "#444455",
+    "#555577"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_026",
+   "originFrame": 136,
+   "frames": [
+    136,
+    152,
+    153,
+    168,
+    184,
+    185,
+    200,
+    216,
+    217
+   ],
+   "tiles": {
+    "w": 2,
+    "h": 6
+   },
+   "px": {
+    "x": 385,
+    "y": 384,
+    "w": 48,
+    "h": 288
+   },
+   "fill": 0.82,
+   "colors": [
+    "#eeeeff",
+    "#333355",
+    "#555577"
+   ],
+   "footprint": "tall furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_027",
+   "originFrame": 128,
+   "frames": [
+    128,
+    129,
+    130,
+    144,
+    145,
+    146
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 7,
+    "y": 408,
+    "w": 132,
+    "h": 66
+   },
+   "fill": 0.89,
+   "colors": [
+    "#eeeeff",
+    "#eeddee",
+    "#333355"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_028",
+   "originFrame": 135,
+   "frames": [
+    135,
+    151
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 349,
+    "y": 411,
+    "w": 24,
+    "h": 30
+   },
+   "fill": 0.975,
+   "colors": [
+    "#eeeeff",
+    "#444455",
+    "#333355"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_029",
+   "originFrame": 131,
+   "frames": [
+    131,
+    132,
+    133,
+    134,
+    135,
+    147,
+    148,
+    149,
+    150,
+    151
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 145,
+    "y": 414,
+    "w": 192,
+    "h": 63
+   },
+   "fill": 0.957,
+   "colors": [
+    "#eeddee",
+    "#eeeeff",
+    "#333355"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_030",
+   "originFrame": 160,
+   "frames": [
+    160,
+    161,
+    162,
+    176,
+    177,
+    178
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 7,
+    "y": 504,
+    "w": 132,
+    "h": 66
+   },
+   "fill": 0.89,
+   "colors": [
+    "#eeeeff",
+    "#eeddee",
+    "#333355"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_031",
+   "originFrame": 167,
+   "frames": [
+    167,
+    183
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 349,
+    "y": 507,
+    "w": 24,
+    "h": 30
+   },
+   "fill": 0.975,
+   "colors": [
+    "#eeeeff",
+    "#444455",
+    "#ff5544"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_032",
+   "originFrame": 163,
+   "frames": [
+    163,
+    164,
+    165,
+    166,
+    167,
+    179,
+    180,
+    181,
+    182,
+    183
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 145,
+    "y": 510,
+    "w": 192,
+    "h": 63
+   },
+   "fill": 0.957,
+   "colors": [
+    "#eeddee",
+    "#eeeeff",
+    "#333355"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_033",
+   "originFrame": 192,
+   "frames": [
+    192,
+    193,
+    194,
+    208,
+    209,
+    210
+   ],
+   "tiles": {
+    "w": 3,
+    "h": 2
+   },
+   "px": {
+    "x": 7,
+    "y": 600,
+    "w": 132,
+    "h": 66
+   },
+   "fill": 0.89,
+   "colors": [
+    "#eeeeff",
+    "#eeddee",
+    "#333355"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_034",
+   "originFrame": 199,
+   "frames": [
+    199,
+    215
+   ],
+   "tiles": {
+    "w": 1,
+    "h": 2
+   },
+   "px": {
+    "x": 349,
+    "y": 603,
+    "w": 24,
+    "h": 30
+   },
+   "fill": 0.975,
+   "colors": [
+    "#eeeeff",
+    "#444455",
+    "#559966"
+   ],
+   "footprint": "tall prop",
+   "solidGuess": true
+  },
+  {
+   "id": "television_and_film_studio/obj_035",
+   "originFrame": 195,
+   "frames": [
+    195,
+    196,
+    197,
+    198,
+    199,
+    211,
+    212,
+    213,
+    214,
+    215
+   ],
+   "tiles": {
+    "w": 5,
+    "h": 2
+   },
+   "px": {
+    "x": 145,
+    "y": 606,
+    "w": 192,
+    "h": 63
+   },
+   "fill": 0.957,
+   "colors": [
+    "#eeddee",
+    "#eeeeff",
+    "#333355"
+   ],
+   "footprint": "wide furniture",
+   "solidGuess": true
+  }
+ ]
+}
