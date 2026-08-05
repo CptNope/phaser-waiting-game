@@ -175,24 +175,28 @@ If the index fails to load, the editor falls back to the sheets Boot preloaded.
 - **E** — interact (take order at guest, pick up at kitchen, deliver to guest)
 - **ESC** — return to menu (from any scene)
 
-### Mobile / Touch Controls
+### On-Screen Controls (always visible in Game)
 
-Touch controls auto-show on touch devices or screens narrower than 900px.
-They're rendered as Phaser game objects with `setScrollFactor(0)` so they
-stay fixed on screen regardless of camera position.
+On-screen controls are always visible in the Game scene — they're the primary
+input method on mobile and complement keyboard on desktop. They're rendered as
+Phaser game objects with `setScrollFactor(0)` so they stay fixed on screen
+regardless of camera position.
 
 - **D-pad** (bottom-left) — hold a direction to walk. Multi-touch aware:
   each pointer tracks its own direction; releasing one doesn't cancel another.
 - **Action button** (bottom-right, labeled E) — tap to interact.
 - **Menu button** (top-right, ≡) — tap to return to menu.
 
-On small screens where the world doesn't fit, the camera follows the waiter
-with a zoom that shows ~12×8 tiles. On large screens the whole world is
-centered at zoom 1 (no follow). `fitCamera()` recalculates on resize.
+### Camera
 
-`src/core/MobileControls.js` exports `shouldShowMobileControls()` (used by
-both Game and Menu scenes) and the `MobileControls` class. The HUD elements
-in Game use `setScrollFactor(0)` so they stay fixed under camera follow.
+The camera **always follows the waiter** with a zoom that adapts to screen size:
+~16×10 tiles on desktop, ~10×7 on mobile (clamped 0.5x–2.0x). `fitCamera()`
+recalculates on resize/orientation change. HUD elements use `setScrollFactor(0)`
+so they stay fixed under camera follow.
+
+`src/core/MobileControls.js` exports the `MobileControls` class and
+`shouldShowMobileControls()` (touch device or screen < 900px, used by Menu
+for button sizing).
 
 ## Asset Pack
 

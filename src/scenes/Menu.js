@@ -1,6 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
 import { Storage } from '../core/Storage.js';
-import { shouldShowMobileControls } from '../core/MobileControls.js';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
@@ -34,18 +33,16 @@ export class MenuScene extends Phaser.Scene {
       { label: 'Import Guests',     action: () => this.import('guests') }
     ];
 
-    const mobile = shouldShowMobileControls();
-    const btnW = mobile ? Math.min(320, width - 48) : 280;
-    const btnH = mobile ? 52 : 44;
-    const startY = mobile ? 200 : 220;
-    const gap = mobile ? 62 : 56;
+    const narrow = width < 900;
+    const btnW = narrow ? Math.min(320, width - 48) : 280;
+    const btnH = narrow ? 52 : 48;
+    const startY = narrow ? 200 : 220;
+    const gap = narrow ? 62 : 56;
     buttons.forEach((b, i) => this.makeButton(width / 2, startY + i * gap, btnW, btnH, b.label, b.action));
 
-    const controlsHint = mobile
-      ? 'D-pad to move • E button to interact • \u2261 for menu'
-      : 'WASD / Arrows to move • E to interact';
+    const controlsHint = 'D-pad or WASD/Arrows to move • E button or E key to interact • \u2261 or ESC for menu';
     this.add.text(width / 2, height - 24, controlsHint, {
-      fontFamily: 'system-ui', fontSize: mobile ? '15px' : '14px', color: '#6b6b7a'
+      fontFamily: 'system-ui', fontSize: narrow ? '14px' : '14px', color: '#6b6b7a'
     }).setOrigin(0.5);
 
     this.flashText = this.add.text(width / 2, height - 60, '', {

@@ -6,7 +6,7 @@ const CHAR_ORIGIN_Y = 0.75;
 import { loadAssetIndex, ensureSheetTexture } from '../data/assetIndex.js';
 import { Storage } from '../core/Storage.js';
 import { DEFAULT_FLOOR_PLAN, DEFAULT_GUESTS } from '../data/defaults.js';
-import { MobileControls, shouldShowMobileControls } from '../core/MobileControls.js';
+import { MobileControls } from '../core/MobileControls.js';
 
 const DIRS = {
   up:    { x: 0, y: -1, anim: 'up' },
@@ -132,8 +132,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Camera: on large screens the whole world fits at zoom 1 (centered).
-   * On small screens, follow the waiter with a zoom that shows ~12×8 tiles.
+   * Camera always follows the waiter. Zoom adapts to screen size:
+   * shows ~16×10 tiles on desktop, ~10×7 on mobile, clamped so the
+   * world never looks too tiny or too cropped.
    */
   setupCamera() {
     const cam = this.cameras.main;
@@ -147,23 +148,24 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     const vw = this.scale.width, vh = this.scale.height;
     this.repositionHUD();
-    const worldFits = vw >= this.worldW && vh >= this.worldH;
-    if (worldFits) {
-      cam.stopFollow();
-      cam.setZoom(1);
-      cam.centerOn(this.worldW / 2, this.worldH / 2);
-    } else {
-      // Show ~12×8 tiles, but never zoom in beyond what the world needs.
-      const targetW = Math.min(12, this.cols) * TILE;
-      const targetH = Math.min(8, this.rows) * TILE;
-      // Leave padding for HUD (top 40px) and controls (bottom 120px) on mobile.
-      const padTop = 40, padBottom = shouldShowMobileControls() ? 130 : 10, padSide = 10;
-      const availW = vw - padSide * 2;
-      const availH = vh - padTop - padBottom;
-      const zoom = Math.min(availW / targetW, availH / targetH, 1.5);
-      cam.setZoom(zoom);
-      cam.startFollow(this.waiter, true, 0.12, 0.12);
-    }
+    // Target tiles visible: more on wide screens, fewer on narrow.
+    const narrow = vw < 900;
+    const targetTilesW = narrow ? 10 : 16;
+    const targetTilesH = narrow ? 7 : 10;
+    // Padding: HUD bar at top, D-pad + action button at bottom.
+    const padTop = 44, padBottom = 140, padSide = narrow ? 10 : 40;
+    const availW = vw - padSide * 2;
+    const availH = vh - padTop - padBottom;
+    const targetW = Math.min(targetTilesW, this.cols) * TILE;
+    const targetH = Math.min(targetTilesH, this.rows) * TILE;
+    // Zoom so the target tile area fits in the available space.
+    // Clamp: don't zoom in past 2x (too pixelated) or out past 0.5x (too tiny).
+    const zoom = Phaser.Math.Clamp(
+      Math.min(availW / targetW, availH / targetH),
+      0.5, 2.0
+    );
+    cam.setZoom(zoom);
+    cam.startFollow(this.waiter, true, 0.12, 0.12);
   }
 
   setupMobileControls() {
@@ -476,8 +478,7 @@ export class GameScene extends Phaser.Scene {
 
   endShift() {
     this.shiftActive = false;
-    const backHint = shouldShowMobileControls() ? 'Tap \u2261 for menu' : 'Press ESC for menu';
-    this.hint(`Shift over! Served ${this.served}, angry ${this.angry}, score ${this.score}. ${backHint}`);
+    this.hint(`Shift over! Served ${this.served}, angry ${this.angry}, score ${this.score}. Tap \u2261 or press ESC for menu.`);
     for (const g of this.guests) {
       if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); }
       if (g.orderBubble) g.orderBubble.destroy();

@@ -110,7 +110,8 @@ export class MobileControls {
     // Reposition on resize
     this._resizeBinding = scene.scale.on('resize', () => this.reposition());
 
-    this.setVisible(shouldShowMobileControls());
+    // Always visible — on-screen controls are the primary input method.
+    this.setVisible(true);
   }
 
   /**
