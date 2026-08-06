@@ -8,11 +8,13 @@ export class MenuScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1b1b22');
 
-    this.add.text(width / 2, 90, 'WAITING GAME', {
-      fontFamily: 'system-ui', fontSize: '52px', fontStyle: 'bold', color: '#ffe9a8'
+    const titleSize = Phaser.Math.Clamp(Math.round(height * 0.095), 32, 56);
+    const subtitleSize = Phaser.Math.Clamp(Math.round(height * 0.032), 14, 20);
+    this.add.text(width / 2, height * 0.10, 'WAITING GAME', {
+      fontFamily: 'system-ui', fontSize: `${titleSize}px`, fontStyle: 'bold', color: '#ffe9a8'
     }).setOrigin(0.5);
-    this.add.text(width / 2, 140, 'a cozy waiting-tables sim', {
-      fontFamily: 'system-ui', fontSize: '18px', color: '#8fb6ff'
+    this.add.text(width / 2, height * 0.15, 'a cozy waiting-tables sim', {
+      fontFamily: 'system-ui', fontSize: `${subtitleSize}px`, color: '#8fb6ff'
     }).setOrigin(0.5);
 
     const buttons = [
@@ -34,15 +36,17 @@ export class MenuScene extends Phaser.Scene {
     ];
 
     const narrow = width < 900;
-    const btnW = narrow ? Math.min(320, width - 48) : 280;
-    const btnH = narrow ? 52 : 48;
-    const startY = narrow ? 200 : 220;
-    const gap = narrow ? 62 : 56;
+    // Scale button height and vertical spacing so 7 buttons fit on short screens.
+    const btnH = Phaser.Math.Clamp(Math.round(height * 0.10), 40, 56);
+    const gap = Phaser.Math.Clamp(Math.round(height * 0.075), 32, 64);
+    const startY = Math.round(height * 0.22);
+    const btnW = narrow ? Math.min(320, width - 48) : Math.min(360, width * 0.45);
     buttons.forEach((b, i) => this.makeButton(width / 2, startY + i * gap, btnW, btnH, b.label, b.action));
 
-    const controlsHint = 'D-pad or WASD/Arrows to move • E button or E key to interact • \u2261 or ESC for menu';
-    this.add.text(width / 2, height - 24, controlsHint, {
-      fontFamily: 'system-ui', fontSize: narrow ? '14px' : '14px', color: '#6b6b7a'
+    // Keep the hint short and within the bottom safe margin.
+    const controlsHint = 'D-pad/Arrows move • E/Action acts • \u2261/ESC menu';
+    this.add.text(width / 2, height - 20, controlsHint, {
+      fontFamily: 'system-ui', fontSize: narrow ? '13px' : '14px', color: '#6b6b7a'
     }).setOrigin(0.5);
 
     this.flashText = this.add.text(width / 2, height - 60, '', {
@@ -51,10 +55,11 @@ export class MenuScene extends Phaser.Scene {
   }
 
   makeButton(x, y, w, h, label, onClick) {
+    const fontSize = Phaser.Math.Clamp(Math.round(h * 0.45), 14, 20);
     const bg = this.add.rectangle(x, y, w, h, 0x2b2b39, 1).setStrokeStyle(2, 0x4a4a5e)
       .setInteractive({ useHandCursor: true });
     const txt = this.add.text(x, y, label, {
-      fontFamily: 'system-ui', fontSize: '18px', color: '#e6e6f0'
+      fontFamily: 'system-ui', fontSize: `${fontSize}px`, color: '#e6e6f0'
     }).setOrigin(0.5);
     bg.on('pointerover', () => { bg.setFillStyle(0x3a3a4d); txt.setColor('#ffe9a8'); });
     bg.on('pointerout', () => { bg.setFillStyle(0x2b2b39); txt.setColor('#e6e6f0'); });

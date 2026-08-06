@@ -1,3 +1,5 @@
+import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
+
 // Touch controls for mobile play: virtual D-pad, action button, and menu button.
 // Rendered on a separate fixed UI camera (no zoom/follow) so they stay pinned
 // to the screen regardless of the main game camera's position or zoom.
@@ -30,19 +32,40 @@ export class MobileControls {
     this.visible = false;
     this.objects = [];
     this._resizeBinding = null;
+    this.sizes = this.computeSizes();
     this.build();
   }
 
   get heldDir() { return this._heldDir; }
 
+  computeSizes() {
+    // Scale based on the shorter viewport side. The D-pad base (56px) is
+    // tuned for ~600px short side. Cap the scale so controls don't get huge
+    // on 4K and don't shrink too small on phones.
+    const w = this.scene?.scale?.width || 800;
+    const h = this.scene?.scale?.height || 600;
+    const short = Math.min(w, h);
+    const scale = Phaser.Math.Clamp(short / 600, 0.85, 1.3);
+    return {
+      scale,
+      DPAD_BTN: Math.round(56 * scale),
+      DPAD_GAP: Math.max(2, Math.round(4 * scale)),
+      ACTION_R: Math.round(38 * scale),
+      MENU_BTN: Math.round(40 * scale),
+      DPAD_FONT: Math.round(24 * scale),
+      ACTION_FONT: Math.round(18 * scale),
+      MENU_FONT: Math.round(20 * scale),
+      MARGIN: Math.max(8, Math.round(16 * scale))
+    };
+  }
+
   build() {
     const scene = this.scene;
-    const DPAD_BTN = 56;
-    const DPAD_GAP = 4;
-    const DPAD_UNIT = DPAD_BTN + DPAD_GAP;
-    const ACTION_R = 38;
-    const MENU_BTN = 40;
     const DEPTH = 2000;
+    // Create at the base 1.0x size; reposition() applies the correct scale
+    // for the current viewport and every resize.
+    const DPAD_BASE = 56, DPAD_GAP = 4, ACTION_BASE = 38, MENU_BASE = 40;
+    const MARGIN = 16, DPAD_UNIT = DPAD_BASE + DPAD_GAP;
 
     const style = {
       fontFamily: 'system-ui', fontSize: '24px', fontStyle: 'bold', color: '#e6e6f0'
@@ -55,14 +78,13 @@ export class MobileControls {
     };
 
     // --- D-pad (bottom-left, cross layout) ---
-    const margin = 16;
-    const dpadOriginX = margin + DPAD_BTN / 2 + DPAD_UNIT; // center of cross
-    const dpadOriginY = scene.scale.height - margin - DPAD_BTN / 2 - DPAD_UNIT;
+    const dpadOriginX = MARGIN + DPAD_BASE / 2 + DPAD_UNIT;
+    const dpadOriginY = scene.scale.height - MARGIN - DPAD_BASE / 2 - DPAD_UNIT;
 
     const makeDirBtn = (relX, relY, dir, label) => {
       const x = dpadOriginX + relX * DPAD_UNIT;
       const y = dpadOriginY + relY * DPAD_UNIT;
-      const bg = scene.add.rectangle(x, y, DPAD_BTN, DPAD_BTN, 0x2b2b39, 0.7)
+      const bg = scene.add.rectangle(x, y, DPAD_BASE, DPAD_BASE, 0x2b2b39, 0.7)
         .setStrokeStyle(2, 0x4a4a5e)
         .setDepth(DEPTH);
       const txt = scene.add.text(x, y, label, style)
@@ -81,28 +103,27 @@ export class MobileControls {
     };
 
     // --- Action button (bottom-right) ---
-    const actionX = scene.scale.width - margin - ACTION_R;
-    const actionY = scene.scale.height - margin - ACTION_R - 20;
-    this.actionBg = scene.add.circle(actionX, actionY, ACTION_R, 0x2b2b39, 0.7)
+    this.actionBg = scene.add.circle(0, 0, ACTION_BASE, 0x2b2b39, 0.7)
       .setStrokeStyle(2, 0x8fb6ff)
       .setDepth(DEPTH);
-    this.actionTxt = scene.add.text(actionX, actionY, 'E', actionStyle)
+    this.actionTxt = scene.add.text(0, 0, 'E', actionStyle)
       .setOrigin(0.5).setDepth(DEPTH + 1);
     this.actionBg.setInteractive();
     this._wireTap(this.actionBg, this.actionTxt, () => this.onInteract());
     this.objects.push(this.actionBg, this.actionTxt);
 
     // --- Menu button (top-right) ---
-    const menuX = scene.scale.width - margin - MENU_BTN / 2;
-    const menuY = margin + MENU_BTN / 2 + 36; // below HUD bar
-    this.menuBg = scene.add.rectangle(menuX, menuY, MENU_BTN, MENU_BTN, 0x2b2b39, 0.7)
+    this.menuBg = scene.add.rectangle(0, 0, MENU_BASE, MENU_BASE, 0x2b2b39, 0.7)
       .setStrokeStyle(2, 0x4a4a5e)
       .setDepth(DEPTH);
-    this.menuTxt = scene.add.text(menuX, menuY, '\u2261', menuStyle)
+    this.menuTxt = scene.add.text(0, 0, '\u2261', menuStyle)
       .setOrigin(0.5).setDepth(DEPTH + 1);
     this.menuBg.setInteractive();
     this._wireTap(this.menuBg, this.menuTxt, () => this.onMenu());
     this.objects.push(this.menuBg, this.menuTxt);
+
+    // Apply correct scale/position for current viewport.
+    this.reposition();
 
     // Reposition on resize
     this._resizeBinding = scene.scale.on('resize', () => this.reposition());
@@ -163,16 +184,14 @@ export class MobileControls {
   }
 
   reposition() {
+    // Recalculate size in case the device was rotated/resized across thresholds.
+    this.sizes = this.computeSizes();
     const scene = this.scene;
-    const DPAD_BTN = 56;
-    const DPAD_GAP = 4;
+    const { DPAD_BTN, DPAD_GAP, ACTION_R, MENU_BTN, MARGIN } = this.sizes;
     const DPAD_UNIT = DPAD_BTN + DPAD_GAP;
-    const ACTION_R = 38;
-    const MENU_BTN = 40;
-    const margin = 16;
 
-    const dpadOriginX = margin + DPAD_BTN / 2 + DPAD_UNIT;
-    const dpadOriginY = scene.scale.height - margin - DPAD_BTN / 2 - DPAD_UNIT;
+    const dpadOriginX = MARGIN + DPAD_BTN / 2 + DPAD_UNIT;
+    const dpadOriginY = scene.scale.height - MARGIN - DPAD_BTN / 2 - DPAD_UNIT;
 
     const positions = {
       up:    [dpadOriginX,                  dpadOriginY - DPAD_UNIT],
@@ -180,21 +199,32 @@ export class MobileControls {
       left:  [dpadOriginX - DPAD_UNIT,      dpadOriginY],
       right: [dpadOriginX + DPAD_UNIT,      dpadOriginY],
     };
+    // Scale factors based on the 1.0x base sizes used in build().
+    const dpadScale = DPAD_BTN / 56;
+    const actionScale = ACTION_R / 38;
+    const menuScale = MENU_BTN / 40;
     for (const [dir, [x, y]] of Object.entries(positions)) {
       const btn = this.dpad[dir];
+      if (!btn) continue;
       btn.bg.setPosition(x, y);
+      btn.bg.setScale(dpadScale);
       btn.txt.setPosition(x, y);
+      btn.txt.setFontSize(this.sizes.DPAD_FONT);
     }
 
-    const actionX = scene.scale.width - margin - ACTION_R;
-    const actionY = scene.scale.height - margin - ACTION_R - 20;
+    const actionX = scene.scale.width - MARGIN - ACTION_R;
+    const actionY = scene.scale.height - MARGIN - ACTION_R - 20;
     this.actionBg.setPosition(actionX, actionY);
+    this.actionBg.setScale(actionScale);
     this.actionTxt.setPosition(actionX, actionY);
+    this.actionTxt.setFontSize(this.sizes.ACTION_FONT);
 
-    const menuX = scene.scale.width - margin - MENU_BTN / 2;
-    const menuY = margin + MENU_BTN / 2 + 36;
+    const menuX = scene.scale.width - MARGIN - MENU_BTN / 2;
+    const menuY = MARGIN + MENU_BTN / 2 + 36;
     this.menuBg.setPosition(menuX, menuY);
+    this.menuBg.setScale(menuScale);
     this.menuTxt.setPosition(menuX, menuY);
+    this.menuTxt.setFontSize(this.sizes.MENU_FONT);
   }
 
   setVisible(v) {

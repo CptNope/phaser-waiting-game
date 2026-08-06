@@ -192,7 +192,8 @@ they stay pinned to the screen regardless of the main camera's position or zoom.
 The Game scene uses two cameras:
 
 - **Main camera** (`this.cameras.main`) — follows the waiter with adaptive zoom
-  (~16×10 tiles on desktop, ~10×7 on mobile, clamped 0.5x–2.0x). Renders all
+  that shows the whole floor plan when it fits, otherwise clamps zoom between
+  0.5x and 2.0x (each 48px tile stays 24–96 screen pixels). Renders all
   world objects (floor tiles, waiter, guests, patience bars, order bubbles).
 - **UI camera** (`this.uiCam`) — fixed at zoom 1, scroll (0,0). Renders HUD and
   mobile controls. Resizes to match the viewport on `fitCamera()`.
@@ -208,7 +209,8 @@ removed in the scene's shutdown handler.
 
 `src/core/MobileControls.js` exports the `MobileControls` class and
 `shouldShowMobileControls()` (touch device or screen < 900px, used by Menu
-for button sizing).
+for button sizing). Controls are created at base 1.0x size (56px D-pad,
+38px action, 40px menu) and scaled with `setScale()` on every resize.
 
 ## Asset Pack
 
