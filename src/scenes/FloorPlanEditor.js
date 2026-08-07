@@ -24,6 +24,7 @@ const TOOLS = [
   { id: 'paste',   label: 'Paste',   short: 'Paste' },
   { id: 'spawn',   label: 'Spawn',   short: 'Spwn' },
   { id: 'kitchen', label: 'Kitchen', short: 'Ktch' },
+  { id: 'bar',     label: 'Bar',     short: 'Bar' },
   { id: 'door',    label: 'Door',    short: 'Door' },
   { id: 'host',    label: 'Host',    short: 'Host' },
   { id: 'bench',   label: 'Bench',   short: 'Bnch' },
@@ -31,7 +32,7 @@ const TOOLS = [
 ];
 
 // Marker tools that auto-paint the selected object tile when placed.
-const MARKER_TOOLS = ['spawn', 'kitchen', 'door', 'host', 'bench', 'table'];
+const MARKER_TOOLS = ['spawn', 'kitchen', 'bar', 'door', 'host', 'bench', 'table'];
 
 // Selectable footprints for the Table tool, in tiles. Seats are the walkable
 // tiles around the footprint, so bigger tables seat bigger parties.
@@ -67,6 +68,8 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.markerTiles = this.plan.markerTiles || {};
     // Footprint used by the Table tool; index into TABLE_SIZES.
     this.tableSizeIdx = 0;
+    // When true, newly placed tables are flagged isBar (bar counter/tables).
+    this.tableIsBar = false;
     // Benches are a newer feature — older saved plans do not have the array.
     this.plan.benches = this.plan.benches || [];
 
@@ -262,6 +265,11 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.refreshTableSizeBtns();
     x2 += TABLE_SIZES.length * 40 + 12;
 
+    // Toggle: newly placed tables are flagged isBar (bar counter/tables).
+    this.barTableBtn = this.makeBtn(x2, 52, 62, 22, 'Bar Tbl', () => this.toggleTableIsBar());
+    this.refreshBarTableBtn();
+    x2 += 62 + 12;
+
     this.statusText = this.add.text(x2, 57, '', {
       fontFamily: 'system-ui', fontSize: '12px', color: '#8fb6ff'
     }).setDepth(101);
@@ -309,6 +317,20 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       b.bg.setFillStyle(on ? 0x4a4a5e : 0x2b2b39);
       b.txt.setColor(on ? '#ffe9a8' : '#e6e6f0');
     });
+  }
+
+  /** Toggles whether the Table tool stamps isBar tables (bar counter/tables). */
+  toggleTableIsBar() {
+    this.tableIsBar = !this.tableIsBar;
+    this.refreshBarTableBtn();
+    this.setTool('table');
+    this.setStatus(this.tableIsBar ? 'placing bar tables' : 'placing regular tables');
+  }
+
+  refreshBarTableBtn() {
+    if (!this.barTableBtn) return;
+    this.barTableBtn.bg.setFillStyle(this.tableIsBar ? 0x5a4a2b : 0x2b2b39);
+    this.barTableBtn.txt.setColor(this.tableIsBar ? '#ffb86c' : '#e6e6f0');
   }
 
   /** Assign the current palette selection as the tile for a marker type. */
@@ -430,7 +452,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.plan.tables = (this.plan.tables || [])
       .filter(t => t.x + (t.w || 1) <= nc && t.y + (t.h || 1) <= nr);
     this.plan.benches = (this.plan.benches || []).filter(b => b.x < nc && b.y < nr);
-    for (const key of ['spawn', 'kitchen', 'door', 'host']) {
+    for (const key of ['spawn', 'kitchen', 'bar', 'door', 'host']) {
       const p = this.plan[key];
       if (p) {
         p.x = Phaser.Math.Clamp(p.x, 0, nc - 1);
@@ -579,6 +601,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
 
     if (this.plan.spawn?.x === x && this.plan.spawn?.y === y) mark('S', 0x6cff6c);
     else if (this.plan.kitchen?.x === x && this.plan.kitchen?.y === y) mark('K', 0xff8a8a);
+    else if (this.plan.bar?.x === x && this.plan.bar?.y === y) mark('BAR', 0xffb86c);
     else if (this.plan.door?.x === x && this.plan.door?.y === y) mark('D', 0x8fb6ff);
     else if (this.plan.host?.x === x && this.plan.host?.y === y) mark('H', 0xff9aff);
     else if (this.plan.benches?.some(b => b.x === x && b.y === y)) mark('B', 0x9ad9ff);
@@ -637,6 +660,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     } else if (t === 'kitchen') {
       this.plan.kitchen = { x, y };
       this.autoPaintMarker('kitchen', x, y);
+    } else if (t === 'bar') {
+      this.plan.bar = { x, y };
+      this.autoPaintMarker('bar', x, y);
     } else if (t === 'door') {
       this.plan.door = { x, y };
       this.autoPaintMarker('door', x, y);
@@ -693,13 +719,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
         }
       }
     }
-    const table = { x, y, w, h };
+    const table = { x, y, w, h, isBar: this.tableIsBar };
     this.plan.tables.push(table);
     for (let dy = 0; dy < h; dy++) {
       for (let dx = 0; dx < w; dx++) this.autoPaintMarker('table', x + dx, y + dy);
     }
     this.renderTableCells(table);
-    this.setStatus(`placed ${w}x${h} table (${this.seatCountFor(table)} seats)`);
+    this.setStatus(`placed ${w}x${h}${this.tableIsBar ? ' bar' : ''} table (${this.seatCountFor(table)} seats)`);
   }
 
   renderTableCells(t) {
@@ -843,9 +869,11 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
       'Pick: eyedropper — copies a tile from the grid into the palette selection.',
       'Copy: drag to select a region.  Paste: click to stamp the copied region.',
-      'Spawn/Kitchen/Door/Host/Bench/Table: places marker AND auto-paints the tile.',
+      'Spawn/Kitchen/Bar/Door/Host/Bench/Table: places marker AND auto-paints the tile.',
       'Host = host stand (the host NPC seats parties). Bench = waiting-area seat.',
+      'Bar = bartender station/drink pickup (like Kitchen, but for drinks).',
       'Table 1x1/2x1/1x2/2x2 sets the footprint; seats are the tiles around it.',
+      'Bar Tbl toggles whether new tables are flagged isBar (bar seating pool).',
       'Right-click a marker preview icon to assign a tile to that marker type.',
       'Sheet ◀ ▶ browses all indexed sheets. Layers hide artwork. Size +/- resizes.'
     ];
