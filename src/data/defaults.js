@@ -19,6 +19,7 @@ const T = {
   plant:        { s: 'generic',     f: 78 },  // greenish decoration (r=158,g=161,b=125)
   hostStand:    { s: 'kitchen',     f: 48 },  // counter variant for the host stand
   bench:        { s: 'kitchen',     f: 44 },  // low table reused as a waiting bench
+  dishRack:     { s: 'kitchen',     f: 354 }, // stack of clean plates — dish area marker
 };
 
 const COLS = 36;
@@ -101,22 +102,32 @@ function buildDefaultFloorPlan() {
     benches.push({ x: b.x, y: b.y });
   }
 
-  // --- Kitchen (row 1: fridge, stove, counters) ---
+  // --- Kitchen (row 1: fridge + 5 stations + dish area; row 2 is the walkway
+  // cooks/runners/the waiter stand in) ---
   const kitchenRow = 1;
   const kitchenItems = [
-    { x: 9,  tile: T.fridge },
-    { x: 10, tile: T.stove },
-    { x: 11, tile: T.counter },
-    { x: 12, tile: T.counter },
-    { x: 13, tile: T.counterAlt },
-    { x: 14, tile: T.counter },
-    { x: 15, tile: T.counter },
+    { x: 9,  tile: T.fridge },      // decorative
+    { x: 10, tile: T.stove },       // grill
+    { x: 11, tile: T.counter },     // fry
+    { x: 12, tile: T.counter },     // saute
+    { x: 13, tile: T.counterAlt },  // salad
+    { x: 14, tile: T.counter },     // dessert
+    { x: 15, tile: T.dishRack },    // dish area
   ];
   for (const item of kitchenItems) {
     objects[idx(item.x, kitchenRow)] = item.tile;
     solids[idx(item.x, kitchenRow)] = true;
   }
   const kitchen = { x: 11, y: 2 };
+  const stations = {
+    grill:   { x: 10, y: 2 },
+    fry:     { x: 11, y: 2 },
+    saute:   { x: 12, y: 2 },
+    salad:   { x: 13, y: 2 },
+    dessert: { x: 14, y: 2 },
+  };
+  const dish = { x: 15, y: 2 };
+  const runnerPosts = [{ x: 16, y: 2 }, { x: 17, y: 2 }];
 
   // --- Kitchen / dining divider (row 3, gaps at x=9 and x=20) ---
   // Bounded at the original section's right edge (28), not COLS - 1: the
@@ -247,6 +258,9 @@ function buildDefaultFloorPlan() {
     benches,
     spawn: { x: 12, y: 14 },
     kitchen,
+    stations,
+    dish,
+    runnerPosts,
     host,
     bar,
     door: { x: doorX, y: 0 }
@@ -269,17 +283,17 @@ function buildDefaultGuests() {
     { id: 'g3',  name: 'Molly',  charName: 'Molly',           patience: 90, drinkOrder: 'coffee', foodOrder: null,     prefersBar: true,  groupSize: 1 },
     { id: 'g4',  name: 'Rob',    charName: 'Rob',             patience: 65, drinkOrder: 'beer',   foodOrder: 'cake',   groupSize: 4 },
     { id: 'g5',  name: 'Amelia', charName: 'Amelia',          patience: 80, drinkOrder: 'wine',   foodOrder: 'burger', groupSize: 4 },
-    { id: 'g6',  name: 'Dan',    charName: 'Dan',             patience: 70, drinkOrder: 'coffee', foodOrder: 'salad',  groupSize: 4 },
+    { id: 'g6',  name: 'Dan',    charName: 'Dan',             patience: 70, drinkOrder: 'coffee', foodOrder: 'stirfry', groupSize: 4 },
     { id: 'g7',  name: 'Bob',    charName: 'Bob',             patience: 85, drinkOrder: 'beer',   foodOrder: 'burger', groupSize: 4 },
     { id: 'g8',  name: 'Ash',    charName: 'Ash',             patience: 75, drinkOrder: 'wine',   foodOrder: 'cake',   groupSize: 6 },
     { id: 'g9',  name: 'Bruce',  charName: 'Bruce',           patience: 80, drinkOrder: 'coffee', foodOrder: 'burger', groupSize: 6 },
-    { id: 'g10', name: 'Edward', charName: 'Edward',          patience: 70, drinkOrder: 'beer',   foodOrder: 'burger', groupSize: 6 },
+    { id: 'g10', name: 'Edward', charName: 'Edward',          patience: 70, drinkOrder: 'beer',   foodOrder: 'fries',  groupSize: 6 },
     { id: 'g11', name: 'Jenny',  charName: 'Old_woman_Jenny', patience: 95, drinkOrder: 'wine',   foodOrder: 'cake',   groupSize: 6 },
     { id: 'g12', name: 'Pier',   charName: 'Pier',            patience: 65, drinkOrder: 'coffee', foodOrder: 'salad',  groupSize: 6 },
-    { id: 'g13', name: 'Roki',   charName: 'Roki',            patience: 75, drinkOrder: 'beer',   foodOrder: 'burger', groupSize: 6 },
+    { id: 'g13', name: 'Roki',   charName: 'Roki',            patience: 75, drinkOrder: 'beer',   foodOrder: 'stirfry', groupSize: 6 },
     { id: 'g14', name: 'Samuel', charName: 'Samuel',          patience: 80, drinkOrder: 'wine',   foodOrder: 'cake',   groupSize: 3 },
     { id: 'g15', name: 'Abby',   charName: 'Kid_Abby',        patience: 55, drinkOrder: 'coffee', foodOrder: 'cake',   groupSize: 3 },
-    { id: 'g16', name: 'Oscar',  charName: 'kid_Oscar',       patience: 55, drinkOrder: 'beer',   foodOrder: 'salad',  groupSize: 3 },
+    { id: 'g16', name: 'Oscar',  charName: 'kid_Oscar',       patience: 55, drinkOrder: 'beer',   foodOrder: 'fries',  groupSize: 3 },
   ];
 }
 

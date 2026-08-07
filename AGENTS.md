@@ -99,7 +99,9 @@ Default floor plan uses verified-opaque frames chosen via pixel analysis:
   f:400 (a green glass bottle, used for both beer and wine — the pack has no
   dedicated wine glass sprite, so wine reuses the bottle with a burgundy
   `setTint()` applied only to the order-bubble icon; see `MENU_TINTS` in
-  catalog.js)
+  catalog.js), f:384 (fries — closest available plated-dish icon, not a
+  literal fries sprite), f:385 (stir fry), f:354 (stack of plates — reused
+  both as the dish-area tile and the dirty-table indicator icon)
 
 ## Character Sprites
 
@@ -144,45 +146,116 @@ so a table directly above/below maps to a side pose.
   party leader has `prefersBar: true`, in which case the whole party skips
   the queue and self-seats at the bar (see "Bartender NPC" below).
 - The **host NPC** seats dine-in parties; the player never has to. Interacting
-  with the host stand just reports status.
+  with the host stand just reports status. The host will not seat a party at
+  a still-empty table once `maxActiveTables` (3) non-bar tables are already
+  occupied — see "Table cap" below. Adding to an already-active table (a
+  party joining one that already has guests) is never blocked by the cap.
 - Waiting guests show blue patience bars; seated guests show green→red
-- HUD shows "Waiting N", "Bar wait N" and "Seating N" while parties are queued
+- HUD shows "Tables N/3", "Waiting N", "Bar wait N", "Food ready N",
+  "Dirty N" and "Seating N"
 - On serve/angry-leave, swap back to `_idle` and walk to door
 - Waiter plays `waiter_<dir>` walk animation while moving, returns to idle pose when stopped
 
-### Two-stage ordering: drink, then food
+### Table cap: the server juggles at most 3 tables
 
-Dine-in guests order in two stages once seated, each taken/delivered the same
-way (walk up, face them, press E):
+`this.maxActiveTables = 3` (Game.js `create()`). `findFreeTableForGroup()`
+(the host's regular, non-bar seating pool) refuses to hand out a still-**empty**
+table once `activeTableCount()` — non-bar tables with at least one seated
+guest *or still dirty*, via `tableIsEmpty()`/`dirtyTables` — already meets the
+cap; the party stays in `waitingGroups` and `updateHost()` retries it each
+tick, exactly like waiting for any other table to free up. Dirty tables
+count even with zero guests, so bussing promptly is what actually keeps
+capacity available — see "Bussing" under the Kitchen section below. This
+only throttles the *dine-in* pipeline — bar seating (`findFreeBarTableForGroup`)
+is uncapped, since the bartender handles those guests entirely on its own.
 
-`seated` → (order drink) → `ordered_drink` → (deliver drink) → `drink_served`
-→ (order food) → `ordered_food` → (deliver food) → `served`, guest leaves.
+### Two-stage ordering: drink, then food (dine-in only)
 
-`prefersBar` guests stop after the drink stage — delivering it ends their
-visit (tip + leave) instead of advancing to `drink_served`. Patience is a
-single continuous budget from `onGuestSeated` through the final delivery; it
-is not reset between stages. `guestAdjacent()`/`interact()` in Game.js branch
-on these states; `deliverToGuest()` (the tip/leave finale) is shared by both
-the food-finale and bar-drink-finale paths since it never reads the order
-directly, only the guest's name and patience ratio.
+Dine-in guests order in two stages once seated. The player takes both
+orders (walk up, face them, press E) but only *delivers* the drink — food
+delivery is fully NPC-driven (see "Kitchen" below):
+
+`seated` → (order drink) → `ordered_drink` → (deliver drink, player-driven)
+→ `drink_served` → (order food) → `ordered_food` → (cook preps, runner
+delivers — no player action) → `served`, guest leaves.
+
+Patience is a single continuous budget from `onGuestSeated` through the final
+delivery; it is not reset between stages. `guestAdjacent()` only matches
+guests at non-bar tables — guests seated at the bar are excluded entirely and
+served by the bartender instead, never by the player.
 
 ### Bartender NPC
 
-The bartender is the **kitchen for drinks**: no state machine, no walking —
-`spawnBartender()` places a static `Alex` sprite with a "BARTENDER" badge at
-`plan.bar`, and (like the kitchen) taking a drink order instantly makes it
-"ready" for pickup there. `this.preparedDrink`/`this.carrying` mirror
-`this.preparedOrder`/`this.carrying` for the kitchen. The bar counter and any
-bar-area dining tables are regular `tables` entries flagged `isBar: true`,
-which auto-derive seats the same way every other table does.
+The bartender has two independent jobs:
 
-`findFreeTableForGroup()` (host's regular seating pool) excludes `isBar`
-tables; `findFreeBarTableForGroup()` is the mirror image, used only by
+1. **Dine-in drink pickup** — same "kitchen for drinks" model as before: no
+   walking, no per-drink state. `spawnBartender()` places a static `Alex`
+   sprite with a "BARTENDER" badge at `plan.bar`, and taking a dine-in guest's
+   drink order instantly makes it "ready" for the player to pick up there via
+   `this.preparedDrink`/`this.carrying`.
+2. **Full service for bar-seated guests** — `onGuestSeated()` calls
+   `startBartenderService(g)` whenever `g.table.isBar` is true: the bartender
+   notices the guest (~1.2s), takes their drink order, prepares it (~1.8s),
+   and delivers it directly via `finalizeGuestVisit()` — no player
+   involvement, no walking, no use of `carrying`/`preparedDrink`. Each step
+   re-checks the guest's state first so a guest who left angry mid-service is
+   silently skipped rather than double-handled.
+
+`finalizeGuestVisit()` is the shared tip/leave finale (score, `served` count,
+walk to the door). Both delivery legs are NPC-driven now (the bartender for
+bar guests, a food runner for dine-in food — below), so this is the *only*
+way a guest's visit ends; there is no player-driven delivery step left at
+all. It deliberately does **not** touch `this.carrying`, so an NPC finalizing
+one guest can never clobber whatever the player is carrying (a dirty dish,
+say) for someone else at that moment.
+
+The bar counter and any bar-area dining tables are regular `tables` entries
+flagged `isBar: true`, which auto-derive seats the same way every other table
+does. `findFreeTableForGroup()` (host's regular seating pool) excludes
+`isBar` tables; `findFreeBarTableForGroup()` is the mirror image, used only by
 `prefersBar` parties. Bar parties that arrive when the bar is full queue in
 `barWaitingGroups` (mirroring `waitingGroups`/`reflowWaitingQueue`, but
 simpler — no bench/queue-line logic, just a handful of holding tiles near
 `plan.bar` from `barWaitingSpots()`) and are retried each tick by
 `updateBarWaiting()`.
+
+### Kitchen: 5 stations, cooks, food runners, bussing
+
+The kitchen row (`plan.kitchen` corridor, cols 9-15) has one appliance tile
+per station — grill, fry, sauté, salad, dessert — reusing existing tiles
+(`T.stove`/`T.counter`/`T.counterAlt`); stations are told apart by their
+cook's badge, not unique art, same as HOST/BARTENDER. `COOK_STATIONS` in
+Game.js maps each `plan.stations.<key>` position to a character + badge;
+`spawnCooks()` places one static sprite+badge per station, no AI, same model
+as the bartender for dine-in drinks.
+
+**Order flow** (`interact()`'s `drink_served` branch, once the drink is
+delivered): taking the food order calls `startCookPrep(g, food)`, which
+looks up the item's station via `STATION_FOR_FOOD` and, after a prep delay,
+pushes `{ guest, stationPost }` onto `this.readyFood`. `updateFoodRunners()`
+(called from `update()`) dispatches an idle runner from `this.foodRunners`
+(`FOOD_RUNNER_CHARACTERS`, posts at `plan.runnerPosts`) to walk to the
+station, then to the guest's seat, then calls `finalizeGuestVisit()` —
+runners reuse `walkActorTo()` exactly like the host does. State is
+re-checked at every async boundary (prep complete, station reached, seat
+reached) so a guest who left angry mid-flight is dropped cleanly instead of
+crashing — same guard pattern as `startBartenderService()`. The player is
+never involved in food delivery, only in taking the order; facing
+`plan.kitchen` just reports status (dishes ready / preparing), it is not a
+pickup point.
+
+**Bussing**: `removeGuestSprite()` — the shared cleanup both `finalizeGuestVisit()`
+and `guestLeavesAngry()` funnel into once a guest's sprite reaches the door —
+marks a table dirty (`markTableDirty()`, a small stack-of-plates icon,
+kitchen frame 354) once `tableIsEmpty()` is true for it, i.e. the whole
+party is gone. Dirty tables are excluded from `findFreeTableFrom()`
+regardless of guest occupancy (so neither the host nor `prefersBar` seating
+will use one) and count as "active" in `activeTableCount()` even with zero
+guests, keeping the 3-table cap meaningful until the player busses it. The
+player picks up a dirty dish by facing any tile of the table's footprint
+(`tableAt()`), carries it (`this.carrying = 'dirty_dish'`) to `plan.dish`,
+and drops it off for a small score bonus. This applies to bar tables too —
+the bartender handles drinks, not cleaning.
 
 ### Host NPC
 
@@ -240,12 +313,19 @@ dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
 - **Host stand flow**: parties queue in the waiting area and an autonomous host NPC walks them to a table.
 - **Default map** is 36×20: waiting area (cols 0-6) with the door at (3,0), host
   stand at (6,7) and six benches; a divider wall at col 7 with the only passage
-  at row 8; kitchen along row 1 (cols 9-15); and ten dining tables in mixed
-  1×1 / 2×1 / 1×2 / 2×2 footprints. Rows 16-19 under that original 28-wide
-  section are sealed dead space (the grid grew taller for the bar area, and
-  that section didn't need to). To the right (cols 28-35), a second divider
-  (passage at row 10) leads into the bar area: a 5-wide counter + a few
-  `isBar` dining tables, with the bartender's station at (34,3).
+  at row 8; kitchen along row 1 (cols 9-15: fridge + 5 stations + dish area,
+  cooks/runners standing in the row-2 walkway below); and ten dining tables in
+  mixed 1×1 / 2×1 / 1×2 / 2×2 footprints. Rows 16-19 under that original
+  28-wide section are sealed dead space (the grid grew taller for the bar
+  area, and that section didn't need to). To the right (cols 28-35), a second
+  divider (passage at row 10) leads into the bar area: a 5-wide counter + a
+  few `isBar` dining tables, with the bartender's station at (34,3).
+- **Kitchen station/dish/runner-post positions** (`plan.stations`,
+  `plan.dish`, `plan.runnerPosts`) have Floor Plan Editor marker tools
+  (Station/Dish/Runner — see below), same as every other marker. A saved
+  plan predating this feature simply has empty/missing fields, which
+  `spawnCooks()`/`spawnFoodRunners()` fall back to `plan.kitchen`'s position
+  for, so nothing crashes — it just visually clusters until placed.
 
 ## Floor Plan Editor
 
@@ -277,12 +357,13 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   to an internal clipboard. Release mouse to finalize.
 - **Paste** — click to stamp the clipboard region with its top-left at the clicked
   cell. Clips at grid boundaries.
-- **Spawn / Kitchen / Bar / Door / Host / Bench / Table** (markers) — place the marker AND
-  auto-paint the selected object tile on that cell (sets solid=true). Removes marker on
-  re-click. Each marker button has a small preview icon (bottom-right corner);
-  right-click the preview to assign the current palette selection as that
-  marker's dedicated tile. Per-marker tiles are stored in `plan.markerTiles`
-  and saved with the plan.
+- **Spawn / Kitchen / Bar / Door / Host / Bench / Table / Station / Dish / Runner**
+  (markers) — place the marker AND auto-paint the selected object tile on
+  that cell (sets solid=true). Removes marker on re-click. Each marker
+  button has a small preview icon (bottom-right corner); right-click the
+  preview to assign the current palette selection as that marker's
+  dedicated tile. Per-marker tiles are stored in `plan.markerTiles` and
+  saved with the plan.
   - **Host** = the podium the host NPC works from. Do not place it on a
     one-tile passage; it is solid and would wall the room off.
   - **Bar** = the bartender's station / drink pickup point — works exactly
@@ -293,18 +374,29 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
     (drawn from the bar's own seating pool instead of the host's). The status
     line reports the seat count. Clicking any tile of an existing table
     removes the whole thing; overlapping footprints are rejected.
+  - **Station** places a cook's post at `plan.stations.<key>`; the **Station**
+    picker row (Grill/Fry/Saute/Salad/Dsrt) chooses which key a click writes
+    to. Re-placing a key just moves it — there's no separate remove.
+  - **Dish** = the bussing drop-off point (`plan.dish`), single marker like
+    Kitchen/Bar.
+  - **Runner** = a food-runner idle post (`plan.runnerPosts`, an array like
+    Bench — click again on the same tile to remove it).
 
-The tool row is responsive: with 13 tools it shrinks the sheet selector, the
+The tool row is responsive: with 16 tools it shrinks the sheet selector, the
 action buttons, the button width and finally the font so it never runs under
-the Menu/Import/Export/Save buttons.
+the Menu/Import/Export/Save buttons. Row 2 (Layers/Size/Table/Station
+pickers) is not responsive — it can overflow on narrow viewports.
 
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
 
 ## Controls
 
 - **WASD / Arrow keys** — move waiter
-- **E** — interact (take order at guest, pick up at kitchen, deliver to guest;
-  at the host stand it reports front-of-house status — the host seats parties itself)
+- **E** — interact (take drink/food order at guest, pick up a drink at the
+  bar and deliver it, pick up a dirty dish from a bussed table and drop it
+  at the dish area; at the host stand it reports front-of-house status — the
+  host seats parties itself, and the kitchen marker just reports status —
+  cooks and food runners handle food entirely on their own)
 - **Scroll wheel** — zoom in/out (desktop)
 - **Pinch** — zoom in/out (mobile)
 - **ESC** — return to menu (from any scene)

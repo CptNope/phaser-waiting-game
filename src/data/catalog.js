@@ -74,12 +74,14 @@ export function charKeys(name) {
 
 // Menu items the waiter can serve. frame is an index into the named sheet.
 export const DEFAULT_MENU = [
-  { id: 'burger',  name: 'Burger',  sheet: 'kitchen', frame: 1 },
-  { id: 'salad',   name: 'Salad',   sheet: 'kitchen', frame: 2 },
-  { id: 'coffee',  name: 'Coffee',  sheet: 'kitchen', frame: 6 },
-  { id: 'cake',    name: 'Cake',    sheet: 'kitchen', frame: 7 },
-  { id: 'beer',    name: 'Beer',    sheet: 'kitchen', frame: 400 },
-  { id: 'wine',    name: 'Wine',    sheet: 'kitchen', frame: 400 }
+  { id: 'burger',  name: 'Burger',   sheet: 'kitchen', frame: 1 },
+  { id: 'salad',   name: 'Salad',    sheet: 'kitchen', frame: 2 },
+  { id: 'coffee',  name: 'Coffee',   sheet: 'kitchen', frame: 6 },
+  { id: 'cake',    name: 'Cake',     sheet: 'kitchen', frame: 7 },
+  { id: 'beer',    name: 'Beer',     sheet: 'kitchen', frame: 400 },
+  { id: 'wine',    name: 'Wine',     sheet: 'kitchen', frame: 400 },
+  { id: 'fries',   name: 'Fries',    sheet: 'kitchen', frame: 384 },
+  { id: 'stirfry', name: 'Stir Fry', sheet: 'kitchen', frame: 385 }
 ];
 
 export const MENU_LABELS = {
@@ -88,7 +90,10 @@ export const MENU_LABELS = {
   coffee: 'Coffee',
   cake: 'Cake',
   beer: 'Beer',
-  wine: 'Wine'
+  wine: 'Wine',
+  fries: 'Fries',
+  stirfry: 'Stir Fry',
+  dirty_dish: 'Dirty Dish'
 };
 
 export const MENU_FRAMES = {
@@ -97,11 +102,14 @@ export const MENU_FRAMES = {
   coffee: 6,
   cake: 7,
   beer: 400,
-  wine: 400
+  wine: 400,
+  fries: 384,
+  stirfry: 385
 };
 
-// Neither the pack nor asset-labels.json has a dedicated wine glass sprite, so
-// Wine reuses the Beer bottle frame with a burgundy tint applied at render time.
+// Neither the pack nor asset-labels.json has a dedicated wine glass or fries
+// sprite, so Wine reuses the Beer bottle frame with a burgundy tint applied
+// at render time, and Fries/Stir Fry reuse the closest plated-dish icons.
 export const MENU_TINTS = {
   wine: 0x8b2a52
 };
@@ -109,4 +117,13 @@ export const MENU_TINTS = {
 // Stage-1 (bar) vs stage-2 (kitchen) menu items — drives guest ordering and
 // the GuestEditor's two dropdowns.
 export const MENU_DRINKS = ['coffee', 'beer', 'wine'];
-export const MENU_FOODS = ['burger', 'salad', 'cake'];
+export const MENU_FOODS = ['burger', 'salad', 'cake', 'fries', 'stirfry'];
+
+// Which kitchen station prepares each food item.
+export const STATION_FOR_FOOD = {
+  burger: 'grill',
+  fries: 'fry',
+  stirfry: 'saute',
+  salad: 'salad',
+  cake: 'dessert'
+};
