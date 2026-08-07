@@ -28,11 +28,23 @@ const TOOLS = [
   { id: 'door',    label: 'Door',    short: 'Door' },
   { id: 'host',    label: 'Host',    short: 'Host' },
   { id: 'bench',   label: 'Bench',   short: 'Bnch' },
-  { id: 'table',   label: 'Table',   short: 'Tbl' }
+  { id: 'table',   label: 'Table',   short: 'Tbl' },
+  { id: 'station', label: 'Station', short: 'Stn' },
+  { id: 'dish',    label: 'Dish',    short: 'Dish' },
+  { id: 'runner',  label: 'Runner',  short: 'Run' }
 ];
 
 // Marker tools that auto-paint the selected object tile when placed.
-const MARKER_TOOLS = ['spawn', 'kitchen', 'bar', 'door', 'host', 'bench', 'table'];
+const MARKER_TOOLS = ['spawn', 'kitchen', 'bar', 'door', 'host', 'bench', 'table', 'station', 'dish', 'runner'];
+
+// Which kitchen station the Station tool stamps; cycled via the station picker.
+const STATION_KEYS = [
+  { key: 'grill',   label: 'Grill', code: 'GR' },
+  { key: 'fry',     label: 'Fry',   code: 'FR' },
+  { key: 'saute',   label: 'Saute', code: 'SA' },
+  { key: 'salad',   label: 'Salad', code: 'SL' },
+  { key: 'dessert', label: 'Dsrt',  code: 'DS' }
+];
 
 // Selectable footprints for the Table tool, in tiles. Seats are the walkable
 // tiles around the footprint, so bigger tables seat bigger parties.
@@ -70,8 +82,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.tableSizeIdx = 0;
     // When true, newly placed tables are flagged isBar (bar counter/tables).
     this.tableIsBar = false;
+    // Which station key the Station tool stamps; index into STATION_KEYS.
+    this.stationKeyIdx = 0;
     // Benches are a newer feature — older saved plans do not have the array.
     this.plan.benches = this.plan.benches || [];
+    // Kitchen stations/dish area/runner posts — newer feature, same fallback.
+    this.plan.stations = this.plan.stations || {};
+    this.plan.runnerPosts = this.plan.runnerPosts || [];
 
     // Until the generated index loads, fall back to the sheets Boot preloaded.
     this.sheetList = SHEETS.map(s => ({
@@ -270,6 +287,17 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.refreshBarTableBtn();
     x2 += 62 + 12;
 
+    // Station picker — which kitchen station the Station tool stamps.
+    this.add.text(x2, 54, 'Station', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
+      .setDepth(101);
+    x2 += 46;
+    this.stationKeyBtns = STATION_KEYS.map((s, i) => {
+      const btn = this.makeBtn(x2 + i * 44, 52, 40, 22, s.label, () => this.setStationKey(i), 10);
+      return btn;
+    });
+    this.refreshStationKeyBtns();
+    x2 += STATION_KEYS.length * 44 + 12;
+
     this.statusText = this.add.text(x2, 57, '', {
       fontFamily: 'system-ui', fontSize: '12px', color: '#8fb6ff'
     }).setDepth(101);
@@ -331,6 +359,22 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     if (!this.barTableBtn) return;
     this.barTableBtn.bg.setFillStyle(this.tableIsBar ? 0x5a4a2b : 0x2b2b39);
     this.barTableBtn.txt.setColor(this.tableIsBar ? '#ffb86c' : '#e6e6f0');
+  }
+
+  /** Choose which station key the Station tool stamps, and switch to that tool. */
+  setStationKey(i) {
+    this.stationKeyIdx = i;
+    this.refreshStationKeyBtns();
+    this.setTool('station');
+    this.setStatus(`placing ${STATION_KEYS[i].label} station`);
+  }
+
+  refreshStationKeyBtns() {
+    this.stationKeyBtns?.forEach((b, i) => {
+      const on = i === this.stationKeyIdx;
+      b.bg.setFillStyle(on ? 0x4a4a5e : 0x2b2b39);
+      b.txt.setColor(on ? '#ffe9a8' : '#e6e6f0');
+    });
   }
 
   /** Assign the current palette selection as the tile for a marker type. */
@@ -452,12 +496,18 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.plan.tables = (this.plan.tables || [])
       .filter(t => t.x + (t.w || 1) <= nc && t.y + (t.h || 1) <= nr);
     this.plan.benches = (this.plan.benches || []).filter(b => b.x < nc && b.y < nr);
-    for (const key of ['spawn', 'kitchen', 'bar', 'door', 'host']) {
+    this.plan.runnerPosts = (this.plan.runnerPosts || []).filter(p => p.x < nc && p.y < nr);
+    for (const key of ['spawn', 'kitchen', 'bar', 'door', 'host', 'dish']) {
       const p = this.plan[key];
       if (p) {
         p.x = Phaser.Math.Clamp(p.x, 0, nc - 1);
         p.y = Phaser.Math.Clamp(p.y, 0, nr - 1);
       }
+    }
+    for (const key of Object.keys(this.plan.stations || {})) {
+      const p = this.plan.stations[key];
+      p.x = Phaser.Math.Clamp(p.x, 0, nc - 1);
+      p.y = Phaser.Math.Clamp(p.y, 0, nr - 1);
     }
   }
 
@@ -605,6 +655,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     else if (this.plan.door?.x === x && this.plan.door?.y === y) mark('D', 0x8fb6ff);
     else if (this.plan.host?.x === x && this.plan.host?.y === y) mark('H', 0xff9aff);
     else if (this.plan.benches?.some(b => b.x === x && b.y === y)) mark('B', 0x9ad9ff);
+    else if (this.plan.dish?.x === x && this.plan.dish?.y === y) mark('DSH', 0xc9c9d6);
+    else if (this.plan.runnerPosts?.some(p => p.x === x && p.y === y)) mark('RUN', 0xc9f2a0);
+    else if (this.stationKeyAt(x, y)) mark(this.stationKeyAt(x, y).code, 0xffcf9e);
     else {
       const tbl = this.plan.tables?.find(t => this.tableCovers(t, x, y));
       if (tbl) {
@@ -679,8 +732,31 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     } else if (t === 'table') {
       this.placeTable(x, y);
       return;
+    } else if (t === 'station') {
+      const key = STATION_KEYS[this.stationKeyIdx].key;
+      this.plan.stations[key] = { x, y };
+      this.autoPaintMarker('station', x, y);
+    } else if (t === 'dish') {
+      this.plan.dish = { x, y };
+      this.autoPaintMarker('dish', x, y);
+    } else if (t === 'runner') {
+      const ex = this.plan.runnerPosts.findIndex(p => p.x === x && p.y === y);
+      if (ex >= 0) this.plan.runnerPosts.splice(ex, 1);
+      else {
+        this.plan.runnerPosts.push({ x, y });
+        this.autoPaintMarker('runner', x, y);
+      }
     }
     this.renderCell(x, y);
+  }
+
+  /** The station key (if any) whose position is (x,y). */
+  stationKeyAt(x, y) {
+    for (const s of STATION_KEYS) {
+      const p = this.plan.stations[s.key];
+      if (p && p.x === x && p.y === y) return s;
+    }
+    return null;
   }
 
   /** True when (x,y) falls inside a table's footprint. */
@@ -869,11 +945,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
       'Pick: eyedropper — copies a tile from the grid into the palette selection.',
       'Copy: drag to select a region.  Paste: click to stamp the copied region.',
-      'Spawn/Kitchen/Bar/Door/Host/Bench/Table: places marker AND auto-paints the tile.',
+      'Spawn/Kitchen/Bar/Door/Host/Bench/Table/Station/Dish/Runner: places marker AND auto-paints the tile.',
       'Host = host stand (the host NPC seats parties). Bench = waiting-area seat.',
       'Bar = bartender station/drink pickup (like Kitchen, but for drinks).',
       'Table 1x1/2x1/1x2/2x2 sets the footprint; seats are the tiles around it.',
       'Bar Tbl toggles whether new tables are flagged isBar (bar seating pool).',
+      'Station places a cook post; the Station picker (Grill/Fry/Saute/Salad/Dsrt) chooses which.',
+      'Dish = bussing drop-off point. Runner = a food-runner post (click again to remove).',
       'Right-click a marker preview icon to assign a tile to that marker type.',
       'Sheet ◀ ▶ browses all indexed sheets. Layers hide artwork. Size +/- resizes.'
     ];

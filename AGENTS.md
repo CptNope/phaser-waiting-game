@@ -320,12 +320,12 @@ dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
   area, and that section didn't need to). To the right (cols 28-35), a second
   divider (passage at row 10) leads into the bar area: a 5-wide counter + a
   few `isBar` dining tables, with the bartender's station at (34,3).
-- **Kitchen/bar station and dish-area positions** (`plan.stations`,
-  `plan.dish`, `plan.runnerPosts`) are set in `defaults.js` but — unlike
-  `kitchen`/`bar`/`host` — have no Floor Plan Editor marker tools; a saved
-  plan without them falls back to `plan.kitchen`'s position so nothing
-  crashes, it just visually clusters. Disclosed gap, same as `groupSize` not
-  being editable in the Guest Editor.
+- **Kitchen station/dish/runner-post positions** (`plan.stations`,
+  `plan.dish`, `plan.runnerPosts`) have Floor Plan Editor marker tools
+  (Station/Dish/Runner — see below), same as every other marker. A saved
+  plan predating this feature simply has empty/missing fields, which
+  `spawnCooks()`/`spawnFoodRunners()` fall back to `plan.kitchen`'s position
+  for, so nothing crashes — it just visually clusters until placed.
 
 ## Floor Plan Editor
 
@@ -357,12 +357,13 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   to an internal clipboard. Release mouse to finalize.
 - **Paste** — click to stamp the clipboard region with its top-left at the clicked
   cell. Clips at grid boundaries.
-- **Spawn / Kitchen / Bar / Door / Host / Bench / Table** (markers) — place the marker AND
-  auto-paint the selected object tile on that cell (sets solid=true). Removes marker on
-  re-click. Each marker button has a small preview icon (bottom-right corner);
-  right-click the preview to assign the current palette selection as that
-  marker's dedicated tile. Per-marker tiles are stored in `plan.markerTiles`
-  and saved with the plan.
+- **Spawn / Kitchen / Bar / Door / Host / Bench / Table / Station / Dish / Runner**
+  (markers) — place the marker AND auto-paint the selected object tile on
+  that cell (sets solid=true). Removes marker on re-click. Each marker
+  button has a small preview icon (bottom-right corner); right-click the
+  preview to assign the current palette selection as that marker's
+  dedicated tile. Per-marker tiles are stored in `plan.markerTiles` and
+  saved with the plan.
   - **Host** = the podium the host NPC works from. Do not place it on a
     one-tile passage; it is solid and would wall the room off.
   - **Bar** = the bartender's station / drink pickup point — works exactly
@@ -373,10 +374,18 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
     (drawn from the bar's own seating pool instead of the host's). The status
     line reports the seat count. Clicking any tile of an existing table
     removes the whole thing; overlapping footprints are rejected.
+  - **Station** places a cook's post at `plan.stations.<key>`; the **Station**
+    picker row (Grill/Fry/Saute/Salad/Dsrt) chooses which key a click writes
+    to. Re-placing a key just moves it — there's no separate remove.
+  - **Dish** = the bussing drop-off point (`plan.dish`), single marker like
+    Kitchen/Bar.
+  - **Runner** = a food-runner idle post (`plan.runnerPosts`, an array like
+    Bench — click again on the same tile to remove it).
 
-The tool row is responsive: with 13 tools it shrinks the sheet selector, the
+The tool row is responsive: with 16 tools it shrinks the sheet selector, the
 action buttons, the button width and finally the font so it never runs under
-the Menu/Import/Export/Save buttons.
+the Menu/Import/Export/Save buttons. Row 2 (Layers/Size/Table/Station
+pickers) is not responsive — it can overflow on narrow viewports.
 
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
 
