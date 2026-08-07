@@ -134,8 +134,14 @@ and 6-11 (RIGHT). `SIT_FRAMES = { left: 0, right: 6 }`. Only side views exist,
 so a table directly above/below maps to a side pose.
 
 ### Game behavior
-- Guests spawn with `_idle` texture, walk to seat via BFS pathfinding
-- On arrival, swap to `_sit` texture with direction facing the table
+- Guests arrive in **groups** (1-4 per group, set by `groupSize` in guest defs)
+- Groups spawn at the door, walk to the **host stand** waiting area, and wait there
+- Waiter interacts with the host stand (E key while facing it) to seat the next group
+- `findFreeTableForGroup` finds a table with enough free adjacent seats for the whole group
+- All guests in a group walk to their seats simultaneously and sit down
+- If no host stand exists in the plan, falls back to legacy direct seating
+- Waiting guests show blue patience bars; seated guests show green→red
+- HUD shows "Waiting N" count when guests are at the host area
 - On serve/angry-leave, swap back to `_idle` and walk to door
 - Waiter plays `waiter_<dir>` walk animation while moving, returns to idle pose when stopped
 
@@ -145,8 +151,10 @@ so a table directly above/below maps to a side pose.
 - **Visual palette** approach: users pick tiles/frames directly from spritesheets in the editors,
   no hand-mapped frame indices needed.
 - **Export/Import JSON** for sharing floor plans and guest rosters (no backend, no localStorage dependency for sharing).
-- **BFS pathfinding** for guest AI (walk from door to seat).
+- **BFS pathfinding** for guest AI (walk from door to waiting area, then to seat).
 - **Seat auto-derivation**: seats are walkable tiles adjacent to Table markers; no manual seat placement needed.
+- **Host stand flow**: guests arrive in groups, wait at host stand, waiter seats entire group at once.
+- **Default map** is 24×14 with a waiting area (cols 0-3), host stand at (3,7), kitchen (cols 6-11, row 1), and 9 dining tables in a 3×3 grid.
 
 ## Floor Plan Editor
 
@@ -178,19 +186,21 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   to an internal clipboard. Release mouse to finalize.
 - **Paste** — click to stamp the clipboard region with its top-left at the clicked
   cell. Clips at grid boundaries.
-- **Spawn / Kitchen / Door / Table** (markers) — place the marker AND auto-paint
+- **Spawn / Kitchen / Door / Host / Table** (markers) — place the marker AND auto-paint
   the selected object tile on that cell (sets solid=true). Removes marker on
   re-click. Each marker button has a small preview icon (bottom-right corner);
   right-click the preview to assign the current palette selection as that
   marker's dedicated tile. Per-marker tiles are stored in `plan.markerTiles`
   and saved with the plan.
+  - **Host** = host stand where guests wait to be seated. Waiter interacts here
+    to seat the next waiting group at a free table.
 
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
 
 ## Controls
 
 - **WASD / Arrow keys** — move waiter
-- **E** — interact (take order at guest, pick up at kitchen, deliver to guest)
+- **E** — interact (seat group at host stand, take order at guest, pick up at kitchen, deliver to guest)
 - **ESC** — return to menu (from any scene)
 
 ### On-Screen Controls (always visible in Game)

@@ -41,15 +41,10 @@ export class GameScene extends Phaser.Scene {
     // core ones. Pull in whatever this plan actually references, then redraw.
     this.ensurePlanSheets();
 
-    this.renderFloor();
-    this.spawnWaiter();
-    this.setupInput();
-    this.setupHUD();
-    this.setupCamera();
-    this.setupMobileControls();
-
+    // Game state — initialized BEFORE setupHUD() since updateHUD() reads these.
     this.guests = [];
     this.queue = [...this.guestDefs];
+    this.waitingGroups = [];   // groups waiting at host area, ready to be seated
     this.score = 0;
     this.served = 0;
     this.angry = 0;
@@ -58,7 +53,14 @@ export class GameScene extends Phaser.Scene {
     this.carrying = null;
     this.preparedOrder = null;
     this.spawnTimer = 0;
-    this.spawnEvery = 6;
+    this.spawnEvery = 8;       // seconds between guest group arrivals
+
+    this.renderFloor();
+    this.spawnWaiter();
+    this.setupInput();
+    this.setupHUD();
+    this.setupCamera();
+    this.setupMobileControls();
 
     this.time.addEvent({ delay: 1000, loop: true, callback: this.tickShift, callbackScope: this });
     this.events.on('shutdown', () => {
@@ -243,7 +245,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   updateHUD() {
-    this.scoreText.setText(`Served ${this.served}  •  Angry ${this.angry}  •  Score ${this.score}`);
+    const waiting = this.waitingGroups.reduce((n, g) => n + g.length, 0);
+    const parts = [`Served ${this.served}`, `Angry ${this.angry}`, `Score ${this.score}`];
+    if (waiting > 0) parts.push(`Waiting ${waiting}`);
+    this.scoreText.setText(parts.join('  •  '));
     this.timeText.setText(this.shiftActive ? `Time ${Math.max(0, Math.ceil(this.shiftTime))}s` : 'Shift over');
     this.carryText.setText(this.carrying ? `Carrying: ${MENU_LABELS[this.carrying] || this.carrying}` : 'Hands free');
   }
@@ -301,41 +306,166 @@ export class GameScene extends Phaser.Scene {
     if (this.spawnTimer >= this.spawnEvery) {
       this.spawnTimer = 0;
       const def = this.queue.shift();
-      this.spawnGuest(def);
+      this.spawnGuestGroup(def);
     }
   }
 
-  spawnGuest(def) {
+  /**
+   * Spawn a group of guests at the door. They walk to the waiting area
+   * (near the host stand) and wait there until the waiter seats them.
+   * If no host stand exists, fall back to direct seating (legacy behavior).
+   */
+  spawnGuestGroup(leaderDef) {
     const door = this.plan.door || { x: 1, y: 0 };
-    const seat = this.findFreeSeat();
-    if (!seat) { this.queue.push(def); return; }
-    const keys = charKeys(def.charName || 'Adam');
-    const g = {
-      def,
-      state: 'incoming',
-      seat,
-      table: seat.table,
-      sprite: this.add.image(door.x * TILE + TILE / 2, door.y * TILE + TILE / 2, keys.idle, IDLE_FRAME_DOWN).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(10),
-      idleKey: keys.idle,
-      sitKey: keys.sit,
-      patience: def.patience,
-      maxPatience: def.patience,
-      patienceBar: null,
-      orderBubble: null
-    };
-    this.guests.push(g);
-    this.worldOnly(g.sprite);
-    this.walkGuestTo(g, seat.x, seat.y, () => {
-      g.state = 'seated';
-      // Swap to sitting sprite (48×96), facing the table.
-      const sitDir = this.sitFacing(g.seat, g.table);
-      g.sprite.setTexture(g.sitKey, SIT_FRAMES[sitDir]);
-      g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
-      g.sprite.flipX = false;
-      g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
-      g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x6cff6c).setOrigin(0, 0.5).setDepth(51);
-      this.worldOnly(g.patienceBar, g.patienceFill);
-    });
+    const groupSize = leaderDef.groupSize || 1;
+    const group = [];
+
+    // Collect groupSize guests from the queue (leader + followers).
+    // If queue runs out, the group is smaller.
+    const defs = [leaderDef];
+    for (let i = 1; i < groupSize && this.queue.length > 0; i++) {
+      defs.push(this.queue.shift());
+    }
+
+    for (const def of defs) {
+      const keys = charKeys(def.charName || 'Adam');
+      const g = {
+        def,
+        state: 'incoming',
+        seat: null,
+        table: null,
+        sprite: this.add.image(door.x * TILE + TILE / 2, door.y * TILE + TILE / 2, keys.idle, IDLE_FRAME_DOWN).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(10),
+        idleKey: keys.idle,
+        sitKey: keys.sit,
+        patience: def.patience,
+        maxPatience: def.patience,
+        patienceBar: null,
+        patienceFill: null,
+        orderBubble: null,
+        group: null,       // set below
+        waitSpot: null,    // tile in waiting area
+      };
+      this.guests.push(g);
+      this.worldOnly(g.sprite);
+      group.push(g);
+    }
+    for (const g of group) g.group = group;
+
+    // If no host stand, fall back to direct seating (legacy).
+    if (!this.plan.host) {
+      this.seatGroupDirectly(group);
+      return;
+    }
+
+    // Walk to waiting area near the host stand.
+    this.assignWaitingSpots(group);
+  }
+
+  /** Legacy path: no host stand — seat guests directly at free seats. */
+  seatGroupDirectly(group) {
+    for (const g of group) {
+      const seat = this.findFreeSeat();
+      if (!seat) { this.queue.push(g.def); this.guests = this.guests.filter(x => x !== g); g.sprite.destroy(); continue; }
+      g.seat = seat;
+      g.table = seat.table;
+      this.walkGuestTo(g, seat.x, seat.y, () => this.onGuestSeated(g));
+    }
+  }
+
+  /** Assign each guest in a group a spot in the waiting area near the host. */
+  assignWaitingSpots(group) {
+    const host = this.plan.host;
+    // Find walkable tiles near the host stand for waiting.
+    const spots = this.findWaitingSpots(host, group.length);
+    for (let i = 0; i < group.length; i++) {
+      const g = group[i];
+      const spot = spots[i] || spots[0] || host;
+      g.waitSpot = spot;
+      g.state = 'walking_to_wait';
+      this.walkGuestTo(g, spot.x, spot.y, () => {
+        g.state = 'waiting';
+        // Show patience bar while waiting
+        if (!g.patienceBar) {
+          g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
+          g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x8fb6ff).setOrigin(0, 0.5).setDepth(51);
+          this.worldOnly(g.patienceBar, g.patienceFill);
+        }
+      });
+    }
+    this.waitingGroups.push(group);
+  }
+
+  /** Find walkable tiles near the host stand for waiting guests. */
+  findWaitingSpots(host, count) {
+    const spots = [];
+    const seen = new Set();
+    const queue = [{ x: host.x, y: host.y, dist: 0 }];
+    while (spots.length < count && queue.length) {
+      const cur = queue.shift();
+      const k = cur.y * this.cols + cur.x;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      // Don't use the host stand tile itself or solid tiles
+      if (!(cur.x === host.x && cur.y === host.y) && !this.solids[k]) {
+        spots.push({ x: cur.x, y: cur.y });
+      }
+      // BFS neighbors
+      for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+        const nx = cur.x + dx, ny = cur.y + dy;
+        if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) continue;
+        const nk = ny * this.cols + nx;
+        if (seen.has(nk)) continue;
+        queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
+      }
+    }
+    return spots;
+  }
+
+  /**
+   * Waiter interacts with host stand: seat the next waiting group at a
+   * free table with enough seats for the whole group.
+   */
+  seatNextGroup() {
+    if (this.waitingGroups.length === 0) {
+      this.hint('No guests waiting to be seated.');
+      return;
+    }
+    const group = this.waitingGroups[0];
+    // Find a table with enough free seats for the whole group.
+    const table = this.findFreeTableForGroup(group.length);
+    if (!table) {
+      this.hint('No free table big enough for this group.');
+      return;
+    }
+    this.waitingGroups.shift();
+    const seats = this.findFreeSeatsForTable(table, group.length);
+    for (let i = 0; i < group.length; i++) {
+      const g = group[i];
+      const seat = seats[i];
+      if (!seat) continue;
+      g.seat = seat;
+      g.table = table;
+      g.state = 'walking_to_seat';
+      // Remove waiting patience bar
+      if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); g.patienceBar = null; g.patienceFill = null; }
+      this.walkGuestTo(g, seat.x, seat.y, () => this.onGuestSeated(g));
+    }
+    this.hint(`Seated party of ${group.length} at table (${table.x},${table.y}).`);
+  }
+
+  /** Called when a guest arrives at their seat. */
+  onGuestSeated(g) {
+    g.state = 'seated';
+    const sitDir = this.sitFacing(g.seat, g.table);
+    g.sprite.setTexture(g.sitKey, SIT_FRAMES[sitDir]);
+    g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
+    g.sprite.flipX = false;
+    // Reset patience to full when seated (waiting patience was separate)
+    g.patience = g.def.patience;
+    g.maxPatience = g.def.patience;
+    g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
+    g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x6cff6c).setOrigin(0, 0.5).setDepth(51);
+    this.worldOnly(g.patienceBar, g.patienceFill);
   }
 
   // Determine which sit pose to use based on table position relative to seat.
@@ -358,6 +488,48 @@ export class GameScene extends Phaser.Scene {
       }
     }
     return null;
+  }
+
+  /** Find a table with at least `count` free adjacent seats. */
+  findFreeTableForGroup(count) {
+    for (const t of this.plan.tables) {
+      const seats = this.countFreeSeatsForTable(t);
+      if (seats >= count) return t;
+    }
+    // If no table has enough seats, find the one with the most free seats
+    // (as long as it has at least 1)
+    let best = null, bestCount = 0;
+    for (const t of this.plan.tables) {
+      const seats = this.countFreeSeatsForTable(t);
+      if (seats > bestCount) { best = t; bestCount = seats; }
+    }
+    return best && bestCount > 0 ? best : null;
+  }
+
+  countFreeSeatsForTable(t) {
+    const adj = [[t.x, t.y - 1], [t.x, t.y + 1], [t.x - 1, t.y], [t.x + 1, t.y]];
+    let count = 0;
+    for (const [ax, ay] of adj) {
+      if (ax < 0 || ay < 0 || ax >= this.cols || ay >= this.rows) continue;
+      if (this.solids[this.idx(ax, ay)]) continue;
+      if (this.guests.some(g => g.seat && g.seat.x === ax && g.seat.y === ay)) continue;
+      count++;
+    }
+    return count;
+  }
+
+  /** Get up to `count` free seats adjacent to a table. */
+  findFreeSeatsForTable(t, count) {
+    const adj = [[t.x, t.y - 1], [t.x, t.y + 1], [t.x - 1, t.y], [t.x + 1, t.y]];
+    const seats = [];
+    for (const [ax, ay] of adj) {
+      if (seats.length >= count) break;
+      if (ax < 0 || ay < 0 || ax >= this.cols || ay >= this.rows) continue;
+      if (this.solids[this.idx(ax, ay)]) continue;
+      if (this.guests.some(g => g.seat && g.seat.x === ax && g.seat.y === ay)) continue;
+      seats.push({ x: ax, y: ay, table: t });
+    }
+    return seats;
   }
 
   walkGuestTo(g, tx, ty, onArrive) {
@@ -415,13 +587,19 @@ export class GameScene extends Phaser.Scene {
 
   updateGuests(dt) {
     for (const g of this.guests) {
-      if (g.state === 'seated' || g.state === 'ordered') {
+      if (g.state === 'waiting' || g.state === 'seated' || g.state === 'ordered') {
         g.patience -= dt;
-        if (g.patience <= 0) this.guestLeavesAngry(g);
-        else if (g.patienceBar) {
+        if (g.patience <= 0) {
+          this.guestLeavesAngry(g);
+        } else if (g.patienceBar) {
           const ratio = Phaser.Math.Clamp(g.patience / g.maxPatience, 0, 1);
           g.patienceFill.width = 36 * ratio;
-          g.patienceFill.fillColor = ratio > 0.5 ? 0x6cff6c : (ratio > 0.25 ? 0xffe9a8 : 0xff6c6c);
+          // Waiting guests show blue→yellow; seated show green→red
+          if (g.state === 'waiting') {
+            g.patienceFill.fillColor = ratio > 0.5 ? 0x8fb6ff : (ratio > 0.25 ? 0xffe9a8 : 0xff6c6c);
+          } else {
+            g.patienceFill.fillColor = ratio > 0.5 ? 0x6cff6c : (ratio > 0.25 ? 0xffe9a8 : 0xff6c6c);
+          }
         }
       }
     }
@@ -443,6 +621,13 @@ export class GameScene extends Phaser.Scene {
       } else {
         this.hint('No order ready at kitchen.');
       }
+      return;
+    }
+
+    // Host stand: seat the next waiting group
+    const h = this.plan.host;
+    if (h && h.x === fx && h.y === fy) {
+      this.seatNextGroup();
       return;
     }
 
@@ -506,7 +691,11 @@ export class GameScene extends Phaser.Scene {
     this.score = Math.max(0, this.score - 5);
     g.state = 'angry';
     if (g.orderBubble) { g.orderBubble.destroy(); g.orderBubble = null; }
-    if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); }
+    if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); g.patienceBar = null; g.patienceFill = null; }
+    // Remove from waiting groups if still waiting
+    if (g.group && g.state === 'waiting') {
+      this.waitingGroups = this.waitingGroups.filter(grp => grp !== g.group);
+    }
     g.sprite.setTexture(g.idleKey, IDLE_FRAME_DOWN);
     g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
     const door = this.plan.door || { x: 1, y: 0 };
@@ -518,7 +707,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   checkShiftEnd() {
-    if (this.queue.length === 0 && this.guests.length === 0) this.endShift();
+    if (this.queue.length === 0 && this.guests.length === 0 && this.waitingGroups.length === 0) this.endShift();
   }
 
   tickShift() {
@@ -534,6 +723,7 @@ export class GameScene extends Phaser.Scene {
       if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); }
       if (g.orderBubble) g.orderBubble.destroy();
     }
+    this.waitingGroups = [];
   }
 
   hint(msg) {

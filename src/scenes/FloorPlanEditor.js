@@ -25,11 +25,12 @@ const TOOLS = [
   { id: 'spawn',   label: 'Spawn',   short: 'Spwn' },
   { id: 'kitchen', label: 'Kitchen', short: 'Ktch' },
   { id: 'door',    label: 'Door',    short: 'Door' },
+  { id: 'host',    label: 'Host',    short: 'Host' },
   { id: 'table',   label: 'Table',   short: 'Tbl' }
 ];
 
 // Marker tools that auto-paint the selected object tile when placed.
-const MARKER_TOOLS = ['spawn', 'kitchen', 'door', 'table'];
+const MARKER_TOOLS = ['spawn', 'kitchen', 'door', 'host', 'table'];
 
 const LAYERS = [
   { id: 'ground',  label: 'Ground' },
@@ -374,7 +375,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.plan.cols = nc;
     this.plan.rows = nr;
     this.plan.tables = (this.plan.tables || []).filter(t => t.x < nc && t.y < nr);
-    for (const key of ['spawn', 'kitchen', 'door']) {
+    for (const key of ['spawn', 'kitchen', 'door', 'host']) {
       const p = this.plan[key];
       if (p) {
         p.x = Phaser.Math.Clamp(p.x, 0, nc - 1);
@@ -520,6 +521,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     if (this.plan.spawn?.x === x && this.plan.spawn?.y === y) { label = 'S'; color = 0x6cff6c; }
     else if (this.plan.kitchen?.x === x && this.plan.kitchen?.y === y) { label = 'K'; color = 0xff8a8a; }
     else if (this.plan.door?.x === x && this.plan.door?.y === y) { label = 'D'; color = 0x8fb6ff; }
+    else if (this.plan.host?.x === x && this.plan.host?.y === y) { label = 'H'; color = 0xff9aff; }
     else if (this.plan.tables?.some(t => t.x === x && t.y === y)) { label = 'T'; color = 0xffe9a8; }
 
     if (label) {
@@ -568,6 +570,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     } else if (t === 'door') {
       this.plan.door = { x, y };
       this.autoPaintMarker('door', x, y);
+    } else if (t === 'host') {
+      this.plan.host = { x, y };
+      this.autoPaintMarker('host', x, y);
     } else if (t === 'table') {
       const ex = this.plan.tables.findIndex(p => p.x === x && p.y === y);
       if (ex >= 0) {
@@ -699,7 +704,8 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
       'Pick: eyedropper — copies a tile from the grid into the palette selection.',
       'Copy: drag to select a region.  Paste: click to stamp the copied region.',
-      'Spawn/Kitchen/Door/Table: places marker AND auto-paints the selected tile.',
+      'Spawn/Kitchen/Door/Host/Table: places marker AND auto-paints the selected tile.',
+      'Host = host stand where waiter seats waiting guest groups.',
       'Right-click a marker preview icon to assign a tile to that marker type.',
       'Sheet ◀ ▶ browses all indexed sheets. Layers hide artwork. Size +/- resizes.'
     ];
