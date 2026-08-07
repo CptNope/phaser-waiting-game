@@ -71,6 +71,7 @@ export class GameScene extends Phaser.Scene {
     this.setupHUD();
     this.setupCamera();
     this.setupMobileControls();
+    this.setupZoomControls();
 
     this.time.addEvent({ delay: 1000, loop: true, callback: this.tickShift, callbackScope: this });
     this.events.on('shutdown', () => {
@@ -349,13 +350,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Camera always follows the waiter. Zoom adapts to screen size:
-   * shows ~16×10 tiles on desktop, ~10×7 on mobile, clamped so the
-   * world never looks too tiny or too cropped.
+   * Camera follows the waiter at a comfortable zoom. No fit-to-world:
+   * the player sees their immediate surroundings and scrolls by walking.
+   * User can zoom in/out with scroll wheel, pinch, or UI buttons.
    */
   setupCamera() {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.worldW, this.worldH);
+    // Default zoom: 1.5x on most screens, slightly lower on very small ones.
+    const short = Math.min(this.scale.width, this.scale.height);
+    this._userZoom = short < 500 ? 1.25 : 1.5;
+    this._zoomMin = 0.75;
+    this._zoomMax = 3.0;
     this._resizeCb = () => this.fitCamera();
     this.scale.on('resize', this._resizeCb);
     this.fitCamera();
@@ -367,64 +373,115 @@ export class GameScene extends Phaser.Scene {
     // Resize UI camera to match viewport so UI objects fill the screen.
     this.uiCam.setSize(vw, vh);
     this.repositionHUD();
-    // Padding: HUD bar at top, D-pad + action button at bottom.
-    const narrow = vw < 900;
-    const padTop = 44, padBottom = 140, padSide = narrow ? 10 : 40;
-    const availW = vw - padSide * 2;
-    const availH = vh - padTop - padBottom;
-    // Show as much of the world as fits, but keep each 48px tile between
-    // 24 and 96 screen pixels (zoom 0.5x - 2.0x). 24px is the practical
-    // minimum for small phones; 96px is the max before the view feels
-    // too zoomed-in on large desktops.
-    const fullWorldZoom = Math.min(availW / this.worldW, availH / this.worldH);
-    const zoom = Phaser.Math.Clamp(fullWorldZoom, 24 / TILE, 96 / TILE);
-    cam.setZoom(zoom);
-    // Round to nearest pixel to keep pixel art crisp at integer-ish zooms.
+    // Apply the user's zoom level (preserved across resizes).
+    cam.setZoom(this._userZoom);
     cam.setRoundPixels(true);
-    cam.startFollow(this.waiter, true, 0.12, 0.12);
+    cam.startFollow(this.waiter, true, 0.15, 0.15);
+    cam.setDeadzone(TILE * 0.5, TILE * 0.5);
+  }
+
+  /** Change zoom by a delta, clamped to allowed range. */
+  applyZoomDelta(delta) {
+    this._userZoom = Phaser.Math.Clamp(this._userZoom + delta, this._zoomMin, this._zoomMax);
+    this.cameras.main.setZoom(this._userZoom);
+  }
+
+  setupZoomControls() {
+    // --- Scroll-wheel zoom (desktop) ---
+    this.input.on('wheel', (_pointer, _gos, _dx, deltaY) => {
+      const step = deltaY > 0 ? -0.15 : 0.15;
+      this.applyZoomDelta(step);
+    });
+
+    // --- Pinch-to-zoom (mobile) ---
+    this._pinchDist = null;
+    this.input.on('pointerdown', () => {
+      if (this.input.pointer1.isDown && this.input.pointer2.isDown) {
+        this._pinchDist = Phaser.Math.Distance.Between(
+          this.input.pointer1.x, this.input.pointer1.y,
+          this.input.pointer2.x, this.input.pointer2.y
+        );
+      }
+    });
+    this.input.on('pointermove', () => {
+      if (this._pinchDist && this.input.pointer1.isDown && this.input.pointer2.isDown) {
+        const dist = Phaser.Math.Distance.Between(
+          this.input.pointer1.x, this.input.pointer1.y,
+          this.input.pointer2.x, this.input.pointer2.y
+        );
+        const diff = dist - this._pinchDist;
+        if (Math.abs(diff) > 4) {
+          this.applyZoomDelta(diff * 0.004);
+          this._pinchDist = dist;
+        }
+      }
+    });
+    const clearPinch = () => {
+      if (!(this.input.pointer1.isDown && this.input.pointer2.isDown)) {
+        this._pinchDist = null;
+      }
+    };
+    this.input.on('pointerup', clearPinch);
+    this.input.on('pointercancel', clearPinch);
   }
 
   setupMobileControls() {
     this.mobileControls = new MobileControls(this, {
       onInteract: () => this.interact(),
-      onMenu: () => this.scene.start('Menu')
+      onMenu: () => this.scene.start('Menu'),
+      onZoomIn: () => this.applyZoomDelta(0.25),
+      onZoomOut: () => this.applyZoomDelta(-0.25)
     });
     // Controls render only on the fixed UI camera.
     this.uiOnly(this.mobileControls.objects);
   }
 
-  /** Calculate responsive HUD font size (px) based on viewport width. */
+  /** Continuous responsive HUD font size (px) based on viewport width. */
   hudFontSize() {
     const w = this.scale.width;
-    if (w < 600) return 12;
-    if (w < 900) return 14;
-    return 16;
+    // Smooth linear interpolation: 11px at 320px → 16px at 1200px
+    return Math.round(Phaser.Math.Clamp(11 + (w - 320) * (5 / 880), 11, 16));
+  }
+
+  /** Responsive HUD bar height. */
+  hudBarHeight() {
+    const w = this.scale.width;
+    if (w < 500) return 28;
+    if (w < 900) return 32;
+    return 36;
   }
 
   /** Reposition HUD elements after a viewport resize. */
   repositionHUD() {
     const w = this.scale.width, h = this.scale.height;
+    const barH = this.hudBarHeight();
     const mainFont = `${this.hudFontSize()}px`;
     const hintFont = `${Math.max(10, this.hudFontSize() - 2)}px`;
-    this.hudBg?.setSize(w, 36);
-    this.scoreText?.setPosition(12, 8);
+    const pad = Math.max(6, Math.round(barH * 0.2));
+    this.hudBg?.setSize(w, barH);
+    this.scoreText?.setPosition(pad, Math.round((barH - this.hudFontSize()) / 2));
     this.scoreText?.setFontSize(mainFont);
-    this.timeText?.setPosition(w / 2, 8);
+    this.timeText?.setPosition(w / 2, Math.round((barH - this.hudFontSize()) / 2));
     this.timeText?.setFontSize(mainFont);
-    this.carryText?.setPosition(w - 12, 8);
+    this.carryText?.setPosition(w - pad, Math.round((barH - this.hudFontSize()) / 2));
     this.carryText?.setFontSize(mainFont);
-    this.hintText?.setPosition(w / 2, h - 24);
+    // Hint text: above mobile controls area on small screens
+    const hintY = w < 900 ? h - 180 : h - 24;
+    this.hintText?.setPosition(w / 2, hintY);
     this.hintText?.setFontSize(hintFont);
   }
 
   setupHUD() {
+    const barH = this.hudBarHeight();
     const mainFont = `${this.hudFontSize()}px`;
     const hintFont = `${Math.max(10, this.hudFontSize() - 2)}px`;
-    this.hudBg = this.add.rectangle(0, 0, this.scale.width, 36, 0x000000, 0.55).setOrigin(0).setDepth(1000);
-    this.scoreText = this.add.text(12, 8, '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#ffe9a8' }).setDepth(1001);
-    this.timeText = this.add.text(this.scale.width / 2, 8, '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001);
-    this.carryText = this.add.text(this.scale.width - 12, 8, '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001);
-    this.hintText = this.add.text(this.scale.width / 2, this.scale.height - 24, '', { fontFamily: 'system-ui', fontSize: hintFont, color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001);
+    const pad = Math.max(6, Math.round(barH * 0.2));
+    this.hudBg = this.add.rectangle(0, 0, this.scale.width, barH, 0x000000, 0.55).setOrigin(0).setDepth(1000);
+    this.scoreText = this.add.text(pad, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#ffe9a8' }).setDepth(1001);
+    this.timeText = this.add.text(this.scale.width / 2, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001);
+    this.carryText = this.add.text(this.scale.width - pad, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001);
+    const hintY = this.scale.width < 900 ? this.scale.height - 180 : this.scale.height - 24;
+    this.hintText = this.add.text(this.scale.width / 2, hintY, '', { fontFamily: 'system-ui', fontSize: hintFont, color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001);
     // HUD renders only on the fixed UI camera — no zoom/follow distortion.
     this.uiOnly([this.hudBg, this.scoreText, this.timeText, this.carryText, this.hintText]);
     this.updateHUD();

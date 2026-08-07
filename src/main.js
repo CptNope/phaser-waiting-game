@@ -16,7 +16,8 @@ const config = {
     height: '100%'
   },
   scene: [BootScene, MenuScene, FloorPlanEditorScene, GuestEditorScene, GameScene],
-  dom: { createContainer: true }
+  dom: { createContainer: true },
+  input: { activePointers: 3 }
 };
 
 const game = new Phaser.Game(config);

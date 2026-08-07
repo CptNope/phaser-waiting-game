@@ -257,6 +257,8 @@ If the index fails to load, the editor falls back to the sheets Boot preloaded.
 - **WASD / Arrow keys** — move waiter
 - **E** — interact (take order at guest, pick up at kitchen, deliver to guest;
   at the host stand it reports front-of-house status — the host seats parties itself)
+- **Scroll wheel** — zoom in/out (desktop)
+- **Pinch** — zoom in/out (mobile)
 - **ESC** — return to menu (from any scene)
 
 ### On-Screen Controls (always visible in Game)
@@ -268,19 +270,27 @@ they stay pinned to the screen regardless of the main camera's position or zoom.
 
 - **D-pad** (bottom-left) — hold a direction to walk. Multi-touch aware:
   each pointer tracks its own direction; releasing one doesn't cancel another.
+  Larger touch targets on narrow screens (64px vs 56px base).
 - **Action button** (bottom-right, labeled E) — tap to interact.
+  Larger on narrow screens (48px vs 38px base).
+- **Zoom +/−** (right side, above action button) — tap to zoom in/out by 0.25x.
 - **Menu button** (top-right, ≡) — tap to return to menu.
+- **Safe-area insets** — controls read CSS `env(safe-area-inset-*)` and offset
+  from edges accordingly, so they don't hide behind notches or gesture bars.
 
-### Camera (two-camera system)
+### Camera (two-camera system, player-focused zoom)
 
-The Game scene uses two cameras:
+The Game scene uses two cameras. The camera is always focused on the player —
+there is no fit-to-world mode. The user controls zoom level.
 
-- **Main camera** (`this.cameras.main`) — follows the waiter with adaptive zoom
-  that shows the whole floor plan when it fits, otherwise clamps zoom between
-  0.5x and 2.0x (each 48px tile stays 24–96 screen pixels). Renders all
-  world objects (floor tiles, waiter, guests, patience bars, order bubbles).
+- **Main camera** (`this.cameras.main`) — follows the waiter at a user-controlled
+  zoom level. Default zoom is 1.5x (1.25x on very small screens < 500px short
+  side). Zoom range is 0.75x–3.0x, controllable via scroll wheel (0.15x steps),
+  pinch-to-zoom, or UI +/− buttons (0.25x steps). `this._userZoom` stores the
+  current level and is preserved across resizes. Renders all world objects
+  (floor tiles, waiter, guests, patience bars, order bubbles).
 - **UI camera** (`this.uiCam`) — fixed at zoom 1, scroll (0,0). Renders HUD and
-  mobile controls. Resizes to match the viewport on `fitCamera()`.
+  on-screen controls. Resizes to match the viewport on `fitCamera()`.
 
 Objects are assigned to cameras via `cameraFilter` (set by `camera.ignore()`):
 - `uiOnly(...objs)` — hides objects from the main camera (HUD, controls).
@@ -288,13 +298,14 @@ Objects are assigned to cameras via `cameraFilter` (set by `camera.ignore()`):
 Call `worldOnly()` for every dynamically created world object (guest sprites,
 patience bars, order bubble containers and their children).
 
-`fitCamera()` recalculates on resize/orientation change. The UI camera is
-removed in the scene's shutdown handler.
+`fitCamera()` recalculates on resize/orientation change but preserves the user's
+zoom. The UI camera is removed in the scene's shutdown handler.
 
 `src/core/MobileControls.js` exports the `MobileControls` class and
 `shouldShowMobileControls()` (touch device or screen < 900px, used by Menu
-for button sizing). Controls are created at base 1.0x size (56px D-pad,
-38px action, 40px menu) and scaled with `setScale()` on every resize.
+for button sizing). Controls use responsive base sizes (larger on narrow
+screens) and scale with `setScale()` on every resize. Safe-area insets are
+read via a temporary DOM element and applied as extra margin.
 
 ## Asset Pack
 
