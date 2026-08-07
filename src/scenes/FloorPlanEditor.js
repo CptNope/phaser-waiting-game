@@ -19,11 +19,17 @@ const TOOLS = [
   { id: 'object',  label: 'Object',  short: 'Obj' },
   { id: 'erase',   label: 'Erase',   short: 'Ers' },
   { id: 'solid',   label: 'Solid',   short: 'Sld' },
+  { id: 'pick',    label: 'Pick',    short: 'Pick' },
+  { id: 'copy',    label: 'Copy',    short: 'Copy' },
+  { id: 'paste',   label: 'Paste',   short: 'Paste' },
   { id: 'spawn',   label: 'Spawn',   short: 'Spwn' },
   { id: 'kitchen', label: 'Kitchen', short: 'Ktch' },
   { id: 'door',    label: 'Door',    short: 'Door' },
   { id: 'table',   label: 'Table',   short: 'Tbl' }
 ];
+
+// Marker tools that auto-paint the selected object tile when placed.
+const MARKER_TOOLS = ['spawn', 'kitchen', 'door', 'table'];
 
 const LAYERS = [
   { id: 'ground',  label: 'Ground' },
@@ -41,6 +47,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.selectedFrame = 0;
     this.layers = { ground: true, objects: true, markers: true };
     this.sheetDetail = null;
+    // Clipboard for box copy/paste: { w, h, ground: [], objects: [], solids: [] }
+    this.clipboard = null;
+    // Selection box for copy tool
+    this.selection = null;
+    // Per-marker tile assignments. When set, placing a marker also paints
+    // this tile as an object. null = use current palette selection.
+    this.markerTiles = this.plan.markerTiles || {};
 
     // Until the generated index loads, fall back to the sheets Boot preloaded.
     this.sheetList = SHEETS.map(s => ({
@@ -62,6 +75,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.buildHelp(height);
 
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+
+    // Enable right-click detection for marker tile assignment.
+    this.input.mouse.disableContextMenu();
 
     this.initIndex();
   }
@@ -105,6 +121,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.palette?.destroy();
     this.buildPalette();
     this.refreshSheetLabel();
+    this.refreshMarkerPreviews();
     this.setStatus(describeFrame(this.sheetDetail, this.selectedFrame));
   }
 
@@ -152,12 +169,37 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     const useShort = btnW < 58;
 
     this.toolBtns = {};
+    this.markerPreviews = {};
     TOOLS.forEach((t, i) => {
       const bx = toolsX + i * (btnW + 4);
-      this.toolBtns[t.id] = this.makeBtn(bx, 20, btnW, 22,
+      const btn = this.makeBtn(bx, 20, btnW, 22,
         useShort ? t.short : t.label, () => this.setTool(t.id));
+      this.toolBtns[t.id] = btn;
+      // Per-marker tile preview: small icon below marker tool buttons.
+      // Right-click to assign current palette selection to this marker.
+      if (MARKER_TOOLS.includes(t.id)) {
+        const pv = this.add.image(bx + btnW - 6, 20 + 22 - 2, '__pixel')
+          .setOrigin(0.5).setDisplaySize(12, 12).setDepth(103)
+          .setTint(0x4a4a5e);
+        pv.setInteractive({ useHandCursor: true });
+        pv.on('pointerdown', (pointer) => {
+          if (pointer.rightButtonDown()) {
+            this.assignMarkerTile(t.id);
+          } else {
+            this.setTool(t.id);
+          }
+        });
+        pv.on('pointerover', () => {
+          const mt = this.markerTiles[t.id];
+          this.setStatus(mt ? `${t.id} tile: ${mt.s}#${mt.f}` : `${t.id}: click to use, right-click preview to assign tile`);
+        });
+        // Prevent context menu on right-click
+        pv.on('contextmenu', (e) => { e.event?.preventDefault?.(); });
+        this.markerPreviews[t.id] = pv;
+      }
     });
     this.refreshToolBtns();
+    this.refreshMarkerPreviews();
 
     // Row 2: layer toggles + grid size.
     let x2 = 12;
@@ -215,6 +257,27 @@ export class FloorPlanEditorScene extends Phaser.Scene {
   setStatus(msg) { this.statusText?.setText(msg || ''); }
 
   setTool(id) { this.tool = id; this.refreshToolBtns(); }
+
+  /** Assign the current palette selection as the tile for a marker type. */
+  assignMarkerTile(markerType) {
+    this.markerTiles[markerType] = { s: this.sheetKey, f: this.selectedFrame };
+    this.refreshMarkerPreviews();
+    this.setStatus(`${markerType} tile set to ${this.sheetKey}#${this.selectedFrame}`);
+  }
+
+  /** Update the small preview icons next to marker tool buttons. */
+  refreshMarkerPreviews() {
+    for (const id of MARKER_TOOLS) {
+      const pv = this.markerPreviews[id];
+      if (!pv) continue;
+      const tile = this.markerTiles[id];
+      if (tile && this.textures.exists(tile.s)) {
+        pv.setTexture(tile.s, tile.f).clearTint().setDisplaySize(14, 14);
+      } else {
+        pv.setTexture('__pixel').setTint(0x4a4a5e).setDisplaySize(12, 12);
+      }
+    }
+  }
 
   refreshToolBtns() {
     for (const t of TOOLS) {
@@ -383,8 +446,15 @@ export class FloorPlanEditorScene extends Phaser.Scene {
           hitArea: new Phaser.Geom.Rectangle(0, 0, TILE, TILE),
           useHandCursor: true
         });
-        cell.on('pointerdown', () => this.applyTool(x, y));
-        cell.on('pointerover', (p) => { if (p.isDown) this.applyTool(x, y); });
+        cell.on('pointerdown', () => {
+          if (this.tool === 'copy') this.startSelection(x, y);
+          else this.applyTool(x, y);
+        });
+        cell.on('pointerover', (p) => {
+          if (!p.isDown) return;
+          if (this.tool === 'copy') this.updateSelection(x, y);
+          else this.applyTool(x, y);
+        });
         this.gridContainer.add(cell);
 
         const g = this.add.image(x * TILE, y * TILE, '__pixel').setOrigin(0, 0).setVisible(false);
@@ -405,6 +475,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
 
     this.fitGrid();
     this.renderAll();
+
+    // Finish copy selection on pointer up (anywhere on the grid)
+    this.input.off('pointerup', this._pointerUpCb);
+    this._pointerUpCb = () => {
+      if (this.tool === 'copy' && this.selection) this.finishSelection();
+    };
+    this.input.on('pointerup', this._pointerUpCb);
   }
 
   /** Scales the grid so any size stays fully visible in the available area. */
@@ -473,24 +550,158 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       this.plan.tables = this.plan.tables.filter(p => !(p.x === x && p.y === y));
     } else if (t === 'solid') {
       this.plan.solids[i] = !this.plan.solids[i];
-    } else if (t === 'spawn') this.plan.spawn = { x, y };
-    else if (t === 'kitchen') this.plan.kitchen = { x, y };
-    else if (t === 'door') this.plan.door = { x, y };
-    else if (t === 'table') {
+    } else if (t === 'pick') {
+      this.pickTile(x, y);
+      return;
+    } else if (t === 'copy') {
+      // Handled by drag selection in applyToolStart/applyToolDrag/applyToolEnd
+      return;
+    } else if (t === 'paste') {
+      this.pasteRegion(x, y);
+      return;
+    } else if (t === 'spawn') {
+      this.plan.spawn = { x, y };
+      this.autoPaintMarker('spawn', x, y);
+    } else if (t === 'kitchen') {
+      this.plan.kitchen = { x, y };
+      this.autoPaintMarker('kitchen', x, y);
+    } else if (t === 'door') {
+      this.plan.door = { x, y };
+      this.autoPaintMarker('door', x, y);
+    } else if (t === 'table') {
       const ex = this.plan.tables.findIndex(p => p.x === x && p.y === y);
-      if (ex >= 0) this.plan.tables.splice(ex, 1);
-      else this.plan.tables.push({ x, y });
+      if (ex >= 0) {
+        this.plan.tables.splice(ex, 1);
+      } else {
+        this.plan.tables.push({ x, y });
+        this.autoPaintMarker('table', x, y);
+      }
     }
     this.renderCell(x, y);
+  }
+
+  /** Eyedropper: copy the tile at (x,y) into the palette selection. */
+  pickTile(x, y) {
+    const i = y * this.cols + x;
+    const obj = this.plan.objects[i];
+    const grd = this.plan.ground[i];
+    const tile = obj || grd;
+    if (!tile) { this.setStatus('nothing to pick here'); return; }
+    const layer = obj ? 'object' : 'ground';
+    const msg = `picked ${tile.s}#${tile.f} (${layer} layer)`;
+    // Switch to the sheet that this tile came from
+    const sheetIdx = this.sheetList.findIndex(s => s.key === tile.s);
+    if (sheetIdx >= 0 && sheetIdx !== this.sheetIdx) {
+      this.selectSheet(sheetIdx).then(() => {
+        this.selectedFrame = tile.f;
+        this.setStatus(msg);
+      });
+    } else {
+      this.selectedFrame = tile.f;
+      this.setStatus(msg);
+    }
+  }
+
+  /**
+   * When placing a marker, auto-paint the assigned tile (or the current
+   * palette selection if no per-marker tile is set) as an object on that cell.
+   */
+  autoPaintMarker(markerType, x, y) {
+    const i = y * this.cols + x;
+    const tile = this.markerTiles[markerType] || { s: this.sheetKey, f: this.selectedFrame };
+    if (tile && this.textures.exists(tile.s)) {
+      this.plan.objects[i] = { s: tile.s, f: tile.f };
+      this.plan.solids[i] = true;
+      this.renderCell(x, y);
+    }
+  }
+
+  // ------------------------------------------------------------- box copy/paste
+
+  /** Start a drag selection for the copy tool. */
+  startSelection(x, y) {
+    this.selection = { x0: x, y0: y, x1: x, y1: y };
+    this.drawSelectionBox();
+  }
+
+  /** Update selection end point during drag. */
+  updateSelection(x, y) {
+    if (!this.selection) return;
+    this.selection.x1 = x;
+    this.selection.y1 = y;
+    this.drawSelectionBox();
+  }
+
+  /** Finalize selection and copy region to clipboard. */
+  finishSelection() {
+    if (!this.selection) return;
+    const { x0, y0, x1, y1 } = this.selection;
+    const minX = Math.min(x0, x1), maxX = Math.max(x0, x1);
+    const minY = Math.min(y0, y1), maxY = Math.max(y0, y1);
+    const w = maxX - minX + 1, h = maxY - minY + 1;
+    if (w < 1 || h < 1) { this.clearSelection(); return; }
+    const ground = [], objects = [], solids = [];
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        const si = (minY + dy) * this.cols + (minX + dx);
+        ground.push(this.plan.ground[si] ?? null);
+        objects.push(this.plan.objects[si] ?? null);
+        solids.push(!!this.plan.solids[si]);
+      }
+    }
+    this.clipboard = { w, h, ground, objects, solids };
+    this.clearSelection();
+    this.setStatus(`copied ${w}x${h} region — switch to Paste and click to place`);
+  }
+
+  clearSelection() {
+    this.selection = null;
+    this.selectionBox?.destroy();
+    this.selectionBox = null;
+  }
+
+  drawSelectionBox() {
+    this.selectionBox?.destroy();
+    if (!this.selection) return;
+    const { x0, y0, x1, y1 } = this.selection;
+    const minX = Math.min(x0, x1), minY = Math.min(y0, y1);
+    const maxX = Math.max(x0, x1), maxY = Math.max(y0, y1);
+    const gfx = this.add.graphics()
+      .lineStyle(2, 0xffe9a8, 1)
+      .strokeRect(minX * TILE, minY * TILE, (maxX - minX + 1) * TILE, (maxY - minY + 1) * TILE);
+    gfx.setDepth(30);
+    this.gridContainer.add(gfx);
+    this.selectionBox = gfx;
+  }
+
+  /** Paste the clipboard region with its top-left at (x,y). */
+  pasteRegion(x, y) {
+    if (!this.clipboard) { this.setStatus('nothing to paste — use Copy first'); return; }
+    const { w, h, ground, objects, solids } = this.clipboard;
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        const tx = x + dx, ty = y + dy;
+        if (tx < 0 || ty < 0 || tx >= this.cols || ty >= this.rows) continue;
+        const ti = ty * this.cols + tx;
+        const ci = dy * w + dx;
+        if (ground[ci]) this.plan.ground[ti] = { ...ground[ci] };
+        if (objects[ci]) this.plan.objects[ti] = { ...objects[ci] };
+        this.plan.solids[ti] = solids[ci];
+        this.renderCell(tx, ty);
+      }
+    }
+    this.setStatus(`pasted ${w}x${h} region at (${x},${y})`);
   }
 
   buildHelp(height) {
     const lines = [
       'Pick a frame in the left palette, choose a tool, then click/drag on the grid.',
       'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
-      'Spawn = waiter start, Kitchen = pickup, Door = guest entry, Table = seat anchor.',
-      'Sheet ◀ ▶ browses all indexed sheets (loaded on demand). Blank frames are hidden.',
-      'Layers hide artwork while editing. Size +/- then Apply resizes (content is kept).'
+      'Pick: eyedropper — copies a tile from the grid into the palette selection.',
+      'Copy: drag to select a region.  Paste: click to stamp the copied region.',
+      'Spawn/Kitchen/Door/Table: places marker AND auto-paints the selected tile.',
+      'Right-click a marker preview icon to assign a tile to that marker type.',
+      'Sheet ◀ ▶ browses all indexed sheets. Layers hide artwork. Size +/- resizes.'
     ];
     // Sits in the band fitGrid() reserves at the bottom; depth keeps it above
     // the grid container, which would otherwise cover it on tall layouts.
@@ -500,6 +711,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
   }
 
   save() {
+    this.plan.markerTiles = this.markerTiles;
     Storage.savePlan(this.plan);
     this.flash('Floor plan saved.');
   }

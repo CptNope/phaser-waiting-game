@@ -167,6 +167,24 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
 - **Auto-fit** — `fitGrid()` scales the grid container so any size stays visible;
   clicks stay accurate because cells are children of the scaled container.
 
+### Tools
+
+- **Ground / Object** — paint the selected palette tile on the ground or object layer.
+- **Erase** — clear ground, object, solid, and table marker on a cell.
+- **Solid** — toggle collision (red tint overlay).
+- **Pick** (eyedropper) — click a cell to copy its tile into the palette selection.
+  Switches to the source sheet automatically. Picks object layer first, then ground.
+- **Copy** — drag to select a rectangular region. Copies ground + objects + solids
+  to an internal clipboard. Release mouse to finalize.
+- **Paste** — click to stamp the clipboard region with its top-left at the clicked
+  cell. Clips at grid boundaries.
+- **Spawn / Kitchen / Door / Table** (markers) — place the marker AND auto-paint
+  the selected object tile on that cell (sets solid=true). Removes marker on
+  re-click. Each marker button has a small preview icon (bottom-right corner);
+  right-click the preview to assign the current palette selection as that
+  marker's dedicated tile. Per-marker tiles are stored in `plan.markerTiles`
+  and saved with the plan.
+
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
 
 ## Controls
