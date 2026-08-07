@@ -37,9 +37,14 @@ const COOK_STATIONS = [
   { key: 'dessert', character: 'Molly',          badge: 'PASTRY CHEF' },
 ];
 // Food runners carry a finished dish from its station straight to the
-// guest's table and deliver it — the player is never involved in food
-// delivery, only in taking the order.
+// guest's table and deliver it, and bus a dirty table when there's no food
+// waiting. The player can do either job too — whoever gets there first.
 const FOOD_RUNNER_CHARACTERS = ['kid_Karen', 'Rob'];
+
+// Max items the player's tray holds at once (drinks, dishes, dirty plates —
+// any mix). A believable tray size: the largest small table (4 seats) fits
+// in one trip; bigger parties need two.
+const CARRY_CAP = 4;
 
 // Guest states that keep a patience bar ticking: everything from being
 // seated through the final food delivery, across both order stages.
@@ -89,9 +94,9 @@ export class GameScene extends Phaser.Scene {
     this.angry = 0;
     this.shiftTime = 120;
     this.shiftActive = true;
-    this.carrying = null;
-    this.preparedDrink = null;
-    this.readyFood = [];       // { guest, stationPost } dishes ready for a runner to fetch
+    this.carrying = [];        // tray: { type: 'drink'|'food'|'dirty_dish', item, guest }
+    this.readyDrinks = [];     // { guest, item } dine-in drinks ready to fetch from the bar
+    this.readyFood = [];       // { guest, item, stationPost } dishes ready to fetch from the kitchen
     this.dirtyTables = new Set();
     this._dirtyIcons = new Map();
     this.spawnTimer = 0;
@@ -103,6 +108,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnBartender();
     this.spawnCooks();
     this.spawnFoodRunners();
+    this.spawnPickupLabels();
     this.setupInput();
     this.setupHUD();
     this.setupCamera();
@@ -240,7 +246,25 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(52);
     this.worldOnly(badge);
 
+    // Stand-in label until a dedicated pickup-counter sprite is chosen.
+    const pickupLabel = this.add.text(sprite.x, sprite.y + 16, 'DRINK PICKUP', {
+      fontFamily: 'system-ui', fontSize: '8px', fontStyle: 'bold',
+      color: '#1b1b22', backgroundColor: '#a8e6ff', padding: { x: 3, y: 1 }
+    }).setOrigin(0.5).setDepth(52);
+    this.worldOnly(pickupLabel);
+
     this.bartender = { sprite, badge };
+  }
+
+  /** Stand-in text label at the food pickup point until a sprite is chosen. */
+  spawnPickupLabels() {
+    const k = this.plan.kitchen;
+    if (!k) return;
+    const label = this.add.text(k.x * TILE + TILE / 2, k.y * TILE + TILE / 2 - 30, 'FOOD PICKUP', {
+      fontFamily: 'system-ui', fontSize: '9px', fontStyle: 'bold',
+      color: '#1b1b22', backgroundColor: '#ffe9a8', padding: { x: 3, y: 1 }
+    }).setOrigin(0.5).setDepth(52);
+    this.worldOnly(label);
   }
 
   /**
@@ -557,7 +581,14 @@ export class GameScene extends Phaser.Scene {
     return 36;
   }
 
-  /** Reposition HUD elements after a viewport resize. */
+  /**
+   * Reposition HUD elements after a viewport resize. Two full-width rows:
+   * status (Served/Score/Tables/…) + time on row 1, the carry tray on its
+   * own row 2 directly below. Row 2 existing as a dedicated line (not a
+   * right-aligned label sharing row 1 with an unbounded, ever-growing status
+   * string) is what fixes it disappearing on narrow/mobile viewports — a
+   * long row-1 string used to visually run straight over it.
+   */
   repositionHUD() {
     const w = this.scale.width, h = this.scale.height;
     const barH = this.hudBarHeight();
@@ -567,9 +598,11 @@ export class GameScene extends Phaser.Scene {
     this.hudBg?.setSize(w, barH);
     this.scoreText?.setPosition(pad, Math.round((barH - this.hudFontSize()) / 2));
     this.scoreText?.setFontSize(mainFont);
-    this.timeText?.setPosition(w / 2, Math.round((barH - this.hudFontSize()) / 2));
+    this.timeText?.setPosition(w - pad, Math.round((barH - this.hudFontSize()) / 2));
     this.timeText?.setFontSize(mainFont);
-    this.carryText?.setPosition(w - pad, Math.round((barH - this.hudFontSize()) / 2));
+    this.carryBg?.setPosition(0, barH);
+    this.carryBg?.setSize(w, barH);
+    this.carryText?.setPosition(pad, barH + Math.round((barH - this.hudFontSize()) / 2));
     this.carryText?.setFontSize(mainFont);
     // Hint text: above mobile controls area on small screens
     const hintY = w < 900 ? h - 180 : h - 24;
@@ -584,12 +617,14 @@ export class GameScene extends Phaser.Scene {
     const pad = Math.max(6, Math.round(barH * 0.2));
     this.hudBg = this.add.rectangle(0, 0, this.scale.width, barH, 0x000000, 0.55).setOrigin(0).setDepth(1000);
     this.scoreText = this.add.text(pad, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#ffe9a8' }).setDepth(1001);
-    this.timeText = this.add.text(this.scale.width / 2, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#e6e6f0' }).setOrigin(0.5, 0).setDepth(1001);
-    this.carryText = this.add.text(this.scale.width - pad, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#9aff9a' }).setOrigin(1, 0).setDepth(1001);
+    this.timeText = this.add.text(this.scale.width - pad, Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#e6e6f0' }).setOrigin(1, 0).setDepth(1001);
+    // Row 2: the carry tray, always its own full-width line.
+    this.carryBg = this.add.rectangle(0, barH, this.scale.width, barH, 0x000000, 0.55).setOrigin(0).setDepth(1000);
+    this.carryText = this.add.text(pad, barH + Math.round((barH - this.hudFontSize()) / 2), '', { fontFamily: 'system-ui', fontSize: mainFont, color: '#9aff9a' }).setDepth(1001);
     const hintY = this.scale.width < 900 ? this.scale.height - 180 : this.scale.height - 24;
     this.hintText = this.add.text(this.scale.width / 2, hintY, '', { fontFamily: 'system-ui', fontSize: hintFont, color: '#8fb6ff' }).setOrigin(0.5).setDepth(1001);
     // HUD renders only on the fixed UI camera — no zoom/follow distortion.
-    this.uiOnly([this.hudBg, this.scoreText, this.timeText, this.carryText, this.hintText]);
+    this.uiOnly([this.hudBg, this.carryBg, this.scoreText, this.timeText, this.carryText, this.hintText]);
     this.updateHUD();
   }
 
@@ -597,16 +632,29 @@ export class GameScene extends Phaser.Scene {
     const waiting = this.waitingGroups.reduce((n, g) => n + g.length, 0);
     const barWaiting = this.barWaitingGroups.reduce((n, g) => n + g.length, 0);
     const activeTables = this.activeTableCount(this.plan.tables.filter(t => !t.isBar));
-    const parts = [`Served ${this.served}`, `Angry ${this.angry}`, `Score ${this.score}`];
-    parts.push(`Tables ${activeTables}/${this.maxActiveTables}`);
-    if (waiting > 0) parts.push(`Waiting ${waiting}`);
-    if (barWaiting > 0) parts.push(`Bar wait ${barWaiting}`);
-    if (this.readyFood.length > 0) parts.push(`Food ready ${this.readyFood.length}`);
-    if (this.dirtyTables.size > 0) parts.push(`Dirty ${this.dirtyTables.size}`);
-    if (this.host?.party) parts.push(`Seating ${this.host.party.length}`);
+    // On narrow screens the status row can't fit everything without running
+    // into the time display — keep only the essentials there and drop the
+    // rest; nothing here is otherwise unavailable (the tray has its own row).
+    const narrow = this.scale.width < 560;
+    const parts = [`Served ${this.served}`, `Score ${this.score}`, `Tables ${activeTables}/${this.maxActiveTables}`];
+    if (!narrow) {
+      parts.splice(1, 0, `Angry ${this.angry}`);
+      if (waiting > 0) parts.push(`Waiting ${waiting}`);
+      if (barWaiting > 0) parts.push(`Bar wait ${barWaiting}`);
+      if (this.readyFood.length > 0) parts.push(`Food ready ${this.readyFood.length}`);
+      if (this.readyDrinks.length > 0) parts.push(`Drinks ready ${this.readyDrinks.length}`);
+      if (this.dirtyTables.size > 0) parts.push(`Dirty ${this.dirtyTables.size}`);
+      if (this.host?.party) parts.push(`Seating ${this.host.party.length}`);
+    }
     this.scoreText.setText(parts.join('  •  '));
     this.timeText.setText(this.shiftActive ? `Time ${Math.max(0, Math.ceil(this.shiftTime))}s` : 'Shift over');
-    this.carryText.setText(this.carrying ? `Carrying: ${MENU_LABELS[this.carrying] || this.carrying}` : 'Hands free');
+
+    if (this.carrying.length === 0) {
+      this.carryText.setText('Hands free');
+    } else {
+      const labels = this.carrying.map(c => MENU_LABELS[c.item] || c.item);
+      this.carryText.setText(`Carrying (${this.carrying.length}/${CARRY_CAP}): ${labels.join(', ')}`);
+    }
   }
 
   update() {
@@ -812,32 +860,42 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Starts the station's cook on a food order. After a prep delay the dish
-   * is pushed onto readyFood for a runner to fetch — mirrors the bartender's
+   * is pushed onto readyFood, ready for either a food runner or the player
+   * to fetch from the kitchen pickup point — mirrors the bartender's
    * startBartenderService, just producing a queue entry instead of an
-   * immediate delivery (a runner still has to carry it to the table).
+   * immediate delivery (someone still has to carry it to the table).
    */
   startCookPrep(g, food) {
     const stationKey = STATION_FOR_FOOD[food] || 'grill';
     const stationPost = this.plan.stations?.[stationKey] || this.plan.kitchen;
     this.time.delayedCall(2000, () => {
       if (g.state !== 'ordered_food' || !this.guests.includes(g)) return; // left angry meanwhile
-      this.readyFood.push({ guest: g, stationPost });
+      this.readyFood.push({ guest: g, item: food, stationPost });
     });
   }
 
   /**
-   * Dispatches idle runners against the ready-food queue, one at a time.
-   * Same shape as updateBarWaiting()/updateHost(): a per-tick check over a
-   * small queue, with a state guard at every async boundary so a guest who
-   * left angry mid-flight is dropped cleanly instead of crashing.
+   * Dispatches every idle runner each tick: food delivery first (guest-
+   * facing, time-sensitive), bussing a dirty table if there's no food
+   * waiting. Same shape as updateBarWaiting()/updateHost() — a per-tick
+   * check over small shared queues — and, since the player can claim from
+   * the same queues via interact(), whoever calls shift()/clearTableDirty()
+   * first simply claims the entry; there's no separate conflict handling
+   * needed. State is re-checked at every async boundary so a guest who left
+   * angry mid-flight is dropped cleanly instead of crashing.
    */
   updateFoodRunners() {
-    if (this.readyFood.length === 0) return;
-    const runner = this.foodRunners.find(r => r.state === 'idle');
-    if (!runner) return;
+    for (const runner of this.foodRunners) {
+      if (runner.state !== 'idle') continue;
+      if (this.readyFood.length > 0) this.dispatchRunnerToFood(runner);
+      else if (this.dirtyTables.size > 0) this.dispatchRunnerToBus(runner);
+    }
+  }
+
+  dispatchRunnerToFood(runner) {
     const order = this.readyFood.shift();
     const g = order.guest;
-    if (g.state !== 'ordered_food' || !this.guests.includes(g)) return; // drop stale order
+    if (g.state !== 'ordered_food' || !this.guests.includes(g)) return; // drop stale order, runner stays idle
 
     runner.state = 'fetching';
     this.walkActorTo(runner, order.stationPost.x, order.stationPost.y, () => {
@@ -848,6 +906,26 @@ export class GameScene extends Phaser.Scene {
       runner.state = 'delivering';
       this.walkActorTo(runner, g.seat.x, g.seat.y, () => {
         if (g.state === 'ordered_food' && this.guests.includes(g)) this.finalizeGuestVisit(g);
+        this.returnRunner(runner);
+      });
+    });
+  }
+
+  /** Runners bus tables too when there's no food to deliver — same job the player can do. */
+  dispatchRunnerToBus(runner) {
+    const table = this.dirtyTables.values().next().value;
+    if (!table) return;
+    const approach = this.seatsForTable(table)[0];
+    if (!approach) return;
+    this.clearTableDirty(table); // claim immediately so the player can't also grab it
+
+    runner.state = 'bussing';
+    this.walkActorTo(runner, approach.x, approach.y, () => {
+      const dish = this.plan.dish;
+      if (!dish) { this.returnRunner(runner); return; }
+      runner.state = 'returning-dish';
+      this.walkActorTo(runner, dish.x, dish.y, () => {
+        this.score += 2;
         this.returnRunner(runner);
       });
     });
@@ -1286,35 +1364,42 @@ export class GameScene extends Phaser.Scene {
     const d = DIRS[this.waiter.facing] || DIRS.down;
     const fx = wx + d.x, fy = wy + d.y;
 
-    // Food is cooked and delivered entirely by the kitchen/runner pipeline
-    // now (startCookPrep/updateFoodRunners) — the kitchen marker is just a
-    // status point, not a pickup point, for the player.
+    // Kitchen: pick up as many ready dishes as the tray has room for. Cooks
+    // and food runners are still working the same queue in the background —
+    // this just lets the player grab food themselves instead of waiting.
     const k = this.plan.kitchen;
     if (k && k.x === fx && k.y === fy) {
-      this.hint(this.readyFood.length > 0
-        ? `The kitchen has ${this.readyFood.length} dish(es) ready for a runner.`
-        : 'The kitchen is preparing orders.');
+      const room = CARRY_CAP - this.carrying.length;
+      if (room <= 0) { this.hint('Tray is full.'); return; }
+      if (this.readyFood.length === 0) {
+        this.hint('No dishes ready at the kitchen yet.');
+        return;
+      }
+      const take = this.readyFood.splice(0, room);
+      for (const o of take) this.carrying.push({ type: 'food', item: o.item, guest: o.guest });
+      this.hint(`Picked up ${take.length} dish${take.length > 1 ? 'es' : ''}.`);
       return;
     }
 
     // Dirty table: pick up the dish, freeing the table for reseating.
     const dirtyTable = this.tableAt(fx, fy);
     if (dirtyTable && this.dirtyTables.has(dirtyTable)) {
-      if (this.carrying) { this.hint('Already carrying something.'); return; }
-      this.carrying = 'dirty_dish';
+      if (this.carrying.length >= CARRY_CAP) { this.hint('Tray is full.'); return; }
+      this.carrying.push({ type: 'dirty_dish', item: 'dirty_dish', guest: null });
       this.clearTableDirty(dirtyTable);
       this.hint('Picked up a dirty dish.');
       return;
     }
 
-    // Dish area: drop off a bussed dish.
+    // Dish area: drop off every bussed dish currently on the tray at once.
     const dish = this.plan.dish;
     if (dish && dish.x === fx && dish.y === fy) {
-      if (this.carrying === 'dirty_dish') {
-        this.carrying = null;
-        this.score += 2;
-        this.hint('Bussed a table. +2');
-      } else if (this.carrying) {
+      const dirty = this.carrying.filter(c => c.type === 'dirty_dish');
+      if (dirty.length > 0) {
+        this.carrying = this.carrying.filter(c => c.type !== 'dirty_dish');
+        this.score += 2 * dirty.length;
+        this.hint(`Bussed ${dirty.length} table${dirty.length > 1 ? 's' : ''}. +${2 * dirty.length}`);
+      } else if (this.carrying.length > 0) {
         this.hint("That doesn't go here.");
       } else {
         this.hint('Nothing to drop off.');
@@ -1322,16 +1407,18 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    // Bar: pick up as many ready drinks as the tray has room for.
     const bar = this.plan.bar;
     if (bar && bar.x === fx && bar.y === fy) {
-      if (this.carrying) { this.hint('Already carrying something.'); return; }
-      if (this.preparedDrink) {
-        this.carrying = this.preparedDrink;
-        this.preparedDrink = null;
-        this.hint(`Picked up ${MENU_LABELS[this.carrying]}.`);
-      } else {
-        this.hint('No drink ready at the bar.');
+      const room = CARRY_CAP - this.carrying.length;
+      if (room <= 0) { this.hint('Tray is full.'); return; }
+      if (this.readyDrinks.length === 0) {
+        this.hint('No drinks ready at the bar yet.');
+        return;
       }
+      const take = this.readyDrinks.splice(0, room);
+      for (const o of take) this.carrying.push({ type: 'drink', item: o.item, guest: o.guest });
+      this.hint(`Picked up ${take.length} drink${take.length > 1 ? 's' : ''}.`);
       return;
     }
 
@@ -1344,29 +1431,7 @@ export class GameScene extends Phaser.Scene {
 
     const g = this.guestAdjacent(fx, fy);
     if (g) {
-      const drink = g.def.drinkOrder || 'coffee';
-      const food = g.def.foodOrder || 'burger';
-      if (g.state === 'seated') {
-        this.preparedDrink = drink;
-        g.state = 'ordered_drink';
-        this.showOrderBubble(g, drink);
-        this.hint(`Took drink order: ${MENU_LABELS[drink]}. Ready at the bar.`);
-      } else if (g.state === 'ordered_drink' && this.carrying === drink) {
-        // Bar-seated guests are excluded by guestAdjacent() — anyone reaching
-        // here is always a dine-in guest moving on to the food stage.
-        this.deliverDrinkStage(g);
-      } else if (g.state === 'ordered_drink') {
-        this.hint(`They want ${MENU_LABELS[drink]}.`);
-      } else if (g.state === 'drink_served') {
-        g.state = 'ordered_food';
-        this.showOrderBubble(g, food);
-        this.hint(`Took order: ${MENU_LABELS[food]}. Kitchen's on it.`);
-        this.startCookPrep(g, food);
-      } else if (g.state === 'ordered_food') {
-        // Cook + runner handle the rest automatically — nothing for the
-        // player to do here but wait.
-        this.hint(`They're waiting on ${MENU_LABELS[food]} from the kitchen.`);
-      }
+      this.handleTableInteraction(g.table, g);
       return;
     }
 
@@ -1378,6 +1443,62 @@ export class GameScene extends Phaser.Scene {
     // excluded here so the player never takes their order or delivers to them.
     return this.guests.find(g => INTERACTABLE_STATES.has(g.state) && !g.table?.isBar &&
       g.seat && g.seat.x === x && g.seat.y === y);
+  }
+
+  /**
+   * Facing any guest at an occupied (non-bar) table handles the WHOLE table
+   * in one interaction: deliver anything already on the tray that matches
+   * someone here, take drink orders for anyone not yet asked, then food
+   * orders for anyone whose drink is already served — including a guest
+   * whose drink this same interaction just delivered, so a table can go
+   * from "just sat down" to "food on the way" in one visit once the tray
+   * has what it needs.
+   */
+  handleTableInteraction(table, facedGuest) {
+    const tableGuests = this.guests.filter(g => g.table === table && INTERACTABLE_STATES.has(g.state));
+    let delivered = 0, drinksTaken = 0, foodTaken = 0;
+
+    for (const g of tableGuests) {
+      if (g.state === 'ordered_drink') {
+        const i = this.carrying.findIndex(c => c.type === 'drink' && c.guest === g);
+        if (i >= 0) { this.carrying.splice(i, 1); this.deliverDrinkStage(g); delivered++; }
+      } else if (g.state === 'ordered_food') {
+        const i = this.carrying.findIndex(c => c.type === 'food' && c.guest === g);
+        if (i >= 0) { this.carrying.splice(i, 1); this.finalizeGuestVisit(g); delivered++; }
+      }
+    }
+
+    for (const g of tableGuests) {
+      if (g.state === 'seated') {
+        const drink = g.def.drinkOrder || 'coffee';
+        g.state = 'ordered_drink';
+        this.showOrderBubble(g, drink);
+        this.readyDrinks.push({ guest: g, item: drink });
+        drinksTaken++;
+      }
+    }
+
+    for (const g of tableGuests) {
+      if (g.state === 'drink_served') {
+        const food = g.def.foodOrder || 'burger';
+        g.state = 'ordered_food';
+        this.showOrderBubble(g, food);
+        this.startCookPrep(g, food);
+        foodTaken++;
+      }
+    }
+
+    if (delivered || drinksTaken || foodTaken) {
+      const parts = [];
+      if (delivered) parts.push(`delivered ${delivered}`);
+      if (drinksTaken) parts.push(`took ${drinksTaken} drink order${drinksTaken > 1 ? 's' : ''}`);
+      if (foodTaken) parts.push(`took ${foodTaken} food order${foodTaken > 1 ? 's' : ''}`);
+      this.hint(parts.join(', ') + '.');
+    } else if (facedGuest.state === 'ordered_drink') {
+      this.hint(`They want ${MENU_LABELS[facedGuest.def.drinkOrder || 'coffee']}.`);
+    } else if (facedGuest.state === 'ordered_food') {
+      this.hint(`They want ${MENU_LABELS[facedGuest.def.foodOrder || 'burger']}.`);
+    }
   }
 
   showOrderBubble(g, itemId) {
@@ -1394,9 +1515,12 @@ export class GameScene extends Phaser.Scene {
 
   menuFrameFor(id) { return MENU_FRAMES[id] ?? 0; }
 
-  /** Mid-visit drink delivery for dine-in guests: they stay seated and move on to food. */
+  /**
+   * Mid-visit drink delivery for dine-in guests: they stay seated and move
+   * on to food. Caller (handleTableInteraction) has already removed the
+   * matching item from the tray — this only touches the guest.
+   */
   deliverDrinkStage(g) {
-    this.carrying = null;
     g.state = 'drink_served';
     if (g.orderBubble) { g.orderBubble.destroy(); g.orderBubble = null; }
     this.hint(`Delivered ${g.def.name}'s drink. They're deciding on food next.`);
@@ -1404,12 +1528,13 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Ends a guest's visit: tip based on remaining patience, score/served,
-   * walk to the door. The only finale — dine-in food and bar drinks are both
-   * delivered by an NPC now (a food runner / the bartender), never the
-   * player, so this is called directly from updateFoodRunners() and
-   * startBartenderService(). Deliberately does not touch `this.carrying`, so
-   * an NPC finalizing one guest can never clobber whatever the player is
-   * carrying for someone else at that moment.
+   * walk to the door. Called from three places: the bartender's autonomous
+   * bar finale, a food runner's autonomous food finale, and the player
+   * delivering a table's food order by hand (handleTableInteraction, which
+   * removes the tray item first). Deliberately does not touch
+   * `this.carrying`/queues itself, so whichever of the three finalizes one
+   * guest can never clobber items still on the tray or in flight for
+   * someone else.
    */
   finalizeGuestVisit(g) {
     g.state = 'served';
