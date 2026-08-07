@@ -102,32 +102,42 @@ function buildDefaultFloorPlan() {
     benches.push({ x: b.x, y: b.y });
   }
 
-  // --- Kitchen (row 1: fridge + 5 stations + dish area; row 2 is the walkway
-  // cooks/runners/the waiter stand in) ---
+  // --- Kitchen (row 1: fridge + 5 two-tile stations + a two-tile dish area,
+  // spread across the full cols 9-27 span with a gap column between each so
+  // they read as distinct areas; row 2 is the walkway cooks/runners/the
+  // waiter stand in) ---
   const kitchenRow = 1;
   const kitchenItems = [
-    { x: 9,  tile: T.fridge },      // decorative
-    { x: 10, tile: T.stove },       // grill
-    { x: 11, tile: T.counter },     // fry
-    { x: 12, tile: T.counter },     // saute
-    { x: 13, tile: T.counterAlt },  // salad
-    { x: 14, tile: T.counter },     // dessert
-    { x: 15, tile: T.dishRack },    // dish area
+    { x: 9,  tile: T.fridge },       // decorative
+    { x: 10, tile: T.stove },        // grill
+    { x: 11, tile: T.counter },      // grill
+    { x: 13, tile: T.counter },      // fry
+    { x: 14, tile: T.counterAlt },   // fry
+    { x: 16, tile: T.counterAlt },   // saute
+    { x: 17, tile: T.counter },      // saute
+    { x: 19, tile: T.counterAlt },   // salad
+    { x: 20, tile: T.counter },      // salad
+    { x: 22, tile: T.counter },      // dessert
+    { x: 23, tile: T.counterAlt },   // dessert
+    { x: 25, tile: T.dishRack },     // dish area
+    { x: 26, tile: T.dishRack },     // dish area
   ];
   for (const item of kitchenItems) {
     objects[idx(item.x, kitchenRow)] = item.tile;
     solids[idx(item.x, kitchenRow)] = true;
   }
-  const kitchen = { x: 11, y: 2 };
+  // Status/decoration anchor only now (see renderFloor()/interact() in
+  // Game.js) — sits in a gap column, central to the whole kitchen span.
+  const kitchen = { x: 18, y: 2 };
   const stations = {
     grill:   { x: 10, y: 2 },
-    fry:     { x: 11, y: 2 },
-    saute:   { x: 12, y: 2 },
-    salad:   { x: 13, y: 2 },
-    dessert: { x: 14, y: 2 },
+    fry:     { x: 13, y: 2 },
+    saute:   { x: 16, y: 2 },
+    salad:   { x: 19, y: 2 },
+    dessert: { x: 22, y: 2 },
   };
-  const dish = { x: 15, y: 2 };
-  const runnerPosts = [{ x: 16, y: 2 }, { x: 17, y: 2 }];
+  const dish = { x: 25, y: 2 };
+  const runnerPosts = [{ x: 24, y: 2 }, { x: 27, y: 2 }];
 
   // --- Kitchen / dining divider (row 3, gaps at x=9 and x=20) ---
   // Bounded at the original section's right edge (28), not COLS - 1: the
