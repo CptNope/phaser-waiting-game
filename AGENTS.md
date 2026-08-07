@@ -150,7 +150,8 @@ so a table directly above/below maps to a side pose.
   a still-empty table once `maxActiveTables` (3) non-bar tables are already
   occupied — see "Table cap" below. Adding to an already-active table (a
   party joining one that already has guests) is never blocked by the cap.
-- Waiting guests show blue patience bars; seated guests show green→red
+- Waiting guests show blue patience bars; seated guests show green→red.
+  Visiting a table refills its guests' patience — see "Whole-table ordering"
 - HUD is two rows: status (Served/Score/Tables/…) + time on row 1, the carry
   tray on its own row 2 below — always its own line so a long status string
   can never run over it (see "HUD" under Controls)
@@ -183,10 +184,19 @@ in one interaction (`handleTableInteraction()`), not just the faced guest:
 
 Per-guest state machine (unchanged shape, just driven per-table now):
 `seated` → `ordered_drink` → `drink_served` → `ordered_food` → `served`.
-Patience is a single continuous budget from `onGuestSeated` through the final
-delivery; it is not reset between stages. `guestAdjacent()` only matches
-guests at non-bar tables — guests seated at the bar are excluded entirely and
-served by the bartender instead, never by the player (see "Bartender NPC").
+
+**Patience resets on every table visit.** `handleTableInteraction()` sets
+`g.patience = g.maxPatience` for every guest at the table before doing
+anything else, whether or not there was an order to take or an item to hand
+over — checking in *is* the service, so simply walking over buys the table
+more time. Only that one table is affected. Note this makes attentiveness,
+not raw speed, the thing the patience system actually rewards: a table you
+keep visiting will never time out.
+
+`guestAdjacent()` only matches guests at non-bar tables — guests seated at
+the bar are excluded entirely and served by the bartender instead, never by
+the player (see "Bartender NPC"), so the player cannot reset a bar guest's
+patience either.
 
 **The tray** (`this.carrying`): an array of `{ type: 'drink'|'food'|'dirty_dish',
 item, guest }`, capped at `CARRY_CAP` (4) total items of any mix. Ordering
@@ -203,22 +213,35 @@ conflict handling needed since JS is single-threaded.
 
 ### Bartender NPC
 
-The bartender has two independent jobs:
+The bartender is an `Alex` sprite with a "BARTENDER" badge, posted at
+`plan.bar`, with two independent jobs:
 
-1. **Dine-in drink pickup** — same "kitchen for drinks" model as before: no
-   walking, no per-drink state. `spawnBartender()` places a static `Alex`
-   sprite with a "BARTENDER" badge (plus a "DRINK PICKUP" stand-in label —
-   see "Pickup labels" below) at `plan.bar`. Taking a dine-in guest's drink
-   order pushes `{ guest, item }` onto `this.readyDrinks` immediately (no
-   prep delay); the player picks up from there, same tray/`CARRY_CAP` rules
-   as the kitchen.
-2. **Full service for bar-seated guests** — `onGuestSeated()` calls
-   `startBartenderService(g)` whenever `g.table.isBar` is true: the bartender
-   notices the guest (~1.2s), takes their drink order, prepares it (~1.8s),
-   and delivers it directly via `finalizeGuestVisit()` — no player
-   involvement at all, and it never touches `readyDrinks`/`carrying`. Each
-   step re-checks the guest's state first so a guest who left angry
-   mid-service is silently skipped rather than double-handled.
+1. **Dine-in drink pickup** — the "kitchen for drinks". Taking a dine-in
+   guest's drink order pushes `{ guest, item }` onto `this.readyDrinks`
+   immediately (no prep delay); the player picks up at `plan.bar`, same
+   tray/`CARRY_CAP` rules as the kitchen. `plan.bar` is a fixed *location*,
+   so this works whether or not the bartender happens to be standing there
+   (see job 2). The "DRINK PICKUP" stand-in label is deliberately not
+   attached to the bartender for that reason — it marks the spot, while the
+   `badge` follows the NPC.
+2. **Table service for bar-seated guests** — `updateBartender()` dispatches
+   the bartender **on foot**, one guest at a time, whenever it's `idle`:
+
+   `idle` → `serving` (walk out to the guest's seat, take the order) →
+   `pouring` (walk back behind the bar, ~0.9s to pour) → `delivering` (walk
+   back out, `finalizeGuestVisit()`) → `returning` (walk to post) → `idle`.
+
+   Same dispatch shape as `updateFoodRunners()`, and it reuses
+   `walkActorTo()` like every other walking NPC. The guest's state is
+   re-checked at every leg, so someone who left angry mid-service is
+   dropped cleanly and the bartender returns to its post rather than
+   getting stuck. It never touches `readyDrinks`/`carrying` — bar guests
+   are served entirely off-queue.
+
+   `updateBartender()` deliberately also picks up guests already in
+   `ordered_drink`, not just `seated`: if a service chain bails partway
+   (guest gone, path failed), the next tick retries them instead of
+   leaving that guest stranded with an order taken and nobody coming back.
 
 `finalizeGuestVisit()` is the shared tip/leave finale (score, `served` count,
 walk to the door). It's called from three places — the bartender's
@@ -269,7 +292,7 @@ the host does — and have two jobs, checked in priority order each tick for
 every idle runner (`updateFoodRunners()`):
 1. **Deliver ready food** (`dispatchRunnerToFood`) — walk to the station,
    then the guest's seat, then `finalizeGuestVisit()`. Guest-state guarded at
-   both legs, same pattern as `startBartenderService()`.
+   both legs, same pattern as `updateBartender()`.
 2. **Bus a dirty table** (`dispatchRunnerToBus`), only when there's no food
    waiting — walk to any tile in the table's seat ring, then to `plan.dish`,
    +2 score. Claims the table via `clearTableDirty()` immediately on pickup,
@@ -433,12 +456,12 @@ If the index fails to load, the editor falls back to the sheets Boot preloaded.
 ## Controls
 
 - **WASD / Arrow keys** — move waiter
-- **E** — interact: at a table, handles the whole table at once (deliver
-  anything matching on the tray, take drink/food orders — see "Whole-table
-  ordering and the carry tray"); at the bar/kitchen, picks up as many ready
-  drinks/dishes as the tray (cap 4) has room for; at a dirty table, picks up
-  the dish; at the dish area, drops off everything bussed; at the host
-  stand, reports front-of-house status (the host seats parties itself)
+- **E** — interact: at a table, handles the whole table at once (resets its
+  patience, delivers anything matching on the tray, takes drink/food orders
+  — see "Whole-table ordering and the carry tray"); at the bar/kitchen, picks
+  up as many ready drinks/dishes as the tray (cap 4) has room for; at a dirty
+  table, picks up the dish; at the dish area, drops off everything bussed; at
+  the host stand, reports front-of-house status (the host seats parties itself)
 - **Scroll wheel** — zoom in/out (desktop)
 - **Pinch** — zoom in/out (mobile)
 - **ESC** — return to menu (from any scene)

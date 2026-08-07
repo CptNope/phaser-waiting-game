@@ -226,9 +226,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * The bartender is the "kitchen" for drinks: purely decorative, no state
-   * machine. Taking a drink order instantly makes it ready at `this.plan.bar`,
-   * exactly like the (NPC-less) kitchen does for food.
+   * The bartender works the bar on foot (see updateBartender) and doubles as
+   * the drink "kitchen" for dine-in orders: taking a dine-in drink order
+   * queues it on `readyDrinks` for pickup at `this.plan.bar`, which stays a
+   * fixed location whether or not the bartender is standing there.
    */
   spawnBartender() {
     const post = this.plan.bar;
@@ -247,13 +248,16 @@ export class GameScene extends Phaser.Scene {
     this.worldOnly(badge);
 
     // Stand-in label until a dedicated pickup-counter sprite is chosen.
+    // Deliberately NOT stored on the bartender object: `badge` follows the
+    // sprite around (it names the NPC), but this one marks the pickup spot
+    // and must stay at the bar when the bartender walks off to serve.
     const pickupLabel = this.add.text(sprite.x, sprite.y + 16, 'DRINK PICKUP', {
       fontFamily: 'system-ui', fontSize: '8px', fontStyle: 'bold',
       color: '#1b1b22', backgroundColor: '#a8e6ff', padding: { x: 3, y: 1 }
     }).setOrigin(0.5).setDepth(52);
     this.worldOnly(pickupLabel);
 
-    this.bartender = { sprite, badge };
+    this.bartender = { sprite, badge, idleKey: keys.idle, post, state: 'idle' };
   }
 
   /** Stand-in text label at the food pickup point until a sprite is chosen. */
@@ -665,6 +669,7 @@ export class GameScene extends Phaser.Scene {
     this.handleSpawning(dt);
     this.updateHost();
     this.updateBarWaiting();
+    this.updateBartender();
     this.updateFoodRunners();
     this.updateHUD();
   }
@@ -861,9 +866,9 @@ export class GameScene extends Phaser.Scene {
   /**
    * Starts the station's cook on a food order. After a prep delay the dish
    * is pushed onto readyFood, ready for either a food runner or the player
-   * to fetch from the kitchen pickup point — mirrors the bartender's
-   * startBartenderService, just producing a queue entry instead of an
-   * immediate delivery (someone still has to carry it to the table).
+   * to fetch from the kitchen pickup point. Unlike a bar-seated guest (whom
+   * the bartender walks out to and serves end to end), nobody is committed
+   * to this dish yet — it just sits in the queue until someone claims it.
    */
   startCookPrep(g, food) {
     const stationKey = STATION_FOR_FOOD[food] || 'grill';
@@ -1153,28 +1158,69 @@ export class GameScene extends Phaser.Scene {
     g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
     g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x6cff6c).setOrigin(0, 0.5).setDepth(51);
     this.worldOnly(g.patienceBar, g.patienceFill);
-
-    // Bar guests are served entirely by the bartender — the player never
-    // takes their order or delivers to them.
-    if (g.table?.isBar) this.startBartenderService(g);
+    // Bar guests are served entirely by the bartender — updateBartender()
+    // picks them up from here on its next idle tick. The player never takes
+    // their order or delivers to them (see guestAdjacent).
   }
 
   /**
-   * The bartender serves bar-seated guests autonomously: notices them, takes
-   * their drink order, prepares it, and delivers it — no player involvement.
-   * Guards against the guest having already left angry between each step.
+   * The bartender serves bar-seated guests on foot, one at a time: walks out
+   * to the guest to take their order, back behind the bar to pour it, out
+   * again to deliver, then back to their post. Same dispatch shape as
+   * updateFoodRunners() — a per-tick check while idle, with the guest's
+   * state re-checked at every leg so someone who left angry mid-service is
+   * dropped cleanly rather than double-handled.
+   *
+   * Deliberately also picks up guests already in `ordered_drink`: if a
+   * service chain bails out partway (guest gone, path failed), the next tick
+   * retries them instead of leaving that guest stranded with an order taken
+   * and nobody coming back.
    */
-  startBartenderService(g) {
-    this.time.delayedCall(1200, () => {
-      if (g.state !== 'seated') return;
-      const drink = g.def.drinkOrder || 'coffee';
+  updateBartender() {
+    const b = this.bartender;
+    if (!b || b.state !== 'idle') return;
+    const g = this.guests.find(x => x.table?.isBar && x.seat &&
+      (x.state === 'seated' || x.state === 'ordered_drink'));
+    if (!g) return;
+    b.state = 'serving';
+    this.walkActorTo(b, g.seat.x, g.seat.y, () => this.bartenderTakeOrder(g));
+  }
+
+  bartenderTakeOrder(g) {
+    const b = this.bartender;
+    if (!this.guests.includes(g) || !g.table?.isBar) { this.returnBartender(); return; }
+    if (g.state === 'seated') {
       g.state = 'ordered_drink';
-      this.showOrderBubble(g, drink);
-      this.time.delayedCall(1800, () => {
-        if (g.state !== 'ordered_drink') return;
-        this.finalizeGuestVisit(g);
-      });
+      this.showOrderBubble(g, g.def.drinkOrder || 'coffee');
+    } else if (g.state !== 'ordered_drink') {
+      this.returnBartender();
+      return;
+    }
+    // Back behind the bar to pour it.
+    b.state = 'pouring';
+    this.walkActorTo(b, b.post.x, b.post.y, () => {
+      this.time.delayedCall(900, () => this.bartenderDeliver(g));
     });
+  }
+
+  bartenderDeliver(g) {
+    const b = this.bartender;
+    if (!this.guests.includes(g) || g.state !== 'ordered_drink' || !g.seat) {
+      this.returnBartender();
+      return;
+    }
+    b.state = 'delivering';
+    this.walkActorTo(b, g.seat.x, g.seat.y, () => {
+      if (this.guests.includes(g) && g.state === 'ordered_drink') this.finalizeGuestVisit(g);
+      this.returnBartender();
+    });
+  }
+
+  returnBartender() {
+    const b = this.bartender;
+    if (!b) return;
+    b.state = 'returning';
+    this.walkActorTo(b, b.post.x, b.post.y, () => { b.state = 'idle'; });
   }
 
   // Determine which sit pose to use based on table position relative to seat.
@@ -1439,7 +1485,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   guestAdjacent(x, y) {
-    // Bar-seated guests are served entirely by the bartender (startBartenderService) —
+    // Bar-seated guests are served entirely by the bartender (updateBartender) —
     // excluded here so the player never takes their order or delivers to them.
     return this.guests.find(g => INTERACTABLE_STATES.has(g.state) && !g.table?.isBar &&
       g.seat && g.seat.x === x && g.seat.y === y);
@@ -1453,10 +1499,16 @@ export class GameScene extends Phaser.Scene {
    * whose drink this same interaction just delivered, so a table can go
    * from "just sat down" to "food on the way" in one visit once the tray
    * has what it needs.
+   *
+   * Any visit also resets the whole table's patience, whether or not there
+   * was anything to hand over — checking in *is* the service, so simply
+   * walking over buys the table more time.
    */
   handleTableInteraction(table, facedGuest) {
     const tableGuests = this.guests.filter(g => g.table === table && INTERACTABLE_STATES.has(g.state));
     let delivered = 0, drinksTaken = 0, foodTaken = 0;
+
+    for (const g of tableGuests) g.patience = g.maxPatience;
 
     for (const g of tableGuests) {
       if (g.state === 'ordered_drink') {
@@ -1493,11 +1545,13 @@ export class GameScene extends Phaser.Scene {
       if (delivered) parts.push(`delivered ${delivered}`);
       if (drinksTaken) parts.push(`took ${drinksTaken} drink order${drinksTaken > 1 ? 's' : ''}`);
       if (foodTaken) parts.push(`took ${foodTaken} food order${foodTaken > 1 ? 's' : ''}`);
-      this.hint(parts.join(', ') + '.');
+      this.hint(parts.join(', ') + '. Patience reset.');
     } else if (facedGuest.state === 'ordered_drink') {
-      this.hint(`They want ${MENU_LABELS[facedGuest.def.drinkOrder || 'coffee']}.`);
+      this.hint(`Checked in — still waiting on ${MENU_LABELS[facedGuest.def.drinkOrder || 'coffee']}.`);
     } else if (facedGuest.state === 'ordered_food') {
-      this.hint(`They want ${MENU_LABELS[facedGuest.def.foodOrder || 'burger']}.`);
+      this.hint(`Checked in — still waiting on ${MENU_LABELS[facedGuest.def.foodOrder || 'burger']}.`);
+    } else {
+      this.hint('Checked in. Patience reset.');
     }
   }
 
