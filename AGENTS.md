@@ -268,13 +268,15 @@ input method on mobile and complement keyboard on desktop. They render on a
 **separate fixed UI camera** (`this.uiCam`) that doesn't zoom or follow, so
 they stay pinned to the screen regardless of the main camera's position or zoom.
 
-- **D-pad** (bottom-left) — hold a direction to walk. Multi-touch aware:
-  each pointer tracks its own direction; releasing one doesn't cancel another.
-  Larger touch targets on narrow screens (64px vs 56px base).
-- **Action button** (bottom-right, labeled E) — tap to interact.
-  Larger on narrow screens (48px vs 38px base).
+- **Dynamic Virtual Joystick** (Left half of screen) — touch anywhere on the left
+  half of the screen to spawn the joystick, then drag to move. Multi-touch aware.
+- **Action / Interact** — tap anywhere on the right half of the screen, or perform
+  a quick tap on the left side, to interact. A visual "E" button remains in the
+  bottom-right as an affordance, but tapping anywhere works.
 - **Zoom +/−** (right side, above action button) — tap to zoom in/out by 0.25x.
 - **Menu button** (top-right, ≡) — tap to return to menu.
+- **Clearish UI** — all visual buttons render at 40% opacity to minimize interference
+  with gameplay visibility.
 - **Safe-area insets** — controls read CSS `env(safe-area-inset-*)` and offset
   from edges accordingly, so they don't hide behind notches or gesture bars.
 

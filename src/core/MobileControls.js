@@ -1,11 +1,9 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
 
-// Touch controls for mobile play: virtual D-pad, action button, menu button,
+// Touch controls for mobile play: dynamic virtual joystick, action button, menu button,
 // and zoom +/− buttons. Rendered on a separate fixed UI camera (no zoom/follow)
 // so they stay pinned to the screen regardless of the main game camera's
 // position or zoom.
-
-const DIR_KEYS = { up: 'up', down: 'down', left: 'left', right: 'right' };
 
 export function isTouchDevice() {
   return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -55,13 +53,17 @@ export class MobileControls {
     this.onMenu = onMenu || (() => {});
     this.onZoomIn = onZoomIn || (() => {});
     this.onZoomOut = onZoomOut || (() => {});
+    
     this._heldDir = null;
-    this._activePointers = new Map(); // pointerId -> dir
+    this._joystickPointerId = null;
+    this._tapStart = null;
+    
     this.visible = false;
     this.objects = [];
     this._resizeBinding = null;
     this.sizes = this.computeSizes();
     this.build();
+    this.setupGlobalInput();
   }
 
   get heldDir() { return this._heldDir; }
@@ -75,18 +77,14 @@ export class MobileControls {
     // Larger base sizes on small screens for better touch targets.
     // Scale based on the shorter viewport side, with wider clamp range.
     const scale = Phaser.Math.Clamp(short / 550, 0.9, 1.4);
-    const dpadBase = narrow ? 64 : 56;
     const actionBase = narrow ? 48 : 38;
     const safeArea = getSafeAreaInsets();
 
     return {
       scale,
-      DPAD_BTN: Math.round(dpadBase * scale),
-      DPAD_GAP: Math.max(2, Math.round(4 * scale)),
       ACTION_R: Math.round(actionBase * scale),
       MENU_BTN: Math.round(40 * scale),
       ZOOM_BTN: Math.round(34 * scale),
-      DPAD_FONT: Math.round(24 * scale),
       ACTION_FONT: Math.round(20 * scale),
       MENU_FONT: Math.round(20 * scale),
       ZOOM_FONT: Math.round(18 * scale),
@@ -100,84 +98,65 @@ export class MobileControls {
   build() {
     const scene = this.scene;
     const DEPTH = 2000;
-    // Create at the base 1.0x size; reposition() applies the correct scale
-    // for the current viewport and every resize.
-    const DPAD_BASE = 56, DPAD_GAP = 4, ACTION_BASE = 38, MENU_BASE = 40, ZOOM_BASE = 34;
-    const MARGIN = 16, DPAD_UNIT = DPAD_BASE + DPAD_GAP;
+    
+    // UI elements will be created at 1.0x base size and scaled in reposition().
+    const ACTION_BASE = 38, MENU_BASE = 40, ZOOM_BASE = 34;
 
-    const style = {
-      fontFamily: 'system-ui', fontSize: '24px', fontStyle: 'bold', color: '#e6e6f0'
-    };
-    const actionStyle = {
-      fontFamily: 'system-ui', fontSize: '20px', fontStyle: 'bold', color: '#ffe9a8'
-    };
-    const menuStyle = {
-      fontFamily: 'system-ui', fontSize: '20px', color: '#e6e6f0'
-    };
-    const zoomStyle = {
-      fontFamily: 'system-ui', fontSize: '18px', fontStyle: 'bold', color: '#e6e6f0'
-    };
+    const actionStyle = { fontFamily: 'system-ui', fontSize: '20px', fontStyle: 'bold', color: '#ffe9a8' };
+    const menuStyle = { fontFamily: 'system-ui', fontSize: '20px', color: '#e6e6f0' };
+    const zoomStyle = { fontFamily: 'system-ui', fontSize: '18px', fontStyle: 'bold', color: '#e6e6f0' };
 
-    // --- D-pad (bottom-left, cross layout) ---
-    const dpadOriginX = MARGIN + DPAD_BASE / 2 + DPAD_UNIT;
-    const dpadOriginY = scene.scale.height - MARGIN - DPAD_BASE / 2 - DPAD_UNIT;
+    // Set UI buttons to a low opacity (0.4) for a clearish look
+    const UI_ALPHA = 0.4;
 
-    const makeDirBtn = (relX, relY, dir, label) => {
-      const x = dpadOriginX + relX * DPAD_UNIT;
-      const y = dpadOriginY + relY * DPAD_UNIT;
-      const bg = scene.add.rectangle(x, y, DPAD_BASE, DPAD_BASE, 0x2b2b39, 0.8)
-        .setStrokeStyle(2, 0x4a4a5e)
-        .setDepth(DEPTH);
-      const txt = scene.add.text(x, y, label, style)
-        .setOrigin(0.5).setDepth(DEPTH + 1);
-      bg.setInteractive({ useHandCursor: false });
-      this._wireHold(bg, dir);
-      this.objects.push(bg, txt);
-      return { bg, txt, dir };
-    };
-
-    this.dpad = {
-      up:    makeDirBtn(0, -1, 'up',    '\u25B2'),
-      down:  makeDirBtn(0,  1, 'down',  '\u25BC'),
-      left:  makeDirBtn(-1, 0, 'left',  '\u25C0'),
-      right: makeDirBtn(1,  0, 'right', '\u25B6'),
-    };
+    // --- Dynamic Joystick Graphics ---
+    // The joystick base and thumb are drawn at fixed sizes (scaled dynamically if we wanted, but they spawn under the finger)
+    this.joystickBase = scene.add.circle(0, 0, 50, 0x2b2b39, UI_ALPHA)
+      .setStrokeStyle(2, 0x8fb6ff, UI_ALPHA)
+      .setDepth(DEPTH - 1)
+      .setVisible(false);
+    
+    this.joystickThumb = scene.add.circle(0, 0, 24, 0x8fb6ff, UI_ALPHA)
+      .setDepth(DEPTH)
+      .setVisible(false);
+    
+    this.objects.push(this.joystickBase, this.joystickThumb);
 
     // --- Action button (bottom-right) ---
-    this.actionBg = scene.add.circle(0, 0, ACTION_BASE, 0x2b2b39, 0.8)
-      .setStrokeStyle(2, 0x8fb6ff)
+    this.actionBg = scene.add.circle(0, 0, ACTION_BASE, 0x2b2b39, UI_ALPHA)
+      .setStrokeStyle(2, 0x8fb6ff, UI_ALPHA)
       .setDepth(DEPTH);
     this.actionTxt = scene.add.text(0, 0, 'E', actionStyle)
-      .setOrigin(0.5).setDepth(DEPTH + 1);
+      .setOrigin(0.5).setDepth(DEPTH + 1).setAlpha(UI_ALPHA + 0.2); // Text slightly more visible
     this.actionBg.setInteractive();
     this._wireTap(this.actionBg, this.actionTxt, () => this.onInteract());
     this.objects.push(this.actionBg, this.actionTxt);
 
     // --- Menu button (top-right) ---
-    this.menuBg = scene.add.rectangle(0, 0, MENU_BASE, MENU_BASE, 0x2b2b39, 0.8)
-      .setStrokeStyle(2, 0x4a4a5e)
+    this.menuBg = scene.add.rectangle(0, 0, MENU_BASE, MENU_BASE, 0x2b2b39, UI_ALPHA)
+      .setStrokeStyle(2, 0x4a4a5e, UI_ALPHA)
       .setDepth(DEPTH);
     this.menuTxt = scene.add.text(0, 0, '\u2261', menuStyle)
-      .setOrigin(0.5).setDepth(DEPTH + 1);
+      .setOrigin(0.5).setDepth(DEPTH + 1).setAlpha(UI_ALPHA + 0.2);
     this.menuBg.setInteractive();
     this._wireTap(this.menuBg, this.menuTxt, () => this.onMenu());
     this.objects.push(this.menuBg, this.menuTxt);
 
     // --- Zoom buttons (right side, stacked vertically above action button) ---
-    this.zoomInBg = scene.add.rectangle(0, 0, ZOOM_BASE, ZOOM_BASE, 0x2b2b39, 0.8)
-      .setStrokeStyle(2, 0x6b8fcc)
+    this.zoomInBg = scene.add.rectangle(0, 0, ZOOM_BASE, ZOOM_BASE, 0x2b2b39, UI_ALPHA)
+      .setStrokeStyle(2, 0x6b8fcc, UI_ALPHA)
       .setDepth(DEPTH);
     this.zoomInTxt = scene.add.text(0, 0, '+', zoomStyle)
-      .setOrigin(0.5).setDepth(DEPTH + 1);
+      .setOrigin(0.5).setDepth(DEPTH + 1).setAlpha(UI_ALPHA + 0.2);
     this.zoomInBg.setInteractive();
     this._wireTap(this.zoomInBg, this.zoomInTxt, () => this.onZoomIn());
     this.objects.push(this.zoomInBg, this.zoomInTxt);
 
-    this.zoomOutBg = scene.add.rectangle(0, 0, ZOOM_BASE, ZOOM_BASE, 0x2b2b39, 0.8)
-      .setStrokeStyle(2, 0x6b8fcc)
+    this.zoomOutBg = scene.add.rectangle(0, 0, ZOOM_BASE, ZOOM_BASE, 0x2b2b39, UI_ALPHA)
+      .setStrokeStyle(2, 0x6b8fcc, UI_ALPHA)
       .setDepth(DEPTH);
     this.zoomOutTxt = scene.add.text(0, 0, '\u2212', zoomStyle)
-      .setOrigin(0.5).setDepth(DEPTH + 1);
+      .setOrigin(0.5).setDepth(DEPTH + 1).setAlpha(UI_ALPHA + 0.2);
     this.zoomOutBg.setInteractive();
     this._wireTap(this.zoomOutBg, this.zoomOutTxt, () => this.onZoomOut());
     this.objects.push(this.zoomOutBg, this.zoomOutTxt);
@@ -192,39 +171,99 @@ export class MobileControls {
     this.setVisible(true);
   }
 
-  /**
-   * Wire a D-pad button to set heldDir on pointer-down and clear on release.
-   * Handles multi-touch: each pointer tracks its own direction.
-   */
-  _wireHold(bg, dir) {
-    const onDown = (pointer) => {
-      bg.setFillStyle(0x4a4a5e, 0.9);
-      this._activePointers.set(pointer.id, dir);
-      this._heldDir = dir;
+  setupGlobalInput() {
+    // Listen to global pointer events on the scene for the dynamic joystick and tap-to-interact anywhere.
+    this.scene.input.on('pointerdown', (pointer, currentlyOver) => {
+      // If we clicked on an existing UI element (like the Menu or Action button), ignore it here.
+      if (currentlyOver.length > 0) return;
+      
+      const width = this.scene.scale.width;
+      
+      // If on the left half of the screen, start the virtual joystick.
+      if (pointer.x < width / 2) {
+        this._joystickPointerId = pointer.id;
+        this.joystickBase.setPosition(pointer.x, pointer.y).setVisible(true);
+        this.joystickThumb.setPosition(pointer.x, pointer.y).setVisible(true);
+      } else {
+        // If on the right half, trigger action immediately.
+        this.onInteract();
+      }
+
+      // Record tap start to detect quick taps (even on the left side)
+      this._tapStart = {
+        id: pointer.id,
+        time: this.scene.time.now,
+        x: pointer.x,
+        y: pointer.y
+      };
+    });
+
+    this.scene.input.on('pointermove', (pointer) => {
+      if (this._joystickPointerId === pointer.id) {
+        const maxRadius = 40;
+        let dx = pointer.x - this.joystickBase.x;
+        let dy = pointer.y - this.joystickBase.y;
+        
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Cap the thumb distance to maxRadius
+        if (dist > maxRadius) {
+          dx = (dx / dist) * maxRadius;
+          dy = (dy / dist) * maxRadius;
+        }
+        
+        this.joystickThumb.setPosition(this.joystickBase.x + dx, this.joystickBase.y + dy);
+        
+        // Calculate direction based on angle
+        if (dist > 10) { // Small deadzone before recognizing direction
+          const angle = Phaser.Math.Angle.Between(0, 0, dx, dy);
+          if (angle > -Math.PI/4 && angle <= Math.PI/4) this._heldDir = 'right';
+          else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) this._heldDir = 'down';
+          else if (angle > -3*Math.PI/4 && angle <= -Math.PI/4) this._heldDir = 'up';
+          else this._heldDir = 'left';
+        } else {
+          this._heldDir = null;
+        }
+      }
+    });
+
+    const onPointerUp = (pointer) => {
+      if (this._joystickPointerId === pointer.id) {
+        this._joystickPointerId = null;
+        this._heldDir = null;
+        this.joystickBase.setVisible(false);
+        this.joystickThumb.setVisible(false);
+      }
+      
+      // Detect quick tap on the left side to trigger interact
+      if (this._tapStart && this._tapStart.id === pointer.id) {
+        // Only process left-side taps here, as right-side taps triggered immediately on pointerdown
+        if (this._tapStart.x < this.scene.scale.width / 2) {
+          const dt = this.scene.time.now - this._tapStart.time;
+          const dist = Phaser.Math.Distance.Between(pointer.x, pointer.y, this._tapStart.x, this._tapStart.y);
+          if (dt < 250 && dist < 15) {
+            this.onInteract();
+          }
+        }
+        this._tapStart = null;
+      }
     };
-    const onUp = (pointer) => {
-      bg.setFillStyle(0x2b2b39, 0.8);
-      this._activePointers.delete(pointer.id);
-      this._recomputeHeldDir();
-    };
-    bg.on('pointerdown', onDown);
-    bg.on('pointerup', onUp);
-    bg.on('pointerout', onUp);
-    bg.on('pointercancel', onUp);
-    // Prevent context menu on long-press
-    bg.on('contextmenu', (e) => { e.event?.preventDefault?.(); });
+
+    this.scene.input.on('pointerup', onPointerUp);
+    this.scene.input.on('pointercancel', onPointerUp);
   }
 
   _wireTap(bg, txt, callback) {
+    const UI_ALPHA = 0.4;
     const press = () => {
-      bg.setFillStyle(0x4a4a5e, 0.95);
+      bg.setFillStyle(0x4a4a5e, UI_ALPHA + 0.2);
       if (txt) txt.setScale(0.9);
     };
     const release = () => {
-      bg.setFillStyle(0x2b2b39, 0.8);
+      bg.setFillStyle(0x2b2b39, UI_ALPHA);
       if (txt) txt.setScale(1);
     };
-    bg.on('pointerdown', (pointer) => {
+    bg.on('pointerdown', () => {
       press();
       callback();
     });
@@ -234,52 +273,21 @@ export class MobileControls {
     bg.on('contextmenu', (e) => { e.event?.preventDefault?.(); });
   }
 
-  _recomputeHeldDir() {
-    if (this._activePointers.size === 0) {
-      this._heldDir = null;
-    } else {
-      // Most recently pressed pointer wins
-      this._heldDir = [...this._activePointers.values()].pop() || null;
-    }
-  }
-
   reposition() {
     // Recalculate size in case the device was rotated/resized across thresholds.
     this.sizes = this.computeSizes();
     const scene = this.scene;
-    const { DPAD_BTN, DPAD_GAP, ACTION_R, MENU_BTN, ZOOM_BTN, MARGIN,
-            SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } = this.sizes;
-    const DPAD_UNIT = DPAD_BTN + DPAD_GAP;
+    const { ACTION_R, MENU_BTN, ZOOM_BTN, MARGIN,
+            SAFE_BOTTOM, SAFE_RIGHT } = this.sizes;
 
     // Bottom margin includes safe area for notched phones.
     const botMargin = MARGIN + SAFE_BOTTOM;
-    const leftMargin = MARGIN + SAFE_LEFT;
     const rightMargin = MARGIN + SAFE_RIGHT;
 
-    // --- D-pad: bottom-left ---
-    const dpadOriginX = leftMargin + DPAD_BTN / 2 + DPAD_UNIT;
-    const dpadOriginY = scene.scale.height - botMargin - DPAD_BTN / 2 - DPAD_UNIT;
-
-    const positions = {
-      up:    [dpadOriginX,                  dpadOriginY - DPAD_UNIT],
-      down:  [dpadOriginX,                  dpadOriginY + DPAD_UNIT],
-      left:  [dpadOriginX - DPAD_UNIT,      dpadOriginY],
-      right: [dpadOriginX + DPAD_UNIT,      dpadOriginY],
-    };
     // Scale factors based on the 1.0x base sizes used in build().
-    const dpadScale = DPAD_BTN / 56;
     const actionScale = ACTION_R / 38;
     const menuScale = MENU_BTN / 40;
     const zoomScale = ZOOM_BTN / 34;
-
-    for (const [dir, [x, y]] of Object.entries(positions)) {
-      const btn = this.dpad[dir];
-      if (!btn) continue;
-      btn.bg.setPosition(x, y);
-      btn.bg.setScale(dpadScale);
-      btn.txt.setPosition(x, y);
-      btn.txt.setFontSize(this.sizes.DPAD_FONT);
-    }
 
     // --- Action button: bottom-right ---
     const actionX = scene.scale.width - rightMargin - ACTION_R;
