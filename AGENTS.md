@@ -134,16 +134,60 @@ and 6-11 (RIGHT). `SIT_FRAMES = { left: 0, right: 6 }`. Only side views exist,
 so a table directly above/below maps to a side pose.
 
 ### Game behavior
-- Guests arrive in **groups** (1-4 per group, set by `groupSize` in guest defs)
-- Groups spawn at the door, walk to the **host stand** waiting area, and wait there
-- Waiter interacts with the host stand (E key while facing it) to seat the next group
-- `findFreeTableForGroup` finds a table with enough free adjacent seats for the whole group
-- All guests in a group walk to their seats simultaneously and sit down
-- If no host stand exists in the plan, falls back to legacy direct seating
+- Guests arrive in **parties** (`groupSize` on the first guest decides how many
+  queued guests arrive together). A party always shares one table.
+- Parties spawn at the door and queue in the **waiting area**
+- The **host NPC** seats them; the player never has to. Interacting with the
+  host stand just reports status.
 - Waiting guests show blue patience bars; seated guests show green→red
-- HUD shows "Waiting N" count when guests are at the host area
+- HUD shows "Waiting N" and "Seating N" while the host is working
 - On serve/angry-leave, swap back to `_idle` and walk to door
 - Waiter plays `waiter_<dir>` walk animation while moving, returns to idle pose when stopped
+
+### Host NPC
+
+`spawnHost()` places a staff character (`HOST_CHARACTER`, default
+`Conference_woman`, with a "HOST" badge) on a walkable tile beside the host
+stand. `updateHost()` runs a four-state machine each frame:
+
+`idle` → `fetching` (walk to the head of the queue) → `escorting` (lead the
+party to the table, guests peeling off to their seats 120 ms apart) →
+`returning` (walk back to the post) → `idle`.
+
+A new escort only starts from `idle`, so a party is never handed off mid-walk.
+`releaseParty()` puts a party back at the front of the queue if an escort
+cannot complete. Without a `host` marker the game falls back to legacy direct
+seating.
+
+### Waiting queue
+
+`waitingSpots()` builds an ordered list of places to wait, cached for the shift:
+
+1. **Queue line** — the longest open run out from the host stand. Runs through
+   a chokepoint are rejected (`isChokepoint()` tests whether blocking a tile
+   would cut the floor in two), so the line never forms across a doorway.
+2. **Bench seats** — the walkable tile in front of each `benches` entry. Guests
+   there use the `_sit` pose.
+
+`reflowWaitingQueue()` re-walks everyone to their current position whenever a
+party arrives or leaves, so the line closes up.
+
+### Tables and seats
+
+Tables are `{ x, y, w, h }` (w/h default to 1). Every footprint tile is solid;
+seats are the walkable tiles orthogonally around it — so **1×1 ≈ 4 seats,
+2×1 ≈ 6, 2×2 ≈ 8**. `findFreeTableForGroup()` prefers a still-empty table whose
+capacity fits the party most snugly, so a couple does not take the eight-top
+while a large party waits.
+
+### Movement gotcha: walk tickets
+
+Actors get re-targeted mid-walk all the time (the queue re-flows, the host
+grabs a party). `walkActorTo()` therefore takes a **ticket**: each call bumps
+`actor._walkTicket` and kills existing tweens. The previous tween chain checks
+the ticket on its next hop and stops. Without this, two chains fight over the
+same sprite and a guest can end up flagged `seated` while their sprite is
+dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
 
 ## Key Design Decisions
 
@@ -152,9 +196,12 @@ so a table directly above/below maps to a side pose.
   no hand-mapped frame indices needed.
 - **Export/Import JSON** for sharing floor plans and guest rosters (no backend, no localStorage dependency for sharing).
 - **BFS pathfinding** for guest AI (walk from door to waiting area, then to seat).
-- **Seat auto-derivation**: seats are walkable tiles adjacent to Table markers; no manual seat placement needed.
-- **Host stand flow**: guests arrive in groups, wait at host stand, waiter seats entire group at once.
-- **Default map** is 24×14 with a waiting area (cols 0-3), host stand at (3,7), kitchen (cols 6-11, row 1), and 9 dining tables in a 3×3 grid.
+- **Seat auto-derivation**: seats are the walkable tiles around a table's footprint; no manual seat placement needed.
+- **Host stand flow**: parties queue in the waiting area and an autonomous host NPC walks them to a table.
+- **Default map** is 28×16: waiting area (cols 0-6) with the door at (3,0), host
+  stand at (6,7) and six benches; a divider wall at col 7 with the only passage
+  at row 8; kitchen along row 1 (cols 9-15); and ten dining tables in mixed
+  1×1 / 2×1 / 1×2 / 2×2 footprints.
 
 ## Floor Plan Editor
 
@@ -186,21 +233,30 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   to an internal clipboard. Release mouse to finalize.
 - **Paste** — click to stamp the clipboard region with its top-left at the clicked
   cell. Clips at grid boundaries.
-- **Spawn / Kitchen / Door / Host / Table** (markers) — place the marker AND auto-paint
-  the selected object tile on that cell (sets solid=true). Removes marker on
+- **Spawn / Kitchen / Door / Host / Bench / Table** (markers) — place the marker AND
+  auto-paint the selected object tile on that cell (sets solid=true). Removes marker on
   re-click. Each marker button has a small preview icon (bottom-right corner);
   right-click the preview to assign the current palette selection as that
   marker's dedicated tile. Per-marker tiles are stored in `plan.markerTiles`
   and saved with the plan.
-  - **Host** = host stand where guests wait to be seated. Waiter interacts here
-    to seat the next waiting group at a free table.
+  - **Host** = the podium the host NPC works from. Do not place it on a
+    one-tile passage; it is solid and would wall the room off.
+  - **Bench** = a waiting-area seat. Guests sit on the tile in front of it.
+  - **Table** uses the **1x1 / 2x1 / 1x2 / 2x2** footprint picker on row 2.
+    The status line reports the seat count. Clicking any tile of an existing
+    table removes the whole thing; overlapping footprints are rejected.
+
+The tool row is responsive: with 13 tools it shrinks the sheet selector, the
+action buttons, the button width and finally the font so it never runs under
+the Menu/Import/Export/Save buttons.
 
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
 
 ## Controls
 
 - **WASD / Arrow keys** — move waiter
-- **E** — interact (seat group at host stand, take order at guest, pick up at kitchen, deliver to guest)
+- **E** — interact (take order at guest, pick up at kitchen, deliver to guest;
+  at the host stand it reports front-of-house status — the host seats parties itself)
 - **ESC** — return to menu (from any scene)
 
 ### On-Screen Controls (always visible in Game)

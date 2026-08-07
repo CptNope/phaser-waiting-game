@@ -1,6 +1,6 @@
 // Service worker for Waiting Game PWA.
 // Caches the app shell and game assets for offline play.
-const CACHE = 'waiting-game-v5';
+const CACHE = 'waiting-game-v6';
 const SHELL = [
   './',
   './index.html',

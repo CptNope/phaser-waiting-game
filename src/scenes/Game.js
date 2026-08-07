@@ -15,6 +15,10 @@ const DIRS = {
   right: { x: 1, y: 0,  anim: 'right' }
 };
 
+// Front-of-house NPC. Any name from CHARACTERS works; this one is not in the
+// default guest roster so the host is visually distinct from the customers.
+const HOST_CHARACTER = 'Conference_woman';
+
 export class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
 
@@ -25,7 +29,12 @@ export class GameScene extends Phaser.Scene {
     this.rows = this.plan.rows;
     this.idx = (x, y) => y * this.cols + x;
     this.solids = this.plan.solids.slice();
-    for (const t of this.plan.tables) this.solids[this.idx(t.x, t.y)] = true;
+    // Tables may span several tiles (w/h default to 1). Every tile of the
+    // footprint blocks movement; seats are derived from the ring around it.
+    for (const t of this.plan.tables) {
+      for (const c of this.tableCells(t)) this.solids[this.idx(c.x, c.y)] = true;
+    }
+    for (const b of (this.plan.benches || [])) this.solids[this.idx(b.x, b.y)] = true;
 
     this.worldW = this.cols * TILE;
     this.worldH = this.rows * TILE;
@@ -57,6 +66,7 @@ export class GameScene extends Phaser.Scene {
 
     this.renderFloor();
     this.spawnWaiter();
+    this.spawnHost();
     this.setupInput();
     this.setupHUD();
     this.setupCamera();
@@ -134,6 +144,182 @@ export class GameScene extends Phaser.Scene {
     this.waiter.facing = 'down';
     this.moving = false;
     this.worldOnly(this.waiter);
+  }
+
+  /**
+   * The host is an NPC who works the front of house on their own: they collect
+   * the party at the head of the queue, walk them to a table and seat them.
+   * They idle on the walkable tile beside the host stand.
+   */
+  spawnHost() {
+    const stand = this.plan.host;
+    if (!stand) { this.host = null; return; }
+    // Stand beside the podium, but not on a tile the queue wants to use —
+    // otherwise the host and the first guest in line overlap.
+    const queue = this.waitingSpots();
+    const near = this.tilesNear(stand, 6);
+    const postTile = near.find(t => !queue.some(q => q.x === t.x && q.y === t.y))
+      || near[0] || stand;
+    const keys = charKeys(HOST_CHARACTER);
+    this.host = {
+      post: postTile,
+      state: 'idle',        // idle | fetching | escorting | returning
+      party: null,
+      table: null,
+      idleKey: keys.idle,
+      sprite: this.add.image(
+        postTile.x * TILE + TILE / 2, postTile.y * TILE + TILE / 2,
+        keys.idle, IDLE_FRAME_DOWN
+      ).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(11)
+    };
+    this.worldOnly(this.host.sprite);
+
+    // A small badge so the host reads as staff rather than another guest.
+    this.host.badge = this.add.text(this.host.sprite.x, this.host.sprite.y - 78, 'HOST', {
+      fontFamily: 'system-ui', fontSize: '10px', fontStyle: 'bold',
+      color: '#1b1b22', backgroundColor: '#ffe9a8', padding: { x: 3, y: 1 }
+    }).setOrigin(0.5).setDepth(52);
+    this.worldOnly(this.host.badge);
+  }
+
+  /** Keeps the HOST badge glued above the host sprite. */
+  syncHostBadge() {
+    if (!this.host?.badge) return;
+    this.host.badge.setPosition(this.host.sprite.x, this.host.sprite.y - 78);
+  }
+
+  /**
+   * Host state machine, ticked every frame. Only starts a new escort when
+   * idle, so a party is never handed off mid-walk.
+   */
+  updateHost() {
+    const h = this.host;
+    if (!h || h.state !== 'idle') return;
+    if (this.waitingGroups.length === 0) return;
+
+    const party = this.waitingGroups[0];
+    const table = this.findFreeTableForGroup(party.length);
+    if (!table) return;   // full house — try again next tick
+
+    this.waitingGroups.shift();
+    h.state = 'fetching';
+    h.party = party;
+    h.table = table;
+    for (const g of party) g.state = 'being_escorted';
+
+    // Walk to the head of the party, then lead them to their table.
+    const lead = party[0];
+    const meet = lead.waitSpot || h.post;
+    this.walkActorTo(h, meet.x, meet.y, () => this.hostEscortToTable());
+  }
+
+  /** Host leads the party to the table, guests trailing one tile behind. */
+  hostEscortToTable() {
+    const h = this.host;
+    if (!h.party) { h.state = 'idle'; return; }
+    h.state = 'escorting';
+
+    const seats = this.findFreeSeatsForTable(h.table, h.party.length);
+    // Host stands at the first seat tile so the walk ends at the table.
+    const dest = seats[0] || this.tilesNear(this.tableCenter(h.table), 1)[0];
+    if (!dest) { this.releaseParty(); return; }
+
+    let arrived = 0;
+    const done = () => {
+      if (++arrived < h.party.length + 1) return;
+      this.hostReturnToPost();
+    };
+
+    this.walkActorTo(h, dest.x, dest.y, done);
+    // Guests peel off to their own seats as the host leads the way.
+    h.party.forEach((g, i) => {
+      const seat = seats[i];
+      if (!seat) { done(); return; }
+      g.seat = seat;
+      g.table = h.table;
+      g.state = 'walking_to_seat';
+      if (g.patienceBar) {
+        g.patienceBar.destroy(); g.patienceFill.destroy();
+        g.patienceBar = null; g.patienceFill = null;
+      }
+      // Stagger departures slightly so the party reads as a group in motion.
+      this.time.delayedCall(120 * i, () => {
+        this.walkGuestTo(g, seat.x, seat.y, () => { this.onGuestSeated(g); done(); });
+      });
+    });
+    this.hint(`Host is seating a party of ${h.party.length}.`);
+  }
+
+  hostReturnToPost() {
+    const h = this.host;
+    h.party = null;
+    h.table = null;
+    h.state = 'returning';
+    this.walkActorTo(h, h.post.x, h.post.y, () => { h.state = 'idle'; });
+  }
+
+  /** Puts a party back at the front of the queue if an escort falls through. */
+  releaseParty() {
+    const h = this.host;
+    if (h.party) {
+      for (const g of h.party) g.state = 'waiting';
+      this.waitingGroups.unshift(h.party);
+      this.reflowWaitingQueue();
+    }
+    h.party = null;
+    h.table = null;
+    h.state = 'idle';
+  }
+
+  /**
+   * Tween any actor with a `sprite` along a BFS path. Shared by the host and
+   * guests; the waiter uses its own input-driven movement instead.
+   *
+   * Re-targeting an actor mid-walk is normal here (the queue re-flows, the host
+   * grabs a party), so each call takes a ticket. The previous chain sees a
+   * stale ticket on its next hop and stops instead of dragging the sprite back
+   * along its old path.
+   */
+  walkActorTo(actor, tx, ty, onArrive, duration = 110) {
+    const ticket = (actor._walkTicket || 0) + 1;
+    actor._walkTicket = ticket;
+    this.tweens.killTweensOf(actor.sprite);
+
+    const from = {
+      x: Math.round((actor.sprite.x - TILE / 2) / TILE),
+      y: Math.round((actor.sprite.y - TILE / 2) / TILE)
+    };
+    const path = this.findPath(from, { x: tx, y: ty });
+    if (!path || path.length === 0) {
+      actor.sprite.setPosition(tx * TILE + TILE / 2, ty * TILE + TILE / 2);
+      this.syncHostBadge();
+      onArrive?.();
+      return;
+    }
+    let step = 0;
+    const next = () => {
+      if (actor._walkTicket !== ticket) return;   // superseded by a newer walk
+      if (step >= path.length) { onArrive?.(); return; }
+      const node = path[step++];
+      const targetX = node.x * TILE + TILE / 2;
+      const targetY = node.y * TILE + TILE / 2;
+      if (actor.idleKey) {
+        if (targetX < actor.sprite.x - 1) actor.sprite.setTexture(actor.idleKey, IDLE_FRAMES.left);
+        else if (targetX > actor.sprite.x + 1) actor.sprite.setTexture(actor.idleKey, IDLE_FRAMES.right);
+        else if (targetY < actor.sprite.y - 1) actor.sprite.setTexture(actor.idleKey, IDLE_FRAMES.up);
+        else if (targetY > actor.sprite.y + 1) actor.sprite.setTexture(actor.idleKey, IDLE_FRAMES.down);
+        actor.sprite.flipX = false;
+      }
+      this.tweens.add({
+        targets: actor.sprite,
+        x: targetX,
+        y: targetY,
+        duration,
+        onUpdate: () => this.syncHostBadge(),
+        onComplete: next
+      });
+    };
+    next();
   }
 
   setupInput() {
@@ -248,6 +434,7 @@ export class GameScene extends Phaser.Scene {
     const waiting = this.waitingGroups.reduce((n, g) => n + g.length, 0);
     const parts = [`Served ${this.served}`, `Angry ${this.angry}`, `Score ${this.score}`];
     if (waiting > 0) parts.push(`Waiting ${waiting}`);
+    if (this.host?.party) parts.push(`Seating ${this.host.party.length}`);
     this.scoreText.setText(parts.join('  •  '));
     this.timeText.setText(this.shiftActive ? `Time ${Math.max(0, Math.ceil(this.shiftTime))}s` : 'Shift over');
     this.carryText.setText(this.carrying ? `Carrying: ${MENU_LABELS[this.carrying] || this.carrying}` : 'Hands free');
@@ -255,9 +442,11 @@ export class GameScene extends Phaser.Scene {
 
   update() {
     if (!this.shiftActive) return;
+    const dt = Phaser.Math.Clamp(this.game.loop.delta / 1000, 0, 0.1);
     this.handleMovement();
-    this.updateGuests(Phaser.Math.Clamp(this.game.loop.delta / 1000, 0, 0.1));
-    this.handleSpawning(Phaser.Math.Clamp(this.game.loop.delta / 1000, 0, 0.1));
+    this.updateGuests(dt);
+    this.handleSpawning(dt);
+    this.updateHost();
     this.updateHUD();
   }
 
@@ -372,85 +561,183 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Assign each guest in a group a spot in the waiting area near the host. */
-  assignWaitingSpots(group) {
-    const host = this.plan.host;
-    // Find walkable tiles near the host stand for waiting.
-    const spots = this.findWaitingSpots(host, group.length);
-    for (let i = 0; i < group.length; i++) {
-      const g = group[i];
-      const spot = spots[i] || spots[0] || host;
-      g.waitSpot = spot;
-      g.state = 'walking_to_wait';
-      this.walkGuestTo(g, spot.x, spot.y, () => {
-        g.state = 'waiting';
-        // Show patience bar while waiting
-        if (!g.patienceBar) {
-          g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
-          g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x8fb6ff).setOrigin(0, 0.5).setDepth(51);
-          this.worldOnly(g.patienceBar, g.patienceFill);
-        }
-      });
-    }
-    this.waitingGroups.push(group);
-  }
+  // ------------------------------------------------------------ waiting area
 
-  /** Find walkable tiles near the host stand for waiting guests. */
-  findWaitingSpots(host, count) {
-    const spots = [];
-    const seen = new Set();
-    const queue = [{ x: host.x, y: host.y, dist: 0 }];
-    while (spots.length < count && queue.length) {
-      const cur = queue.shift();
-      const k = cur.y * this.cols + cur.x;
-      if (seen.has(k)) continue;
-      seen.add(k);
-      // Don't use the host stand tile itself or solid tiles
-      if (!(cur.x === host.x && cur.y === host.y) && !this.solids[k]) {
-        spots.push({ x: cur.x, y: cur.y });
-      }
-      // BFS neighbors
-      for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
-        const nx = cur.x + dx, ny = cur.y + dy;
-        if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) continue;
-        const nk = ny * this.cols + nx;
-        if (seen.has(nk)) continue;
-        queue.push({ x: nx, y: ny, dist: cur.dist + 1 });
-      }
-    }
-    return spots;
+  /**
+   * Send a newly arrived party to the waiting area, then re-flow the whole
+   * queue so parties stack up in arrival order behind the host stand.
+   */
+  assignWaitingSpots(group) {
+    this.waitingGroups.push(group);
+    for (const g of group) g.state = 'walking_to_wait';
+    this.reflowWaitingQueue();
   }
 
   /**
-   * Waiter interacts with host stand: seat the next waiting group at a
-   * free table with enough seats for the whole group.
+   * Walk every waiting guest to their current queue position. Called when a
+   * party arrives or leaves so the line closes up behind them. Guests near the
+   * front stand in line; the overflow sits on benches.
+   */
+  reflowWaitingQueue() {
+    const spots = this.waitingSpots();
+    let i = 0;
+    for (const group of this.waitingGroups) {
+      for (const g of group) {
+        const spot = spots[i++] || spots[spots.length - 1] || this.plan.host;
+        if (!spot) continue;
+        // Already standing where we want them — nothing to do.
+        if (g.waitSpot && g.waitSpot.x === spot.x && g.waitSpot.y === spot.y &&
+            g.state === 'waiting') continue;
+        g.waitSpot = spot;
+        this.walkGuestTo(g, spot.x, spot.y, () => this.onGuestWaiting(g, spot));
+      }
+    }
+  }
+
+  onGuestWaiting(g, spot) {
+    // A party may have been seated while its members were still walking.
+    if (g.state !== 'walking_to_wait' && g.state !== 'waiting') return;
+    g.state = 'waiting';
+    if (spot.bench) {
+      // Sitting on a bench: use the sit pose facing the bench.
+      g.sprite.setTexture(g.sitKey, SIT_FRAMES[spot.bench.x < spot.x ? 'left' : 'right']);
+      g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
+    } else {
+      g.sprite.setTexture(g.idleKey, IDLE_FRAME_DOWN);
+      g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
+    }
+    if (!g.patienceBar) {
+      g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
+      g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x8fb6ff).setOrigin(0, 0.5).setDepth(51);
+      this.worldOnly(g.patienceBar, g.patienceFill);
+    } else {
+      g.patienceBar.setPosition(g.sprite.x, g.sprite.y - 80);
+      g.patienceFill.setPosition(g.sprite.x - 18, g.sprite.y - 80);
+    }
+  }
+
+  /**
+   * Ordered list of places to wait: first the queue line snaking away from the
+   * host stand, then the tiles in front of each bench. Cached because the map
+   * does not change during a shift.
+   */
+  waitingSpots() {
+    if (this._waitingSpots) return this._waitingSpots;
+    const host = this.plan.host;
+    const spots = [];
+    if (!host) return (this._waitingSpots = spots);
+
+    // Queue line: walk outward from the host stand along the longest open run.
+    // Runs that pass through a chokepoint are rejected, otherwise the line
+    // would form across the doorway the host has to lead parties through.
+    const runs = [[0, -1], [0, 1], [-1, 0], [1, 0]].map(([dx, dy]) => {
+      const run = [];
+      let x = host.x + dx, y = host.y + dy;
+      while (x >= 0 && y >= 0 && x < this.cols && y < this.rows &&
+             !this.solids[this.idx(x, y)] && !this.isChokepoint(x, y)) {
+        run.push({ x, y });
+        x += dx; y += dy;
+      }
+      return run;
+    });
+    runs.sort((a, b) => b.length - a.length);
+    for (const s of runs[0] || []) spots.push(s);
+
+    // Bench seats: the walkable tile in front of each bench.
+    for (const b of (this.plan.benches || [])) {
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const x = b.x + dx, y = b.y + dy;
+        if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) continue;
+        if (this.solids[this.idx(x, y)]) continue;
+        if (spots.some(s => s.x === x && s.y === y)) continue;
+        spots.push({ x, y, bench: b });
+        break;
+      }
+    }
+
+    // Last resort: any walkable tile near the host stand.
+    if (spots.length === 0) spots.push(...this.tilesNear(host, 8));
+    return (this._waitingSpots = spots);
+  }
+
+  /**
+   * True when blocking this tile would cut the floor in two — a doorway or
+   * corridor. Used to keep the waiting queue out of the restaurant's passages.
+   * Results are memoised; the map does not change during a shift.
+   */
+  isChokepoint(x, y) {
+    this._chokepoints = this._chokepoints || new Map();
+    const key = this.idx(x, y);
+    if (this._chokepoints.has(key)) return this._chokepoints.get(key);
+
+    // Reachable floor from a neighbour, with (x,y) treated as a wall. If any
+    // other neighbour cannot be reached that way, this tile is a chokepoint.
+    const open = [];
+    for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) continue;
+      if (!this.solids[this.idx(nx, ny)]) open.push({ x: nx, y: ny });
+    }
+    let result = false;
+    if (open.length > 1) {
+      const seen = new Set([key, this.idx(open[0].x, open[0].y)]);
+      const stack = [open[0]];
+      while (stack.length) {
+        const cur = stack.pop();
+        for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+          const nx = cur.x + dx, ny = cur.y + dy;
+          if (nx < 0 || ny < 0 || nx >= this.cols || ny >= this.rows) continue;
+          const k = this.idx(nx, ny);
+          if (seen.has(k) || this.solids[k]) continue;
+          seen.add(k);
+          stack.push({ x: nx, y: ny });
+        }
+      }
+      result = open.some(o => !seen.has(this.idx(o.x, o.y)));
+    }
+    this._chokepoints.set(key, result);
+    return result;
+  }
+
+  /** BFS out from a tile, returning up to `count` walkable tiles. */
+  tilesNear(origin, count) {
+    const out = [];
+    const seen = new Set([this.idx(origin.x, origin.y)]);
+    const queue = [origin];
+    while (out.length < count && queue.length) {
+      const cur = queue.shift();
+      for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+        const x = cur.x + dx, y = cur.y + dy;
+        if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) continue;
+        const k = this.idx(x, y);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        if (this.solids[k]) continue;
+        out.push({ x, y });
+        queue.push({ x, y });
+      }
+    }
+    return out;
+  }
+
+  /**
+   * The host seats parties on their own, so interacting with the stand just
+   * reports the state of the front of house.
    */
   seatNextGroup() {
-    if (this.waitingGroups.length === 0) {
-      this.hint('No guests waiting to be seated.');
+    if (!this.host) { this.hint('No host on duty.'); return; }
+    if (this.host.state !== 'idle') {
+      this.hint(`Host is seating a party of ${this.host.party?.length ?? 0}.`);
       return;
     }
-    const group = this.waitingGroups[0];
-    // Find a table with enough free seats for the whole group.
-    const table = this.findFreeTableForGroup(group.length);
-    if (!table) {
-      this.hint('No free table big enough for this group.');
+    const waiting = this.waitingGroups.reduce((n, g) => n + g.length, 0);
+    if (waiting === 0) { this.hint('Nobody waiting to be seated.'); return; }
+    const next = this.waitingGroups[0];
+    if (!this.findFreeTableForGroup(next.length)) {
+      this.hint(`No table free for the next party of ${next.length}.`);
       return;
     }
-    this.waitingGroups.shift();
-    const seats = this.findFreeSeatsForTable(table, group.length);
-    for (let i = 0; i < group.length; i++) {
-      const g = group[i];
-      const seat = seats[i];
-      if (!seat) continue;
-      g.seat = seat;
-      g.table = table;
-      g.state = 'walking_to_seat';
-      // Remove waiting patience bar
-      if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); g.patienceBar = null; g.patienceFill = null; }
-      this.walkGuestTo(g, seat.x, seat.y, () => this.onGuestSeated(g));
-    }
-    this.hint(`Seated party of ${group.length} at table (${table.x},${table.y}).`);
+    this.hint(`${waiting} guest(s) waiting — host is on it.`);
   }
 
   /** Called when a guest arrives at their seat. */
@@ -470,92 +757,103 @@ export class GameScene extends Phaser.Scene {
 
   // Determine which sit pose to use based on table position relative to seat.
   // Sit sheets only have LEFT/RIGHT poses (side view), so map up/down to nearest side.
+  // Multi-tile tables use their center so side seats still face inward.
   sitFacing(seat, table) {
-    if (table.x < seat.x) return 'left';
-    if (table.x > seat.x) return 'right';
+    const c = this.tableCenter(table);
+    if (c.x < seat.x) return 'left';
+    if (c.x > seat.x) return 'right';
     // Table is directly above/below — use left pose as default.
     return 'left';
   }
 
+  // --------------------------------------------------------- tables & seating
+
+  /** Every tile covered by a table's footprint. w/h default to 1. */
+  tableCells(t) {
+    const cells = [];
+    const w = t.w || 1, h = t.h || 1;
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) cells.push({ x: t.x + dx, y: t.y + dy });
+    }
+    return cells;
+  }
+
+  /** Center of a table footprint, in tile coordinates (may be fractional). */
+  tableCenter(t) {
+    return { x: t.x + ((t.w || 1) - 1) / 2, y: t.y + ((t.h || 1) - 1) / 2 };
+  }
+
+  /**
+   * Seats are the walkable tiles orthogonally adjacent to the footprint —
+   * the ring around the table minus its corners. A 1×1 table gives 4 seats,
+   * 2×1 gives 6, 2×2 gives 8.
+   */
+  seatsForTable(t) {
+    const w = t.w || 1, h = t.h || 1;
+    const seats = [];
+    const push = (x, y) => {
+      if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return;
+      if (this.solids[this.idx(x, y)]) return;
+      seats.push({ x, y, table: t });
+    };
+    for (let dx = 0; dx < w; dx++) { push(t.x + dx, t.y - 1); push(t.x + dx, t.y + h); }
+    for (let dy = 0; dy < h; dy++) { push(t.x - 1, t.y + dy); push(t.x + w, t.y + dy); }
+    return seats;
+  }
+
+  seatTaken(x, y) {
+    return this.guests.some(g => g.seat && g.seat.x === x && g.seat.y === y);
+  }
+
+  freeSeatsForTable(t) {
+    return this.seatsForTable(t).filter(s => !this.seatTaken(s.x, s.y));
+  }
+
+  /** True when no guest is seated at (or heading to) any seat of this table. */
+  tableIsEmpty(t) {
+    return this.freeSeatsForTable(t).length === this.seatsForTable(t).length;
+  }
+
   findFreeSeat() {
     for (const t of this.plan.tables) {
-      const adj = [[t.x, t.y - 1], [t.x, t.y + 1], [t.x - 1, t.y], [t.x + 1, t.y]];
-      for (const [ax, ay] of adj) {
-        if (ax < 0 || ay < 0 || ax >= this.cols || ay >= this.rows) continue;
-        if (this.solids[this.idx(ax, ay)]) continue;
-        if (this.guests.some(g => g.seat && g.seat.x === ax && g.seat.y === ay)) continue;
-        return { x: ax, y: ay, table: t };
-      }
+      const free = this.freeSeatsForTable(t);
+      if (free.length) return free[0];
     }
     return null;
   }
 
-  /** Find a table with at least `count` free adjacent seats. */
+  /**
+   * Pick a table for a party of `count`. Prefers a still-empty table whose
+   * capacity fits the party most snugly, so a couple does not occupy the
+   * eight-top while a large party waits. Falls back to any table with enough
+   * free seats, then to the table with the most free seats.
+   */
   findFreeTableForGroup(count) {
+    let best = null, bestWaste = Infinity;
     for (const t of this.plan.tables) {
-      const seats = this.countFreeSeatsForTable(t);
-      if (seats >= count) return t;
+      const free = this.freeSeatsForTable(t).length;
+      if (free < count) continue;
+      // Prefer empty tables so parties are not split across strangers.
+      const waste = free - count + (this.tableIsEmpty(t) ? 0 : 100);
+      if (waste < bestWaste) { best = t; bestWaste = waste; }
     }
-    // If no table has enough seats, find the one with the most free seats
-    // (as long as it has at least 1)
-    let best = null, bestCount = 0;
+    if (best) return best;
+
+    let most = null, mostFree = 0;
     for (const t of this.plan.tables) {
-      const seats = this.countFreeSeatsForTable(t);
-      if (seats > bestCount) { best = t; bestCount = seats; }
+      const free = this.freeSeatsForTable(t).length;
+      if (free > mostFree) { most = t; mostFree = free; }
     }
-    return best && bestCount > 0 ? best : null;
+    return mostFree > 0 ? most : null;
   }
 
-  countFreeSeatsForTable(t) {
-    const adj = [[t.x, t.y - 1], [t.x, t.y + 1], [t.x - 1, t.y], [t.x + 1, t.y]];
-    let count = 0;
-    for (const [ax, ay] of adj) {
-      if (ax < 0 || ay < 0 || ax >= this.cols || ay >= this.rows) continue;
-      if (this.solids[this.idx(ax, ay)]) continue;
-      if (this.guests.some(g => g.seat && g.seat.x === ax && g.seat.y === ay)) continue;
-      count++;
-    }
-    return count;
-  }
-
-  /** Get up to `count` free seats adjacent to a table. */
+  /** Get up to `count` free seats around a table. */
   findFreeSeatsForTable(t, count) {
-    const adj = [[t.x, t.y - 1], [t.x, t.y + 1], [t.x - 1, t.y], [t.x + 1, t.y]];
-    const seats = [];
-    for (const [ax, ay] of adj) {
-      if (seats.length >= count) break;
-      if (ax < 0 || ay < 0 || ax >= this.cols || ay >= this.rows) continue;
-      if (this.solids[this.idx(ax, ay)]) continue;
-      if (this.guests.some(g => g.seat && g.seat.x === ax && g.seat.y === ay)) continue;
-      seats.push({ x: ax, y: ay, table: t });
-    }
-    return seats;
+    return this.freeSeatsForTable(t).slice(0, count);
   }
 
   walkGuestTo(g, tx, ty, onArrive) {
-    const path = this.findPath({ x: Math.round((g.sprite.x - TILE / 2) / TILE), y: Math.round((g.sprite.y - TILE / 2) / TILE) }, { x: tx, y: ty });
-    if (!path || path.length === 0) { g.sprite.setPosition(tx * TILE + TILE / 2, ty * TILE + TILE / 2); onArrive(); return; }
-    let step = 0;
-    const next = () => {
-      if (step >= path.length) { onArrive(); return; }
-      const node = path[step++];
-      const targetX = node.x * TILE + TILE / 2;
-      const targetY = node.y * TILE + TILE / 2;
-      // Set idle frame based on movement direction.
-      if (targetX < g.sprite.x - 1) g.sprite.setTexture(g.idleKey, IDLE_FRAMES.left);
-      else if (targetX > g.sprite.x + 1) g.sprite.setTexture(g.idleKey, IDLE_FRAMES.right);
-      else if (targetY < g.sprite.y - 1) g.sprite.setTexture(g.idleKey, IDLE_FRAMES.up);
-      else if (targetY > g.sprite.y + 1) g.sprite.setTexture(g.idleKey, IDLE_FRAMES.down);
-      g.sprite.flipX = false;
-      this.tweens.add({
-        targets: g.sprite,
-        x: targetX,
-        y: targetY,
-        duration: 120,
-        onComplete: next
-      });
-    };
-    next();
+    this.walkActorTo(g, tx, ty, onArrive, 120);
   }
 
   findPath(start, goal) {
@@ -624,9 +922,9 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    // Host stand: seat the next waiting group
-    const h = this.plan.host;
-    if (h && h.x === fx && h.y === fy) {
+    // Host stand: report on the front of house (the host seats parties itself)
+    const hs = this.plan.host;
+    if (hs && hs.x === fx && hs.y === fy) {
       this.seatNextGroup();
       return;
     }
@@ -689,12 +987,19 @@ export class GameScene extends Phaser.Scene {
   guestLeavesAngry(g) {
     this.angry += 1;
     this.score = Math.max(0, this.score - 5);
+    // Note the old state before overwriting it — a guest who gives up while
+    // still queueing has to be pulled out of the waiting line.
+    const wasWaiting = g.state === 'waiting' || g.state === 'walking_to_wait';
     g.state = 'angry';
     if (g.orderBubble) { g.orderBubble.destroy(); g.orderBubble = null; }
     if (g.patienceBar) { g.patienceBar.destroy(); g.patienceFill.destroy(); g.patienceBar = null; g.patienceFill = null; }
-    // Remove from waiting groups if still waiting
-    if (g.group && g.state === 'waiting') {
-      this.waitingGroups = this.waitingGroups.filter(grp => grp !== g.group);
+    if (wasWaiting && g.group) {
+      const i = g.group.indexOf(g);
+      if (i >= 0) g.group.splice(i, 1);
+      if (g.group.length === 0) {
+        this.waitingGroups = this.waitingGroups.filter(grp => grp !== g.group);
+      }
+      this.reflowWaitingQueue();
     }
     g.sprite.setTexture(g.idleKey, IDLE_FRAME_DOWN);
     g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
@@ -707,7 +1012,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   checkShiftEnd() {
-    if (this.queue.length === 0 && this.guests.length === 0 && this.waitingGroups.length === 0) this.endShift();
+    if (this.queue.length === 0 && this.guests.length === 0 &&
+        this.waitingGroups.length === 0 && !this.host?.party) this.endShift();
   }
 
   tickShift() {

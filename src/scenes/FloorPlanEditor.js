@@ -26,11 +26,21 @@ const TOOLS = [
   { id: 'kitchen', label: 'Kitchen', short: 'Ktch' },
   { id: 'door',    label: 'Door',    short: 'Door' },
   { id: 'host',    label: 'Host',    short: 'Host' },
+  { id: 'bench',   label: 'Bench',   short: 'Bnch' },
   { id: 'table',   label: 'Table',   short: 'Tbl' }
 ];
 
 // Marker tools that auto-paint the selected object tile when placed.
-const MARKER_TOOLS = ['spawn', 'kitchen', 'door', 'host', 'table'];
+const MARKER_TOOLS = ['spawn', 'kitchen', 'door', 'host', 'bench', 'table'];
+
+// Selectable footprints for the Table tool, in tiles. Seats are the walkable
+// tiles around the footprint, so bigger tables seat bigger parties.
+const TABLE_SIZES = [
+  { w: 1, h: 1, label: '1x1' },
+  { w: 2, h: 1, label: '2x1' },
+  { w: 1, h: 2, label: '1x2' },
+  { w: 2, h: 2, label: '2x2' }
+];
 
 const LAYERS = [
   { id: 'ground',  label: 'Ground' },
@@ -55,6 +65,10 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     // Per-marker tile assignments. When set, placing a marker also paints
     // this tile as an object. null = use current palette selection.
     this.markerTiles = this.plan.markerTiles || {};
+    // Footprint used by the Table tool; index into TABLE_SIZES.
+    this.tableSizeIdx = 0;
+    // Benches are a newer feature — older saved plans do not have the array.
+    this.plan.benches = this.plan.benches || [];
 
     // Until the generated index loads, fall back to the sheets Boot preloaded.
     this.sheetList = SHEETS.map(s => ({
@@ -151,9 +165,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, TOOLBAR_H, 0x1b1b22).setOrigin(0, 0).setDepth(100);
 
     // Right-side actions are laid out first so the tool row knows its budget.
-    const actionW = 68, actionGap = 6;
+    // Everything on this row shrinks with the viewport: there are 13 tools to
+    // fit, so the sheet selector and the action buttons give ground first.
+    const narrow = width < 900;
+    const actionW = narrow ? 50 : 68, actionGap = narrow ? 4 : 6;
     const actionsW = actionW * 4 + actionGap * 3;
     const actionsX = Math.max(12, width - 12 - actionsW);
+    const toolsX = narrow ? 148 : 200;
 
     // Row 1: sheet selector + tools, sized to whatever space is left.
     this.add.text(12, 6, 'Sheet', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
@@ -161,20 +179,24 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.makeBtn(12, 20, 24, 22, '◀', () => this.selectSheet(this.sheetIdx - 1));
     this.makeBtn(38, 20, 24, 22, '▶', () => this.selectSheet(this.sheetIdx + 1));
     this.sheetLabel = this.add.text(68, 25, this.sheetKey, {
-      fontFamily: 'system-ui', fontSize: '13px', color: '#ffe9a8'
+      fontFamily: 'system-ui', fontSize: narrow ? '11px' : '13px', color: '#ffe9a8'
     }).setDepth(101);
 
-    const toolsX = 200;
+    // The tool row must never run under the action buttons, so the width is
+    // whatever divides the remaining budget; the label drops to its short form
+    // and then to a smaller font as the row tightens.
+    const gap = 3;
     const budget = Math.max(0, actionsX - 8 - toolsX);
-    const btnW = Phaser.Math.Clamp(Math.floor(budget / TOOLS.length) - 4, 38, 72);
+    const btnW = Math.max(14, Math.min(72, Math.floor(budget / TOOLS.length) - gap));
     const useShort = btnW < 58;
+    const toolFont = btnW < 30 ? 8 : (btnW < 38 ? 10 : (btnW < 46 ? 11 : 13));
 
     this.toolBtns = {};
     this.markerPreviews = {};
     TOOLS.forEach((t, i) => {
-      const bx = toolsX + i * (btnW + 4);
+      const bx = toolsX + i * (btnW + gap);
       const btn = this.makeBtn(bx, 20, btnW, 22,
-        useShort ? t.short : t.label, () => this.setTool(t.id));
+        useShort ? t.short : t.label, () => this.setTool(t.id), toolFont);
       this.toolBtns[t.id] = btn;
       // Per-marker tile preview: small icon below marker tool buttons.
       // Right-click to assign current palette selection to this marker.
@@ -227,8 +249,20 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     }).setDepth(101);
     this.applyBtn = this.makeBtn(x2 + 186, 52, 60, 22, 'Apply', () => this.applyResize());
     this.refreshSizeLabel();
+    x2 += 258;
 
-    this.statusText = this.add.text(x2 + 258, 57, '', {
+    // Table footprint picker — only meaningful for the Table tool.
+    this.add.text(x2, 54, 'Table', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
+      .setDepth(101);
+    x2 += 40;
+    this.tableSizeBtns = TABLE_SIZES.map((s, i) => {
+      const btn = this.makeBtn(x2 + i * 40, 52, 36, 22, s.label, () => this.setTableSize(i));
+      return btn;
+    });
+    this.refreshTableSizeBtns();
+    x2 += TABLE_SIZES.length * 40 + 12;
+
+    this.statusText = this.add.text(x2, 57, '', {
       fontFamily: 'system-ui', fontSize: '12px', color: '#8fb6ff'
     }).setDepth(101);
 
@@ -243,11 +277,12 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     });
   }
 
-  makeBtn(x, y, w, h, label, onClick) {
+  makeBtn(x, y, w, h, label, onClick, fontSize) {
     const bg = this.add.rectangle(x, y, w, h, 0x2b2b39).setOrigin(0, 0)
       .setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true }).setDepth(101);
+    const size = fontSize ?? Math.min(13, Math.max(10, h - 8));
     const txt = this.add.text(x + w / 2, y + h / 2, label, {
-      fontFamily: 'system-ui', fontSize: Math.min(13, Math.max(10, h - 8)) + 'px', color: '#e6e6f0'
+      fontFamily: 'system-ui', fontSize: size + 'px', color: '#e6e6f0'
     }).setOrigin(0.5).setDepth(102);
     bg.on('pointerover', () => bg.setFillStyle(0x3a3a4d));
     bg.on('pointerout', () => bg.setFillStyle(0x2b2b39));
@@ -258,6 +293,23 @@ export class FloorPlanEditorScene extends Phaser.Scene {
   setStatus(msg) { this.statusText?.setText(msg || ''); }
 
   setTool(id) { this.tool = id; this.refreshToolBtns(); }
+
+  /** Choose the footprint the Table tool stamps, and switch to that tool. */
+  setTableSize(i) {
+    this.tableSizeIdx = i;
+    this.refreshTableSizeBtns();
+    this.setTool('table');
+    const s = TABLE_SIZES[i];
+    this.setStatus(`table footprint ${s.label}`);
+  }
+
+  refreshTableSizeBtns() {
+    this.tableSizeBtns?.forEach((b, i) => {
+      const on = i === this.tableSizeIdx;
+      b.bg.setFillStyle(on ? 0x4a4a5e : 0x2b2b39);
+      b.txt.setColor(on ? '#ffe9a8' : '#e6e6f0');
+    });
+  }
 
   /** Assign the current palette selection as the tile for a marker type. */
   assignMarkerTile(markerType) {
@@ -374,7 +426,10 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.plan.solids = solids;
     this.plan.cols = nc;
     this.plan.rows = nr;
-    this.plan.tables = (this.plan.tables || []).filter(t => t.x < nc && t.y < nr);
+    // Drop tables whose footprint would hang off the resized grid.
+    this.plan.tables = (this.plan.tables || [])
+      .filter(t => t.x + (t.w || 1) <= nc && t.y + (t.h || 1) <= nr);
+    this.plan.benches = (this.plan.benches || []).filter(b => b.x < nc && b.y < nr);
     for (const key of ['spawn', 'kitchen', 'door', 'host']) {
       const p = this.plan[key];
       if (p) {
@@ -517,22 +572,35 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     } else o.setVisible(false);
 
     m.setFillStyle(0x000000, 0.001);
-    let label = null, color = 0xffffff;
-    if (this.plan.spawn?.x === x && this.plan.spawn?.y === y) { label = 'S'; color = 0x6cff6c; }
-    else if (this.plan.kitchen?.x === x && this.plan.kitchen?.y === y) { label = 'K'; color = 0xff8a8a; }
-    else if (this.plan.door?.x === x && this.plan.door?.y === y) { label = 'D'; color = 0x8fb6ff; }
-    else if (this.plan.host?.x === x && this.plan.host?.y === y) { label = 'H'; color = 0xff9aff; }
-    else if (this.plan.tables?.some(t => t.x === x && t.y === y)) { label = 'T'; color = 0xffe9a8; }
+    // `tinted` is separate from `label` so the non-anchor cells of a
+    // multi-tile table still get highlighted without repeating the letter.
+    let label = null, color = 0xffffff, tinted = false;
+    const mark = (text, c) => { label = text; color = c; tinted = true; };
 
+    if (this.plan.spawn?.x === x && this.plan.spawn?.y === y) mark('S', 0x6cff6c);
+    else if (this.plan.kitchen?.x === x && this.plan.kitchen?.y === y) mark('K', 0xff8a8a);
+    else if (this.plan.door?.x === x && this.plan.door?.y === y) mark('D', 0x8fb6ff);
+    else if (this.plan.host?.x === x && this.plan.host?.y === y) mark('H', 0xff9aff);
+    else if (this.plan.benches?.some(b => b.x === x && b.y === y)) mark('B', 0x9ad9ff);
+    else {
+      const tbl = this.plan.tables?.find(t => this.tableCovers(t, x, y));
+      if (tbl) {
+        const w = tbl.w || 1, h = tbl.h || 1;
+        const anchor = tbl.x === x && tbl.y === y;
+        mark(anchor ? (w > 1 || h > 1 ? `${w}x${h}` : 'T') : null, 0xffe9a8);
+      }
+    }
+
+    if (tinted) m.setFillStyle(color, 0.45);
+    if (m.label) { m.label.destroy(); m.label = null; }
     if (label) {
-      m.setFillStyle(color, 0.45);
-      if (m.label) m.label.destroy();
       m.label = this.add.text(m.x, m.y, label, {
-        fontFamily: 'system-ui', fontSize: '20px', fontStyle: 'bold', color: '#111'
+        fontFamily: 'system-ui', fontSize: label.length > 1 ? '14px' : '20px',
+        fontStyle: 'bold', color: '#111'
       }).setOrigin(0.5).setDepth(20);
       this.gridContainer.add(m.label);
       m.label.setVisible(this.layers.markers);
-    } else if (m.label) { m.label.destroy(); m.label = null; }
+    }
 
     if (this.plan.solids[i]) m.setFillStyle(0xff4d4d, 0.25);
     m.setAlpha(this.layers.markers ? 1 : 0);
@@ -549,7 +617,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       this.plan.ground[i] = null;
       this.plan.objects[i] = null;
       this.plan.solids[i] = false;
-      this.plan.tables = this.plan.tables.filter(p => !(p.x === x && p.y === y));
+      // Erasing anywhere inside a table's footprint removes the whole table.
+      this.plan.tables = this.plan.tables.filter(p => !this.tableCovers(p, x, y));
+      this.plan.benches = this.plan.benches.filter(b => !(b.x === x && b.y === y));
     } else if (t === 'solid') {
       this.plan.solids[i] = !this.plan.solids[i];
     } else if (t === 'pick') {
@@ -573,16 +643,85 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     } else if (t === 'host') {
       this.plan.host = { x, y };
       this.autoPaintMarker('host', x, y);
-    } else if (t === 'table') {
-      const ex = this.plan.tables.findIndex(p => p.x === x && p.y === y);
-      if (ex >= 0) {
-        this.plan.tables.splice(ex, 1);
-      } else {
-        this.plan.tables.push({ x, y });
-        this.autoPaintMarker('table', x, y);
+    } else if (t === 'bench') {
+      const ex = this.plan.benches.findIndex(b => b.x === x && b.y === y);
+      if (ex >= 0) this.plan.benches.splice(ex, 1);
+      else {
+        this.plan.benches.push({ x, y });
+        this.autoPaintMarker('bench', x, y);
       }
+    } else if (t === 'table') {
+      this.placeTable(x, y);
+      return;
     }
     this.renderCell(x, y);
+  }
+
+  /** True when (x,y) falls inside a table's footprint. */
+  tableCovers(t, x, y) {
+    const w = t.w || 1, h = t.h || 1;
+    return x >= t.x && x < t.x + w && y >= t.y && y < t.y + h;
+  }
+
+  /**
+   * Place (or remove) a table using the currently selected footprint. Clicking
+   * an existing table removes it; otherwise the footprint is stamped with the
+   * table tile as long as it fits inside the grid.
+   */
+  placeTable(x, y) {
+    const ex = this.plan.tables.findIndex(t => this.tableCovers(t, x, y));
+    if (ex >= 0) {
+      const old = this.plan.tables[ex];
+      this.plan.tables.splice(ex, 1);
+      this.renderTableCells(old);
+      this.setStatus(`removed ${old.w || 1}x${old.h || 1} table`);
+      return;
+    }
+    const { w, h } = TABLE_SIZES[this.tableSizeIdx];
+    if (x + w > this.cols || y + h > this.rows) {
+      this.setStatus(`${w}x${h} table does not fit here`);
+      return;
+    }
+    // Refuse to overlap an existing table — footprints must stay disjoint.
+    for (const t of this.plan.tables) {
+      for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
+          if (this.tableCovers(t, x + dx, y + dy)) {
+            this.setStatus('overlaps an existing table');
+            return;
+          }
+        }
+      }
+    }
+    const table = { x, y, w, h };
+    this.plan.tables.push(table);
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) this.autoPaintMarker('table', x + dx, y + dy);
+    }
+    this.renderTableCells(table);
+    this.setStatus(`placed ${w}x${h} table (${this.seatCountFor(table)} seats)`);
+  }
+
+  renderTableCells(t) {
+    const w = t.w || 1, h = t.h || 1;
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) this.renderCell(t.x + dx, t.y + dy);
+    }
+  }
+
+  /** Seats a table would provide: walkable tiles orthogonally around it. */
+  seatCountFor(t) {
+    const w = t.w || 1, h = t.h || 1;
+    let n = 0;
+    const check = (x, y) => {
+      if (x < 0 || y < 0 || x >= this.cols || y >= this.rows) return;
+      if (this.plan.solids[y * this.cols + x]) return;
+      if (this.plan.tables.some(o => this.tableCovers(o, x, y))) return;
+      n++;
+    };
+    for (let dx = 0; dx < w; dx++) { check(t.x + dx, t.y - 1); check(t.x + dx, t.y + h); }
+    for (let dy = 0; dy < h; dy++) { check(t.x - 1, t.y + dy); check(t.x + w, t.y + dy); }
+    return n;
   }
 
   /** Eyedropper: copy the tile at (x,y) into the palette selection. */
@@ -704,8 +843,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
       'Pick: eyedropper — copies a tile from the grid into the palette selection.',
       'Copy: drag to select a region.  Paste: click to stamp the copied region.',
-      'Spawn/Kitchen/Door/Host/Table: places marker AND auto-paints the selected tile.',
-      'Host = host stand where waiter seats waiting guest groups.',
+      'Spawn/Kitchen/Door/Host/Bench/Table: places marker AND auto-paints the tile.',
+      'Host = host stand (the host NPC seats parties). Bench = waiting-area seat.',
+      'Table 1x1/2x1/1x2/2x2 sets the footprint; seats are the tiles around it.',
       'Right-click a marker preview icon to assign a tile to that marker type.',
       'Sheet ◀ ▶ browses all indexed sheets. Layers hide artwork. Size +/- resizes.'
     ];
