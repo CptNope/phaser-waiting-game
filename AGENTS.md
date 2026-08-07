@@ -144,13 +144,27 @@ so a table directly above/below maps to a side pose.
   party leader has `prefersBar: true`, in which case the whole party skips
   the queue and self-seats at the bar (see "Bartender NPC" below).
 - The **host NPC** seats dine-in parties; the player never has to. Interacting
-  with the host stand just reports status.
+  with the host stand just reports status. The host will not seat a party at
+  a still-empty table once `maxActiveTables` (3) non-bar tables are already
+  occupied — see "Table cap" below. Adding to an already-active table (a
+  party joining one that already has guests) is never blocked by the cap.
 - Waiting guests show blue patience bars; seated guests show green→red
-- HUD shows "Waiting N", "Bar wait N" and "Seating N" while parties are queued
+- HUD shows "Tables N/3", "Waiting N", "Bar wait N" and "Seating N"
 - On serve/angry-leave, swap back to `_idle` and walk to door
 - Waiter plays `waiter_<dir>` walk animation while moving, returns to idle pose when stopped
 
-### Two-stage ordering: drink, then food
+### Table cap: the server juggles at most 3 tables
+
+`this.maxActiveTables = 3` (Game.js `create()`). `findFreeTableForGroup()`
+(the host's regular, non-bar seating pool) refuses to hand out a still-**empty**
+table once `activeTableCount()` — non-bar tables with at least one seated
+guest, via `tableIsEmpty()` — already meets the cap; the party stays in
+`waitingGroups` and `updateHost()` retries it each tick, exactly like waiting
+for any other table to free up. This only throttles the *dine-in* pipeline —
+bar seating (`findFreeBarTableForGroup`) is uncapped, since the bartender
+handles those guests entirely on its own (below).
+
+### Two-stage ordering: drink, then food (dine-in only)
 
 Dine-in guests order in two stages once seated, each taken/delivered the same
 way (walk up, face them, press E):
@@ -158,26 +172,40 @@ way (walk up, face them, press E):
 `seated` → (order drink) → `ordered_drink` → (deliver drink) → `drink_served`
 → (order food) → `ordered_food` → (deliver food) → `served`, guest leaves.
 
-`prefersBar` guests stop after the drink stage — delivering it ends their
-visit (tip + leave) instead of advancing to `drink_served`. Patience is a
-single continuous budget from `onGuestSeated` through the final delivery; it
-is not reset between stages. `guestAdjacent()`/`interact()` in Game.js branch
-on these states; `deliverToGuest()` (the tip/leave finale) is shared by both
-the food-finale and bar-drink-finale paths since it never reads the order
-directly, only the guest's name and patience ratio.
+Patience is a single continuous budget from `onGuestSeated` through the final
+delivery; it is not reset between stages. `guestAdjacent()` only matches
+guests at non-bar tables — guests seated at the bar are excluded entirely and
+served by the bartender instead (below), never by the player.
 
 ### Bartender NPC
 
-The bartender is the **kitchen for drinks**: no state machine, no walking —
-`spawnBartender()` places a static `Alex` sprite with a "BARTENDER" badge at
-`plan.bar`, and (like the kitchen) taking a drink order instantly makes it
-"ready" for pickup there. `this.preparedDrink`/`this.carrying` mirror
-`this.preparedOrder`/`this.carrying` for the kitchen. The bar counter and any
-bar-area dining tables are regular `tables` entries flagged `isBar: true`,
-which auto-derive seats the same way every other table does.
+The bartender has two independent jobs:
 
-`findFreeTableForGroup()` (host's regular seating pool) excludes `isBar`
-tables; `findFreeBarTableForGroup()` is the mirror image, used only by
+1. **Dine-in drink pickup** — same "kitchen for drinks" model as before: no
+   walking, no per-drink state. `spawnBartender()` places a static `Alex`
+   sprite with a "BARTENDER" badge at `plan.bar`, and taking a dine-in guest's
+   drink order instantly makes it "ready" for the player to pick up there.
+   `this.preparedDrink`/`this.carrying` mirror `this.preparedOrder`/
+   `this.carrying` for the kitchen.
+2. **Full service for bar-seated guests** — `onGuestSeated()` calls
+   `startBartenderService(g)` whenever `g.table.isBar` is true: the bartender
+   notices the guest (~1.2s), takes their drink order, prepares it (~1.8s),
+   and delivers it directly via `finalizeGuestVisit()` — no player
+   involvement, no walking, no use of `carrying`/`preparedDrink`. Each step
+   re-checks the guest's state first so a guest who left angry mid-service is
+   silently skipped rather than double-handled.
+
+`finalizeGuestVisit()` is the tip/leave finale (score, `served` count, walk to
+the door) shared by both the dine-in food finale and the bartender's
+autonomous bar finale — it deliberately does **not** touch `this.carrying`,
+so the bartender servicing a bar guest can never clobber whatever the player
+is carrying for someone else at that moment. `deliverToGuest()` is a thin
+wrapper that clears `carrying` first, for the player-driven call sites.
+
+The bar counter and any bar-area dining tables are regular `tables` entries
+flagged `isBar: true`, which auto-derive seats the same way every other table
+does. `findFreeTableForGroup()` (host's regular seating pool) excludes
+`isBar` tables; `findFreeBarTableForGroup()` is the mirror image, used only by
 `prefersBar` parties. Bar parties that arrive when the bar is full queue in
 `barWaitingGroups` (mirroring `waitingGroups`/`reflowWaitingQueue`, but
 simpler — no bench/queue-line logic, just a handful of holding tiles near

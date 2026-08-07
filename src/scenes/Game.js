@@ -66,6 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.queue = [...this.guestDefs];
     this.waitingGroups = [];   // groups waiting at host area, ready to be seated
     this.barWaitingGroups = []; // prefersBar groups waiting for a bar seat
+    this.maxActiveTables = 3;  // the server only juggles this many dine-in tables at once
     this.score = 0;
     this.served = 0;
     this.angry = 0;
@@ -528,7 +529,9 @@ export class GameScene extends Phaser.Scene {
   updateHUD() {
     const waiting = this.waitingGroups.reduce((n, g) => n + g.length, 0);
     const barWaiting = this.barWaitingGroups.reduce((n, g) => n + g.length, 0);
+    const activeTables = this.activeTableCount(this.plan.tables.filter(t => !t.isBar));
     const parts = [`Served ${this.served}`, `Angry ${this.angry}`, `Score ${this.score}`];
+    parts.push(`Tables ${activeTables}/${this.maxActiveTables}`);
     if (waiting > 0) parts.push(`Waiting ${waiting}`);
     if (barWaiting > 0) parts.push(`Bar wait ${barWaiting}`);
     if (this.host?.party) parts.push(`Seating ${this.host.party.length}`);
@@ -631,10 +634,6 @@ export class GameScene extends Phaser.Scene {
         orderBubble: null,
         group: null,       // set below
         waitSpot: null,    // tile in waiting area
-        // Whether the WHOLE PARTY prefers the bar — decided by the leader,
-        // not each guest's own def, since followers are pulled from the
-        // queue and may not individually carry the flag.
-        prefersBar: !!leaderDef.prefersBar,
       };
       this.guests.push(g);
       this.worldOnly(g.sprite);
@@ -912,7 +911,11 @@ export class GameScene extends Phaser.Scene {
     if (waiting === 0) { this.hint('Nobody waiting to be seated.'); return; }
     const next = this.waitingGroups[0];
     if (!this.findFreeTableForGroup(next.length)) {
-      this.hint(`No table free for the next party of ${next.length}.`);
+      const pool = this.plan.tables.filter(t => !t.isBar);
+      const wouldFitIfRoomed = this.findFreeTableFrom(pool, next.length);
+      this.hint(wouldFitIfRoomed
+        ? `Server's hands are full — ${this.maxActiveTables} tables already active.`
+        : `No table free for the next party of ${next.length}.`);
       return;
     }
     this.hint(`${waiting} guest(s) waiting — host is on it.`);
@@ -931,6 +934,28 @@ export class GameScene extends Phaser.Scene {
     g.patienceBar = this.add.rectangle(g.sprite.x, g.sprite.y - 80, 36, 5, 0x000000, 0.5).setDepth(50);
     g.patienceFill = this.add.rectangle(g.sprite.x - 18, g.sprite.y - 80, 36, 5, 0x6cff6c).setOrigin(0, 0.5).setDepth(51);
     this.worldOnly(g.patienceBar, g.patienceFill);
+
+    // Bar guests are served entirely by the bartender — the player never
+    // takes their order or delivers to them.
+    if (g.table?.isBar) this.startBartenderService(g);
+  }
+
+  /**
+   * The bartender serves bar-seated guests autonomously: notices them, takes
+   * their drink order, prepares it, and delivers it — no player involvement.
+   * Guards against the guest having already left angry between each step.
+   */
+  startBartenderService(g) {
+    this.time.delayedCall(1200, () => {
+      if (g.state !== 'seated') return;
+      const drink = g.def.drinkOrder || 'coffee';
+      g.state = 'ordered_drink';
+      this.showOrderBubble(g, drink);
+      this.time.delayedCall(1800, () => {
+        if (g.state !== 'ordered_drink') return;
+        this.finalizeGuestVisit(g);
+      });
+    });
   }
 
   // Determine which sit pose to use based on table position relative to seat.
@@ -1025,9 +1050,24 @@ export class GameScene extends Phaser.Scene {
     return mostFree > 0 ? most : null;
   }
 
-  /** Regular (non-bar) tables the host queue draws from. */
+  /** Non-bar tables currently occupied by at least one guest. */
+  activeTableCount(pool) {
+    return pool.filter(t => !this.tableIsEmpty(t)).length;
+  }
+
+  /**
+   * Regular (non-bar) tables the host queue draws from. Adding to an already
+   * -occupied table is always allowed (it doesn't grow the server's workload),
+   * but seating a party at a still-empty table is refused once maxActiveTables
+   * are already occupied — the server is only ever juggling that many tables
+   * at once.
+   */
   findFreeTableForGroup(count) {
-    return this.findFreeTableFrom(this.plan.tables.filter(t => !t.isBar), count);
+    const pool = this.plan.tables.filter(t => !t.isBar);
+    const table = this.findFreeTableFrom(pool, count);
+    if (!table) return null;
+    if (this.tableIsEmpty(table) && this.activeTableCount(pool) >= this.maxActiveTables) return null;
+    return table;
   }
 
   /** Bar counter + bar tables that prefersBar parties draw from. */
@@ -1140,8 +1180,9 @@ export class GameScene extends Phaser.Scene {
         this.showOrderBubble(g, drink);
         this.hint(`Took drink order: ${MENU_LABELS[drink]}. Ready at the bar.`);
       } else if (g.state === 'ordered_drink' && this.carrying === drink) {
-        if (g.prefersBar) this.deliverToGuest(g);
-        else this.deliverDrinkStage(g);
+        // Bar-seated guests are excluded by guestAdjacent() — anyone reaching
+        // here is always a dine-in guest moving on to the food stage.
+        this.deliverDrinkStage(g);
       } else if (g.state === 'ordered_drink') {
         this.hint(`They want ${MENU_LABELS[drink]}.`);
       } else if (g.state === 'drink_served') {
@@ -1161,7 +1202,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   guestAdjacent(x, y) {
-    return this.guests.find(g => INTERACTABLE_STATES.has(g.state) &&
+    // Bar-seated guests are served entirely by the bartender (startBartenderService) —
+    // excluded here so the player never takes their order or delivers to them.
+    return this.guests.find(g => INTERACTABLE_STATES.has(g.state) && !g.table?.isBar &&
       g.seat && g.seat.x === x && g.seat.y === y);
   }
 
@@ -1187,8 +1230,20 @@ export class GameScene extends Phaser.Scene {
     this.hint(`Delivered ${g.def.name}'s drink. They're deciding on food next.`);
   }
 
+  /** Player-driven delivery: clears the waiter's hands, then finalizes the visit. */
   deliverToGuest(g) {
     this.carrying = null;
+    this.finalizeGuestVisit(g);
+  }
+
+  /**
+   * Ends a guest's visit: tip based on remaining patience, score/served,
+   * walk to the door. Deliberately does not touch `this.carrying` — the
+   * bartender's autonomous service (startBartenderService) calls this
+   * directly for bar guests, and must not clobber whatever the player is
+   * carrying for someone else at that moment.
+   */
+  finalizeGuestVisit(g) {
     g.state = 'served';
     const tip = Math.round(10 + 20 * Phaser.Math.Clamp(g.patience / g.maxPatience, 0, 1));
     this.score += tip;
