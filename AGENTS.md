@@ -95,7 +95,11 @@ Default floor plan uses verified-opaque frames chosen via pixel analysis:
 - **Kitchen**: `kitchen` f:80 (fridge), f:82 (stove), f:32/48 (counters)
 - **Tables**: `kitchen` f:44/46 (alternating tan/wood dining tables)
 - **Decor**: `generic` f:78 (plants in dining corners)
-- **Menu icons**: `kitchen` f:1 (burger), f:2 (salad), f:6 (coffee), f:7 (cake)
+- **Menu icons**: `kitchen` f:1 (burger), f:2 (salad), f:6 (coffee), f:7 (cake),
+  f:400 (a green glass bottle, used for both beer and wine — the pack has no
+  dedicated wine glass sprite, so wine reuses the bottle with a burgundy
+  `setTint()` applied only to the order-bubble icon; see `MENU_TINTS` in
+  catalog.js)
 
 ## Character Sprites
 
@@ -136,13 +140,49 @@ so a table directly above/below maps to a side pose.
 ### Game behavior
 - Guests arrive in **parties** (`groupSize` on the first guest decides how many
   queued guests arrive together). A party always shares one table.
-- Parties spawn at the door and queue in the **waiting area**
-- The **host NPC** seats them; the player never has to. Interacting with the
-  host stand just reports status.
+- Parties spawn at the door and queue in the **waiting area** — unless the
+  party leader has `prefersBar: true`, in which case the whole party skips
+  the queue and self-seats at the bar (see "Bartender NPC" below).
+- The **host NPC** seats dine-in parties; the player never has to. Interacting
+  with the host stand just reports status.
 - Waiting guests show blue patience bars; seated guests show green→red
-- HUD shows "Waiting N" and "Seating N" while the host is working
+- HUD shows "Waiting N", "Bar wait N" and "Seating N" while parties are queued
 - On serve/angry-leave, swap back to `_idle` and walk to door
 - Waiter plays `waiter_<dir>` walk animation while moving, returns to idle pose when stopped
+
+### Two-stage ordering: drink, then food
+
+Dine-in guests order in two stages once seated, each taken/delivered the same
+way (walk up, face them, press E):
+
+`seated` → (order drink) → `ordered_drink` → (deliver drink) → `drink_served`
+→ (order food) → `ordered_food` → (deliver food) → `served`, guest leaves.
+
+`prefersBar` guests stop after the drink stage — delivering it ends their
+visit (tip + leave) instead of advancing to `drink_served`. Patience is a
+single continuous budget from `onGuestSeated` through the final delivery; it
+is not reset between stages. `guestAdjacent()`/`interact()` in Game.js branch
+on these states; `deliverToGuest()` (the tip/leave finale) is shared by both
+the food-finale and bar-drink-finale paths since it never reads the order
+directly, only the guest's name and patience ratio.
+
+### Bartender NPC
+
+The bartender is the **kitchen for drinks**: no state machine, no walking —
+`spawnBartender()` places a static `Alex` sprite with a "BARTENDER" badge at
+`plan.bar`, and (like the kitchen) taking a drink order instantly makes it
+"ready" for pickup there. `this.preparedDrink`/`this.carrying` mirror
+`this.preparedOrder`/`this.carrying` for the kitchen. The bar counter and any
+bar-area dining tables are regular `tables` entries flagged `isBar: true`,
+which auto-derive seats the same way every other table does.
+
+`findFreeTableForGroup()` (host's regular seating pool) excludes `isBar`
+tables; `findFreeBarTableForGroup()` is the mirror image, used only by
+`prefersBar` parties. Bar parties that arrive when the bar is full queue in
+`barWaitingGroups` (mirroring `waitingGroups`/`reflowWaitingQueue`, but
+simpler — no bench/queue-line logic, just a handful of holding tiles near
+`plan.bar` from `barWaitingSpots()`) and are retried each tick by
+`updateBarWaiting()`.
 
 ### Host NPC
 
@@ -198,10 +238,14 @@ dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
 - **BFS pathfinding** for guest AI (walk from door to waiting area, then to seat).
 - **Seat auto-derivation**: seats are the walkable tiles around a table's footprint; no manual seat placement needed.
 - **Host stand flow**: parties queue in the waiting area and an autonomous host NPC walks them to a table.
-- **Default map** is 28×16: waiting area (cols 0-6) with the door at (3,0), host
+- **Default map** is 36×20: waiting area (cols 0-6) with the door at (3,0), host
   stand at (6,7) and six benches; a divider wall at col 7 with the only passage
   at row 8; kitchen along row 1 (cols 9-15); and ten dining tables in mixed
-  1×1 / 2×1 / 1×2 / 2×2 footprints.
+  1×1 / 2×1 / 1×2 / 2×2 footprints. Rows 16-19 under that original 28-wide
+  section are sealed dead space (the grid grew taller for the bar area, and
+  that section didn't need to). To the right (cols 28-35), a second divider
+  (passage at row 10) leads into the bar area: a 5-wide counter + a few
+  `isBar` dining tables, with the bartender's station at (34,3).
 
 ## Floor Plan Editor
 
@@ -233,7 +277,7 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   to an internal clipboard. Release mouse to finalize.
 - **Paste** — click to stamp the clipboard region with its top-left at the clicked
   cell. Clips at grid boundaries.
-- **Spawn / Kitchen / Door / Host / Bench / Table** (markers) — place the marker AND
+- **Spawn / Kitchen / Bar / Door / Host / Bench / Table** (markers) — place the marker AND
   auto-paint the selected object tile on that cell (sets solid=true). Removes marker on
   re-click. Each marker button has a small preview icon (bottom-right corner);
   right-click the preview to assign the current palette selection as that
@@ -241,10 +285,14 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   and saved with the plan.
   - **Host** = the podium the host NPC works from. Do not place it on a
     one-tile passage; it is solid and would wall the room off.
+  - **Bar** = the bartender's station / drink pickup point — works exactly
+    like Kitchen, but for drinks (`plan.bar`).
   - **Bench** = a waiting-area seat. Guests sit on the tile in front of it.
-  - **Table** uses the **1x1 / 2x1 / 1x2 / 2x2** footprint picker on row 2.
-    The status line reports the seat count. Clicking any tile of an existing
-    table removes the whole thing; overlapping footprints are rejected.
+  - **Table** uses the **1x1 / 2x1 / 1x2 / 2x2** footprint picker on row 2,
+    plus a **Bar Tbl** toggle that flags newly placed tables `isBar: true`
+    (drawn from the bar's own seating pool instead of the host's). The status
+    line reports the seat count. Clicking any tile of an existing table
+    removes the whole thing; overlapping footprints are rejected.
 
 The tool row is responsive: with 13 tools it shrinks the sheet selector, the
 action buttons, the button width and finally the font so it never runs under

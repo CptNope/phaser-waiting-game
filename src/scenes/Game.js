@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { TILE, MENU_LABELS, MENU_FRAMES, charKeys, IDLE_FRAMES, IDLE_FRAME_DOWN, SIT_FRAMES, RUN_FRAMES } from '../data/catalog.js';
+import { TILE, MENU_LABELS, MENU_FRAMES, MENU_TINTS, charKeys, IDLE_FRAMES, IDLE_FRAME_DOWN, SIT_FRAMES, RUN_FRAMES } from '../data/catalog.js';
 
 // All character sprites are 48×96 on a 48px grid. Origin Y=0.75 puts feet at tile bottom.
 const CHAR_ORIGIN_Y = 0.75;
@@ -18,6 +18,17 @@ const DIRS = {
 // Front-of-house NPC. Any name from CHARACTERS works; this one is not in the
 // default guest roster so the host is visually distinct from the customers.
 const HOST_CHARACTER = 'Conference_woman';
+
+// The bartender is a purely decorative NPC — it never moves. It plays the
+// same "instant prep" role for drinks that the (NPC-less) kitchen plays for
+// food: taking a drink order immediately makes it ready for pickup.
+const BARTENDER_CHARACTER = 'Alex';
+
+// Guest states that keep a patience bar ticking: everything from being
+// seated through the final food delivery, across both order stages.
+const PATIENCE_STATES = new Set(['waiting', 'seated', 'ordered_drink', 'drink_served', 'ordered_food']);
+// Guest states the waiter can face-interact with at their seat.
+const INTERACTABLE_STATES = new Set(['seated', 'ordered_drink', 'drink_served', 'ordered_food']);
 
 export class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
@@ -54,6 +65,7 @@ export class GameScene extends Phaser.Scene {
     this.guests = [];
     this.queue = [...this.guestDefs];
     this.waitingGroups = [];   // groups waiting at host area, ready to be seated
+    this.barWaitingGroups = []; // prefersBar groups waiting for a bar seat
     this.score = 0;
     this.served = 0;
     this.angry = 0;
@@ -61,12 +73,14 @@ export class GameScene extends Phaser.Scene {
     this.shiftActive = true;
     this.carrying = null;
     this.preparedOrder = null;
+    this.preparedDrink = null;
     this.spawnTimer = 0;
     this.spawnEvery = 8;       // seconds between guest group arrivals
 
     this.renderFloor();
     this.spawnWaiter();
     this.spawnHost();
+    this.spawnBartender();
     this.setupInput();
     this.setupHUD();
     this.setupCamera();
@@ -187,6 +201,30 @@ export class GameScene extends Phaser.Scene {
   syncHostBadge() {
     if (!this.host?.badge) return;
     this.host.badge.setPosition(this.host.sprite.x, this.host.sprite.y - 78);
+  }
+
+  /**
+   * The bartender is the "kitchen" for drinks: purely decorative, no state
+   * machine. Taking a drink order instantly makes it ready at `this.plan.bar`,
+   * exactly like the (NPC-less) kitchen does for food.
+   */
+  spawnBartender() {
+    const post = this.plan.bar;
+    if (!post) { this.bartender = null; return; }
+    const keys = charKeys(BARTENDER_CHARACTER);
+    const sprite = this.add.image(
+      post.x * TILE + TILE / 2, post.y * TILE + TILE / 2,
+      keys.idle, IDLE_FRAME_DOWN
+    ).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(11);
+    this.worldOnly(sprite);
+
+    const badge = this.add.text(sprite.x, sprite.y - 78, 'BARTENDER', {
+      fontFamily: 'system-ui', fontSize: '10px', fontStyle: 'bold',
+      color: '#1b1b22', backgroundColor: '#a8e6ff', padding: { x: 3, y: 1 }
+    }).setOrigin(0.5).setDepth(52);
+    this.worldOnly(badge);
+
+    this.bartender = { sprite, badge };
   }
 
   /**
@@ -489,8 +527,10 @@ export class GameScene extends Phaser.Scene {
 
   updateHUD() {
     const waiting = this.waitingGroups.reduce((n, g) => n + g.length, 0);
+    const barWaiting = this.barWaitingGroups.reduce((n, g) => n + g.length, 0);
     const parts = [`Served ${this.served}`, `Angry ${this.angry}`, `Score ${this.score}`];
     if (waiting > 0) parts.push(`Waiting ${waiting}`);
+    if (barWaiting > 0) parts.push(`Bar wait ${barWaiting}`);
     if (this.host?.party) parts.push(`Seating ${this.host.party.length}`);
     this.scoreText.setText(parts.join('  •  '));
     this.timeText.setText(this.shiftActive ? `Time ${Math.max(0, Math.ceil(this.shiftTime))}s` : 'Shift over');
@@ -504,6 +544,7 @@ export class GameScene extends Phaser.Scene {
     this.updateGuests(dt);
     this.handleSpawning(dt);
     this.updateHost();
+    this.updateBarWaiting();
     this.updateHUD();
   }
 
@@ -590,12 +631,22 @@ export class GameScene extends Phaser.Scene {
         orderBubble: null,
         group: null,       // set below
         waitSpot: null,    // tile in waiting area
+        // Whether the WHOLE PARTY prefers the bar — decided by the leader,
+        // not each guest's own def, since followers are pulled from the
+        // queue and may not individually carry the flag.
+        prefersBar: !!leaderDef.prefersBar,
       };
       this.guests.push(g);
       this.worldOnly(g.sprite);
       group.push(g);
     }
     for (const g of group) g.group = group;
+
+    // prefersBar parties skip the host queue entirely and self-seat at the bar.
+    if (leaderDef.prefersBar) {
+      this.seatBarGroupDirectly(group);
+      return;
+    }
 
     // If no host stand, fall back to direct seating (legacy).
     if (!this.plan.host) {
@@ -618,6 +669,76 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * prefersBar parties have no escort NPC: if a bar seat is free they walk
+   * straight to it from the door; otherwise they wait near the bar entrance
+   * (patience ticking) until one opens up, retried each tick by
+   * updateBarWaiting().
+   */
+  seatBarGroupDirectly(group) {
+    const table = this.findFreeBarTableForGroup(group.length);
+    if (!table) {
+      this.barWaitingGroups.push(group);
+      for (const g of group) { g.state = 'walking_to_wait'; g.queueKind = 'bar'; }
+      this.reflowBarWaitingQueue();
+      return;
+    }
+    const seats = this.findFreeSeatsForTable(table, group.length);
+    group.forEach((g, i) => {
+      const seat = seats[i];
+      if (!seat) return;
+      g.seat = seat;
+      g.table = table;
+      g.state = 'walking_to_seat';
+      this.walkGuestTo(g, seat.x, seat.y, () => this.onGuestSeated(g));
+    });
+  }
+
+  /** Tries to seat the front of the bar-overflow queue once a seat frees up. */
+  updateBarWaiting() {
+    if (this.barWaitingGroups.length === 0) return;
+    const group = this.barWaitingGroups[0];
+    const table = this.findFreeBarTableForGroup(group.length);
+    if (!table) return;
+    this.barWaitingGroups.shift();
+    const seats = this.findFreeSeatsForTable(table, group.length);
+    group.forEach((g, i) => {
+      const seat = seats[i];
+      if (!seat) return;
+      g.seat = seat;
+      g.table = table;
+      g.state = 'walking_to_seat';
+      if (g.patienceBar) {
+        g.patienceBar.destroy(); g.patienceFill.destroy();
+        g.patienceBar = null; g.patienceFill = null;
+      }
+      this.walkGuestTo(g, seat.x, seat.y, () => this.onGuestSeated(g));
+    });
+  }
+
+  /** Walks every bar-overflow guest to their current holding spot near the bar. */
+  reflowBarWaitingQueue() {
+    const spots = this.barWaitingSpots();
+    let i = 0;
+    for (const group of this.barWaitingGroups) {
+      for (const g of group) {
+        const spot = spots[i++] || spots[spots.length - 1] || this.plan.bar;
+        if (!spot) continue;
+        if (g.waitSpot && g.waitSpot.x === spot.x && g.waitSpot.y === spot.y &&
+            g.state === 'waiting') continue;
+        g.waitSpot = spot;
+        this.walkGuestTo(g, spot.x, spot.y, () => this.onGuestWaiting(g, spot));
+      }
+    }
+  }
+
+  /** A handful of tiles near the bar entrance for overflow parties to hold at. */
+  barWaitingSpots() {
+    if (this._barWaitingSpots) return this._barWaitingSpots;
+    const entrance = this.plan.bar || { x: 0, y: 0 };
+    return (this._barWaitingSpots = this.tilesNear(entrance, 6));
+  }
+
   // ------------------------------------------------------------ waiting area
 
   /**
@@ -626,7 +747,7 @@ export class GameScene extends Phaser.Scene {
    */
   assignWaitingSpots(group) {
     this.waitingGroups.push(group);
-    for (const g of group) g.state = 'walking_to_wait';
+    for (const g of group) { g.state = 'walking_to_wait'; g.queueKind = 'host'; }
     this.reflowWaitingQueue();
   }
 
@@ -880,14 +1001,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Pick a table for a party of `count`. Prefers a still-empty table whose
-   * capacity fits the party most snugly, so a couple does not occupy the
-   * eight-top while a large party waits. Falls back to any table with enough
-   * free seats, then to the table with the most free seats.
+   * Pick a table for a party of `count` from `pool`. Prefers a still-empty
+   * table whose capacity fits the party most snugly, so a couple does not
+   * occupy the eight-top while a large party waits. Falls back to any table
+   * with enough free seats, then to the table with the most free seats.
    */
-  findFreeTableForGroup(count) {
+  findFreeTableFrom(pool, count) {
     let best = null, bestWaste = Infinity;
-    for (const t of this.plan.tables) {
+    for (const t of pool) {
       const free = this.freeSeatsForTable(t).length;
       if (free < count) continue;
       // Prefer empty tables so parties are not split across strangers.
@@ -897,11 +1018,21 @@ export class GameScene extends Phaser.Scene {
     if (best) return best;
 
     let most = null, mostFree = 0;
-    for (const t of this.plan.tables) {
+    for (const t of pool) {
       const free = this.freeSeatsForTable(t).length;
       if (free > mostFree) { most = t; mostFree = free; }
     }
     return mostFree > 0 ? most : null;
+  }
+
+  /** Regular (non-bar) tables the host queue draws from. */
+  findFreeTableForGroup(count) {
+    return this.findFreeTableFrom(this.plan.tables.filter(t => !t.isBar), count);
+  }
+
+  /** Bar counter + bar tables that prefersBar parties draw from. */
+  findFreeBarTableForGroup(count) {
+    return this.findFreeTableFrom(this.plan.tables.filter(t => t.isBar), count);
   }
 
   /** Get up to `count` free seats around a table. */
@@ -942,7 +1073,7 @@ export class GameScene extends Phaser.Scene {
 
   updateGuests(dt) {
     for (const g of this.guests) {
-      if (g.state === 'waiting' || g.state === 'seated' || g.state === 'ordered') {
+      if (PATIENCE_STATES.has(g.state)) {
         g.patience -= dt;
         if (g.patience <= 0) {
           this.guestLeavesAngry(g);
@@ -979,6 +1110,19 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const bar = this.plan.bar;
+    if (bar && bar.x === fx && bar.y === fy) {
+      if (this.carrying) { this.hint('Already carrying something.'); return; }
+      if (this.preparedDrink) {
+        this.carrying = this.preparedDrink;
+        this.preparedDrink = null;
+        this.hint(`Picked up ${MENU_LABELS[this.carrying]}.`);
+      } else {
+        this.hint('No drink ready at the bar.');
+      }
+      return;
+    }
+
     // Host stand: report on the front of house (the host seats parties itself)
     const hs = this.plan.host;
     if (hs && hs.x === fx && hs.y === fy) {
@@ -988,15 +1132,27 @@ export class GameScene extends Phaser.Scene {
 
     const g = this.guestAdjacent(fx, fy);
     if (g) {
+      const drink = g.def.drinkOrder || 'coffee';
+      const food = g.def.foodOrder || 'burger';
       if (g.state === 'seated') {
-        this.preparedOrder = g.def.order;
-        g.state = 'ordered';
-        this.showOrderBubble(g);
-        this.hint(`Took order: ${MENU_LABELS[g.def.order]}. Ready at kitchen.`);
-      } else if (g.state === 'ordered' && this.carrying === g.def.order) {
+        this.preparedDrink = drink;
+        g.state = 'ordered_drink';
+        this.showOrderBubble(g, drink);
+        this.hint(`Took drink order: ${MENU_LABELS[drink]}. Ready at the bar.`);
+      } else if (g.state === 'ordered_drink' && this.carrying === drink) {
+        if (g.prefersBar) this.deliverToGuest(g);
+        else this.deliverDrinkStage(g);
+      } else if (g.state === 'ordered_drink') {
+        this.hint(`They want ${MENU_LABELS[drink]}.`);
+      } else if (g.state === 'drink_served') {
+        this.preparedOrder = food;
+        g.state = 'ordered_food';
+        this.showOrderBubble(g, food);
+        this.hint(`Took order: ${MENU_LABELS[food]}. Ready at kitchen.`);
+      } else if (g.state === 'ordered_food' && this.carrying === food) {
         this.deliverToGuest(g);
-      } else if (g.state === 'ordered') {
-        this.hint(`They want ${MENU_LABELS[g.def.order]}.`);
+      } else if (g.state === 'ordered_food') {
+        this.hint(`They want ${MENU_LABELS[food]}.`);
       }
       return;
     }
@@ -1005,21 +1161,31 @@ export class GameScene extends Phaser.Scene {
   }
 
   guestAdjacent(x, y) {
-    return this.guests.find(g => (g.state === 'seated' || g.state === 'ordered') &&
+    return this.guests.find(g => INTERACTABLE_STATES.has(g.state) &&
       g.seat && g.seat.x === x && g.seat.y === y);
   }
 
-  showOrderBubble(g) {
+  showOrderBubble(g, itemId) {
     if (g.orderBubble) g.orderBubble.destroy();
     const bx = g.sprite.x, by = g.sprite.y - 88;
     g.orderBubble = this.add.container(bx, by).setDepth(60);
     const bg = this.add.rectangle(0, 0, 40, 28, 0xffffff, 0.9).setStrokeStyle(1, 0x333333);
-    const icon = this.add.image(0, 0, 'kitchen', this.menuFrameFor(g.def.order)).setDisplaySize(24, 24);
+    const icon = this.add.image(0, 0, 'kitchen', this.menuFrameFor(itemId)).setDisplaySize(24, 24);
+    const tint = MENU_TINTS[itemId];
+    if (tint != null) icon.setTint(tint);
     g.orderBubble.add([bg, icon]);
     this.worldOnly(g.orderBubble, bg, icon);
   }
 
   menuFrameFor(id) { return MENU_FRAMES[id] ?? 0; }
+
+  /** Mid-visit drink delivery for dine-in guests: they stay seated and move on to food. */
+  deliverDrinkStage(g) {
+    this.carrying = null;
+    g.state = 'drink_served';
+    if (g.orderBubble) { g.orderBubble.destroy(); g.orderBubble = null; }
+    this.hint(`Delivered ${g.def.name}'s drink. They're deciding on food next.`);
+  }
 
   deliverToGuest(g) {
     this.carrying = null;
@@ -1055,8 +1221,10 @@ export class GameScene extends Phaser.Scene {
       if (i >= 0) g.group.splice(i, 1);
       if (g.group.length === 0) {
         this.waitingGroups = this.waitingGroups.filter(grp => grp !== g.group);
+        this.barWaitingGroups = this.barWaitingGroups.filter(grp => grp !== g.group);
       }
-      this.reflowWaitingQueue();
+      if (g.queueKind === 'bar') this.reflowBarWaitingQueue();
+      else this.reflowWaitingQueue();
     }
     g.sprite.setTexture(g.idleKey, IDLE_FRAME_DOWN);
     g.sprite.setOrigin(0.5, CHAR_ORIGIN_Y);
@@ -1070,7 +1238,8 @@ export class GameScene extends Phaser.Scene {
 
   checkShiftEnd() {
     if (this.queue.length === 0 && this.guests.length === 0 &&
-        this.waitingGroups.length === 0 && !this.host?.party) this.endShift();
+        this.waitingGroups.length === 0 && this.barWaitingGroups.length === 0 &&
+        !this.host?.party) this.endShift();
   }
 
   tickShift() {
@@ -1087,6 +1256,7 @@ export class GameScene extends Phaser.Scene {
       if (g.orderBubble) g.orderBubble.destroy();
     }
     this.waitingGroups = [];
+    this.barWaitingGroups = [];
   }
 
   hint(msg) {

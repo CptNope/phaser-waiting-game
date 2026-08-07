@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { CHARACTERS, MENU_LABELS, charKeys, IDLE_FRAME_DOWN, IDLE_FRAMES } from '../data/catalog.js';
+import { CHARACTERS, MENU_LABELS, MENU_DRINKS, MENU_FOODS, charKeys, IDLE_FRAME_DOWN, IDLE_FRAMES } from '../data/catalog.js';
 import { Storage } from '../core/Storage.js';
 import { DEFAULT_GUESTS } from '../data/defaults.js';
 
@@ -126,7 +126,11 @@ export class GuestEditorScene extends Phaser.Scene {
       try { preview = this.add.image(24, y + 36, keys.idle, IDLE_FRAME_DOWN).setOrigin(0.5, 0.75).setDisplaySize(28, 56); }
       catch { preview = this.add.rectangle(8, y + 4, 32, 32, 0x4a4a5e); }
       const name = this.add.text(48, y + 6, g.name || '(unnamed)', { fontFamily: 'system-ui', fontSize: '14px', color: '#e6e6f0' });
-      const order = this.add.text(48, y + 22, 'wants ' + (MENU_LABELS[g.order] || g.order), { fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff' });
+      const drinkLabel = MENU_LABELS[g.drinkOrder] || g.drinkOrder || 'Coffee';
+      const orderText = g.prefersBar
+        ? `bar: ${drinkLabel}`
+        : `${drinkLabel} → ${MENU_LABELS[g.foodOrder] || g.foodOrder || 'Burger'}`;
+      const order = this.add.text(48, y + 22, orderText, { fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff' });
       bg.on('pointerdown', () => { this.editingId = g.id; this.loadEditing(); this.refreshList(); });
       bg.on('pointerover', () => { if (g.id !== this.editingId) bg.setFillStyle(0x3a3a4d); });
       bg.on('pointerout', () => { if (g.id !== this.editingId) bg.setFillStyle(0x2b2b39); });
@@ -175,13 +179,30 @@ export class GuestEditorScene extends Phaser.Scene {
     ).setOrigin(0, 0.5);
     this.getInput(this.patienceInput).addEventListener('input', () => this.applyFormToEditing());
 
-    // Order dropdown.
-    this.add.text(x, TOOLBAR_H + 250, 'Order', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
-    const orderOpts = Object.entries(MENU_LABELS).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
-    this.orderInput = this.add.dom(x, TOOLBAR_H + 278).createFromHTML(
-      `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${orderOpts}</select>`
+    // Drink dropdown (stage 1 — everyone orders a drink first).
+    this.add.text(x, TOOLBAR_H + 250, 'Drink', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    const drinkOpts = MENU_DRINKS.map(id => `<option value="${id}">${MENU_LABELS[id]}</option>`).join('');
+    this.drinkInput = this.add.dom(x, TOOLBAR_H + 278).createFromHTML(
+      `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${drinkOpts}</select>`
     ).setOrigin(0, 0.5);
-    this.getInput(this.orderInput).addEventListener('change', () => this.applyFormToEditing());
+    this.getInput(this.drinkInput).addEventListener('change', () => this.applyFormToEditing());
+
+    // Food dropdown (stage 2 — skipped entirely for prefersBar guests).
+    this.foodLabel = this.add.text(x, TOOLBAR_H + 300, 'Food', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    const foodOpts = MENU_FOODS.map(id => `<option value="${id}">${MENU_LABELS[id]}</option>`).join('');
+    this.foodInput = this.add.dom(x, TOOLBAR_H + 328).createFromHTML(
+      `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${foodOpts}</select>`
+    ).setOrigin(0, 0.5);
+    this.getInput(this.foodInput).addEventListener('change', () => this.applyFormToEditing());
+
+    // Prefers bar checkbox — skips the host queue, drink-only visit.
+    this.barInput = this.add.dom(x, TOOLBAR_H + 360).createFromHTML(
+      `<label style="display:flex;align-items:center;gap:6px;font-family:system-ui;font-size:13px;color:#c9c9d6;cursor:pointer;">
+         <input type="checkbox" style="width:16px;height:16px;" />
+         Prefers bar (drink only, skips queue)
+       </label>`
+    ).setOrigin(0, 0.5);
+    this.getInput(this.barInput).addEventListener('change', () => this.applyFormToEditing());
 
     this.add.text(x, height - 40,
       'Pick a character from the left panel. Idle pose shown for walking, sit pose used when seated.',
@@ -197,11 +218,22 @@ export class GuestEditorScene extends Phaser.Scene {
     this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
     this.getInput(this.nameInput).value = g.name || '';
     this.getInput(this.patienceInput).value = g.patience;
-    this.getInput(this.orderInput).value = g.order;
+    this.getInput(this.drinkInput).value = g.drinkOrder || 'coffee';
+    this.getInput(this.foodInput).value = g.foodOrder || 'burger';
+    this.getInput(this.barInput).checked = !!g.prefersBar;
+    this.refreshFoodRow(!!g.prefersBar);
     // Highlight selected character.
     for (const b of this.charButtons) {
       b.bg.setFillStyle(b.name === g.charName ? 0x4a4a5e : 0x2b2b39);
     }
+  }
+
+  /** Greys out the Food dropdown when the guest is bar-only (drink stage is their whole visit). */
+  refreshFoodRow(prefersBar) {
+    const alpha = prefersBar ? 0.4 : 1;
+    this.foodLabel.setAlpha(alpha);
+    this.foodInput.setAlpha(alpha);
+    this.getInput(this.foodInput).disabled = prefersBar;
   }
 
   applyFormToEditing() {
@@ -209,14 +241,20 @@ export class GuestEditorScene extends Phaser.Scene {
     if (!g) return;
     g.name = this.getInput(this.nameInput).value || '(unnamed)';
     g.patience = Math.max(10, parseInt(this.getInput(this.patienceInput).value, 10) || 60);
-    g.order = this.getInput(this.orderInput).value;
+    g.drinkOrder = this.getInput(this.drinkInput).value;
+    g.foodOrder = this.getInput(this.foodInput).value;
+    g.prefersBar = this.getInput(this.barInput).checked;
+    this.refreshFoodRow(g.prefersBar);
     this.refreshList();
   }
 
   addGuest() {
     const id = 'g' + Date.now();
     const firstChar = CHARACTERS[0];
-    this.guests.push({ id, name: firstChar.replace(/_/g, ' '), charName: firstChar, patience: 60, order: 'burger' });
+    this.guests.push({
+      id, name: firstChar.replace(/_/g, ' '), charName: firstChar, patience: 60,
+      drinkOrder: 'coffee', foodOrder: 'burger', prefersBar: false
+    });
     this.editingId = id;
     this.refreshList();
     this.loadEditing();

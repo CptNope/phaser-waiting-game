@@ -77,19 +77,36 @@ export const DEFAULT_MENU = [
   { id: 'burger',  name: 'Burger',  sheet: 'kitchen', frame: 1 },
   { id: 'salad',   name: 'Salad',   sheet: 'kitchen', frame: 2 },
   { id: 'coffee',  name: 'Coffee',  sheet: 'kitchen', frame: 6 },
-  { id: 'cake',    name: 'Cake',    sheet: 'kitchen', frame: 7 }
+  { id: 'cake',    name: 'Cake',    sheet: 'kitchen', frame: 7 },
+  { id: 'beer',    name: 'Beer',    sheet: 'kitchen', frame: 400 },
+  { id: 'wine',    name: 'Wine',    sheet: 'kitchen', frame: 400 }
 ];
 
 export const MENU_LABELS = {
   burger: 'Burger',
   salad: 'Salad',
   coffee: 'Coffee',
-  cake: 'Cake'
+  cake: 'Cake',
+  beer: 'Beer',
+  wine: 'Wine'
 };
 
 export const MENU_FRAMES = {
   burger: 1,
   salad: 2,
   coffee: 6,
-  cake: 7
+  cake: 7,
+  beer: 400,
+  wine: 400
 };
+
+// Neither the pack nor asset-labels.json has a dedicated wine glass sprite, so
+// Wine reuses the Beer bottle frame with a burgundy tint applied at render time.
+export const MENU_TINTS = {
+  wine: 0x8b2a52
+};
+
+// Stage-1 (bar) vs stage-2 (kitchen) menu items — drives guest ordering and
+// the GuestEditor's two dropdowns.
+export const MENU_DRINKS = ['coffee', 'beer', 'wine'];
+export const MENU_FOODS = ['burger', 'salad', 'cake'];
