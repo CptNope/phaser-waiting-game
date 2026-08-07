@@ -221,13 +221,17 @@ simpler — no bench/queue-line logic, just a handful of holding tiles near
 
 ### Kitchen: 5 stations, cooks, food runners, bussing
 
-The kitchen row (`plan.kitchen` corridor, cols 9-15) has one appliance tile
-per station — grill, fry, sauté, salad, dessert — reusing existing tiles
-(`T.stove`/`T.counter`/`T.counterAlt`); stations are told apart by their
-cook's badge, not unique art, same as HOST/BARTENDER. `COOK_STATIONS` in
-Game.js maps each `plan.stations.<key>` position to a character + badge;
-`spawnCooks()` places one static sprite+badge per station, no AI, same model
-as the bartender for dine-in drinks.
+The kitchen row (row 1, cols 9-27) has a two-tile appliance footprint per
+station — grill, fry, sauté, salad, dessert, then a two-tile dish area —
+each separated by an open gap column so they read as distinct areas on the
+map, reusing existing tiles (`T.stove`/`T.counter`/`T.counterAlt`/`T.dishRack`);
+stations are told apart by their cook's badge, not unique art, same as
+HOST/BARTENDER. `plan.kitchen` is no longer tied to any one station — it's
+just a status/decoration anchor sitting in a gap column, central to the
+whole span. `COOK_STATIONS` in Game.js maps each `plan.stations.<key>`
+position (row 2, under the station's first appliance tile) to a character +
+badge; `spawnCooks()` places one static sprite+badge per station, no AI,
+same model as the bartender for dine-in drinks.
 
 **Order flow** (`interact()`'s `drink_served` branch, once the drink is
 delivered): taking the food order calls `startCookPrep(g, food)`, which
@@ -313,9 +317,10 @@ dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
 - **Host stand flow**: parties queue in the waiting area and an autonomous host NPC walks them to a table.
 - **Default map** is 36×20: waiting area (cols 0-6) with the door at (3,0), host
   stand at (6,7) and six benches; a divider wall at col 7 with the only passage
-  at row 8; kitchen along row 1 (cols 9-15: fridge + 5 stations + dish area,
-  cooks/runners standing in the row-2 walkway below); and ten dining tables in
-  mixed 1×1 / 2×1 / 1×2 / 2×2 footprints. Rows 16-19 under that original
+  at row 8; kitchen along row 1 (cols 9-27: fridge + 5 two-tile stations +
+  a two-tile dish area, each separated by a gap column, cooks/runners
+  standing in the row-2 walkway below); and ten dining tables in mixed
+  1×1 / 2×1 / 1×2 / 2×2 footprints. Rows 16-19 under that original
   28-wide section are sealed dead space (the grid grew taller for the bar
   area, and that section didn't need to). To the right (cols 28-35), a second
   divider (passage at row 10) leads into the bar area: a 5-wide counter + a
