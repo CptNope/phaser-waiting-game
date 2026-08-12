@@ -1,5 +1,5 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { TILE, SHEETS } from '../data/catalog.js';
+import { TILE, SHEETS, STATION_KEYS } from '../data/catalog.js';
 import { Storage } from '../core/Storage.js';
 import { Palette } from '../core/Palette.js';
 import { DEFAULT_FLOOR_PLAN } from '../data/defaults.js';
@@ -36,15 +36,6 @@ const TOOLS = [
 
 // Marker tools that auto-paint the selected object tile when placed.
 const MARKER_TOOLS = ['spawn', 'kitchen', 'bar', 'door', 'host', 'bench', 'table', 'station', 'dish', 'runner'];
-
-// Which kitchen station the Station tool stamps; cycled via the station picker.
-const STATION_KEYS = [
-  { key: 'grill',   label: 'Grill', code: 'GR' },
-  { key: 'fry',     label: 'Fry',   code: 'FR' },
-  { key: 'saute',   label: 'Saute', code: 'SA' },
-  { key: 'salad',   label: 'Salad', code: 'SL' },
-  { key: 'dessert', label: 'Dsrt',  code: 'DS' }
-];
 
 // Selectable footprints for the Table tool, in tiles. Seats are the walkable
 // tiles around the footprint, so bigger tables seat bigger parties.

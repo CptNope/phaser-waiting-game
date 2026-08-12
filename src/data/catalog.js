@@ -2,6 +2,21 @@
 // Sheets are loaded once in Boot and referenced by key everywhere else.
 export const TILE = 48;
 
+// Fixed allergen vocabulary shared by menu items (Menu Editor) and guests
+// (Guest Editor) — see src/data/menu.js for the actual menu item list.
+export const ALLERGENS = ['Dairy', 'Egg', 'Fish', 'Gluten', 'Nuts', 'Shellfish', 'Soy', 'Other'];
+
+// Kitchen station keys — shared by the Floor Plan Editor's Station tool
+// (which places a station marker) and the Menu Editor (which assigns a food
+// item to the station that preps it).
+export const STATION_KEYS = [
+  { key: 'grill',   label: 'Grill', code: 'GR' },
+  { key: 'fry',     label: 'Fry',   code: 'FR' },
+  { key: 'saute',   label: 'Saute', code: 'SA' },
+  { key: 'salad',   label: 'Salad', code: 'SL' },
+  { key: 'dessert', label: 'Dsrt',  code: 'DS' }
+];
+
 export const SHEETS = [
   { key: 'generic',     path: 'game-assets/tiles/1_Generic_48x48.png',           frameW: 48, frameH: 48 },
   { key: 'kitchen',     path: 'game-assets/tiles/12_Kitchen_48x48.png',          frameW: 48, frameH: 48 },
@@ -72,58 +87,5 @@ export function charKeys(name) {
   return { idle: `${key}_idle`, sit: `${key}_sit` };
 }
 
-// Menu items the waiter can serve. frame is an index into the named sheet.
-export const DEFAULT_MENU = [
-  { id: 'burger',  name: 'Burger',   sheet: 'kitchen', frame: 1 },
-  { id: 'salad',   name: 'Salad',    sheet: 'kitchen', frame: 2 },
-  { id: 'coffee',  name: 'Coffee',   sheet: 'kitchen', frame: 6 },
-  { id: 'cake',    name: 'Cake',     sheet: 'kitchen', frame: 7 },
-  { id: 'beer',    name: 'Beer',     sheet: 'kitchen', frame: 400 },
-  { id: 'wine',    name: 'Wine',     sheet: 'kitchen', frame: 400 },
-  { id: 'fries',   name: 'Fries',    sheet: 'kitchen', frame: 384 },
-  { id: 'stirfry', name: 'Stir Fry', sheet: 'kitchen', frame: 385 }
-];
-
-export const MENU_LABELS = {
-  burger: 'Burger',
-  salad: 'Salad',
-  coffee: 'Coffee',
-  cake: 'Cake',
-  beer: 'Beer',
-  wine: 'Wine',
-  fries: 'Fries',
-  stirfry: 'Stir Fry',
-  dirty_dish: 'Dirty Dish'
-};
-
-export const MENU_FRAMES = {
-  burger: 1,
-  salad: 2,
-  coffee: 6,
-  cake: 7,
-  beer: 400,
-  wine: 400,
-  fries: 384,
-  stirfry: 385
-};
-
-// Neither the pack nor asset-labels.json has a dedicated wine glass or fries
-// sprite, so Wine reuses the Beer bottle frame with a burgundy tint applied
-// at render time, and Fries/Stir Fry reuse the closest plated-dish icons.
-export const MENU_TINTS = {
-  wine: 0x8b2a52
-};
-
-// Stage-1 (bar) vs stage-2 (kitchen) menu items — drives guest ordering and
-// the GuestEditor's two dropdowns.
-export const MENU_DRINKS = ['coffee', 'beer', 'wine'];
-export const MENU_FOODS = ['burger', 'salad', 'cake', 'fries', 'stirfry'];
-
-// Which kitchen station prepares each food item.
-export const STATION_FOR_FOOD = {
-  burger: 'grill',
-  fries: 'fry',
-  stirfry: 'saute',
-  salad: 'salad',
-  cake: 'dessert'
-};
+// Menu items now live in game-assets/default-menu.json (+ any user save under
+// Storage's menu key) — see src/data/menu.js and the Menu Editor scene.

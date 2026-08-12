@@ -1,6 +1,6 @@
 // Service worker for Waiting Game PWA.
 // Caches the app shell and game assets for offline play.
-const CACHE = 'waiting-game-v6';
+const CACHE = 'waiting-game-v7';
 const SHELL = [
   './',
   './index.html',
@@ -10,16 +10,21 @@ const SHELL = [
   './src/scenes/Menu.js',
   './src/scenes/FloorPlanEditor.js',
   './src/scenes/GuestEditor.js',
+  './src/scenes/MenuEditor.js',
   './src/scenes/Game.js',
   './src/data/defaults.js',
   './src/data/catalog.js',
   './src/data/assetIndex.js',
+  './src/data/menu.js',
+  './src/data/characterGenerator.js',
   './src/core/Storage.js',
   './src/core/Palette.js',
   './src/core/MobileControls.js',
+  './src/core/AppearanceCompositor.js',
   // Summary only. Per-sheet detail under game-assets/asset-index/ and the themed
   // PNGs are fetched on demand and picked up by the runtime cache below.
   './game-assets/asset-index.json',
+  './game-assets/default-menu.json',
   './game-assets/tiles/1_Generic_48x48.png',
   './game-assets/tiles/12_Kitchen_48x48.png',
   './game-assets/tiles/Room_Builder_48x48.png',

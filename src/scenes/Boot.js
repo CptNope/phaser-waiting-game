@@ -1,5 +1,21 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
 import { SHEETS, CHARACTER_SHEETS, WAITER_SHEETS, SIT_SHEETS, SIT_GEOM, RUN_FRAMES } from '../data/catalog.js';
+import { Storage } from '../core/Storage.js';
+import { DEFAULT_GUESTS } from '../data/defaults.js';
+import { collectLayerFiles } from '../core/AppearanceCompositor.js';
+import { loadDefaultMenuItems } from '../data/menu.js';
+
+// Only the generator-layer files actually referenced by guests in the current
+// roster get preloaded — same philosophy as CHARACTER_SHEETS only listing the
+// 20 named legacy characters, not the whole pack. Custom appearances added
+// later via Import are loaded lazily by the Guest Editor / AppearanceCompositor.
+function currentRosterAppearances() {
+  const guests = Storage.loadGuests() || DEFAULT_GUESTS;
+  return guests
+    .map(g => g.appearance)
+    .filter(a => a?.mode === 'custom' && a.custom)
+    .map(a => a.custom);
+}
 
 export class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
@@ -26,6 +42,9 @@ export class BootScene extends Phaser.Scene {
     for (const w of WAITER_SHEETS) this.load.spritesheet(w.key, w.path, { frameWidth: w.frameW, frameHeight: w.frameH });
     // Sit sheets are sliced manually in create() — load as plain images.
     for (const s of SIT_SHEETS) this.load.image(s.key, s.path);
+
+    // Generator layer files for any custom-appearance guests already in the roster.
+    for (const f of collectLayerFiles(currentRosterAppearances())) this.load.image(f.key, f.path);
   }
 
   // Sit sheets place a 48×96 sprite inside each 96px-wide cell, so the plain
@@ -40,7 +59,7 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
-  create() {
+  async create() {
     this.registerSitFrames();
 
     // 1x1 white pixel used as a placeholder texture for editor cells.
@@ -61,6 +80,10 @@ export class BootScene extends Phaser.Scene {
         });
       }
     }
+
+    // Warm the default-menu cache now so every later loadMenuItems() call
+    // (Guest Editor, Menu Editor, Game) resolves instantly from cache.
+    await loadDefaultMenuItems();
 
     document.getElementById('boot-fallback')?.classList.add('hidden');
     this.scene.start('Menu');

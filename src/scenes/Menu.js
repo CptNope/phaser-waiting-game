@@ -21,6 +21,7 @@ export class MenuScene extends Phaser.Scene {
       { label: 'Play Shift',        action: () => this.scene.start('Game') },
       { label: 'Floor Plan Editor', action: () => this.scene.start('FloorPlanEditor') },
       { label: 'Guest Editor',      action: () => this.scene.start('GuestEditor') },
+      { label: 'Menu Editor',       action: () => this.scene.start('MenuEditor') },
       { label: 'Export Floor Plan', action: () => {
           const p = Storage.loadPlan();
           if (!p) return this.flash('No saved floor plan yet.');

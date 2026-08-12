@@ -1,0 +1,10 @@
+[
+  { "id": "burger",  "name": "Burger",   "category": "food",  "sheet": "kitchen", "frame": 1,   "tint": null,     "station": "grill",   "allergens": ["Gluten"] },
+  { "id": "salad",   "name": "Salad",    "category": "food",  "sheet": "kitchen", "frame": 2,   "tint": null,     "station": "salad",   "allergens": [] },
+  { "id": "coffee",  "name": "Coffee",   "category": "drink", "sheet": "kitchen", "frame": 6,   "tint": null,     "station": null,      "allergens": [] },
+  { "id": "cake",    "name": "Cake",     "category": "food",  "sheet": "kitchen", "frame": 7,   "tint": null,     "station": "dessert", "allergens": ["Gluten", "Egg", "Dairy"] },
+  { "id": "beer",    "name": "Beer",     "category": "drink", "sheet": "kitchen", "frame": 400, "tint": null,     "station": null,      "allergens": ["Gluten"] },
+  { "id": "wine",    "name": "Wine",     "category": "drink", "sheet": "kitchen", "frame": 400, "tint": 9120338,  "station": null,      "allergens": [] },
+  { "id": "fries",   "name": "Fries",    "category": "food",  "sheet": "kitchen", "frame": 384, "tint": null,     "station": "fry",     "allergens": [] },
+  { "id": "stirfry", "name": "Stir Fry", "category": "food",  "sheet": "kitchen", "frame": 385, "tint": null,     "station": "saute",   "allergens": ["Soy"] }
+]

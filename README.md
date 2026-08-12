@@ -32,10 +32,16 @@ Or any static server will do (`npx serve`, `php -S`, etc.).
 - **Floor Plan Editor** — paint tiles, place tables and a spawn point, resize the
   grid, toggle layers. Browse all 31 indexed sprite sheets; non-preloaded sheets
   load on demand.
-- **Guest Editor** — pick from 20 named characters (each with idle + sit poses),
-  set their patience, order, and color.
-- **Import / Export** — share floor plans and rosters as JSON. No backend, no
-  account, no localStorage dependency for sharing.
+- **Guest Editor** — pick from 20 named preset characters, or build a custom
+  look on the **Custom** tab (body/eyes/outfit/hairstyle/accessory, layered
+  from the pack's character generator sheets, plus a Kid toggle and a
+  Randomize button). Set patience, drink/food order, and allergies.
+- **Menu Editor** — create/edit menu items: name, drink or food, a sprite
+  picked from any sprite sheet, an optional tint, a kitchen station (food),
+  and allergens. The Guest Editor's order dropdowns pull from this list.
+- **Import / Export** — share floor plans, guest rosters, and menus as JSON.
+  No backend, no account, no localStorage dependency for sharing. The
+  default menu itself ships as `game-assets/default-menu.json`.
 
 ## Assets
 
@@ -72,9 +78,9 @@ manifest.json           PWA manifest
 sw.js                   Service worker (cache-first)
 src/
   main.js               Phaser config + scene registration + SW registration
-  scenes/               Boot, Menu, FloorPlanEditor, GuestEditor, Game
-  data/                 catalog, defaults, assetIndex loader
-  core/                 Storage, Palette
+  scenes/               Boot, Menu, FloorPlanEditor, GuestEditor, MenuEditor, Game
+  data/                 catalog, defaults, assetIndex loader, characterGenerator, menu
+  core/                 Storage, Palette, AppearanceCompositor
 tools/
   index_assets.py       Asset index + docs generator
 docs/
@@ -83,6 +89,8 @@ docs/
 game-assets/
   tiles/                Core sheets + themes/ (on-demand)
   characters/single/    20 named characters + waiter
+  characters/generator/ Layered body/eyes/outfit/hairstyle/accessory sheets (+ kids)
+  default-menu.json     Default menu items (editable, importable)
   asset-index.json      Generated summary (~12 KB, always loaded)
   asset-index/<key>.json  Generated per-sheet detail, fetched on demand
   asset-labels.json     Hand-written names (merged in; never overwritten)

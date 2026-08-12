@@ -28,19 +28,23 @@ sw.js                   Service worker (cache-first for assets)
 src/
   main.js               Phaser game config + scene registration + SW registration
   scenes/
-    Boot.js             Asset loading with progress bar, creates __pixel texture
-    Menu.js             Main menu: Play / Floor Plan Editor / Guest Editor / Import-Export
+    Boot.js             Asset loading with progress bar, creates __pixel texture, warms default-menu cache
+    Menu.js             Main menu: Play / Floor Plan Editor / Guest Editor / Menu Editor / Import-Export
     FloorPlanEditor.js  Tile-based floor plan editor with visual palette
-    GuestEditor.js      Guest roster editor with character frame picker + DOM form inputs
+    GuestEditor.js      Guest roster editor: Presets/Custom appearance tabs, allergies, DOM form inputs
+    MenuEditor.js       Menu item editor: sprite picker (any sheet), category/station/tint/allergens
     Game.js             Core gameplay: seat guests, take orders, deliver food, score
   data/
-    catalog.js          Spritesheet definitions, tile size, menu items
+    catalog.js          Spritesheet definitions, tile size, ALLERGENS, STATION_KEYS
     defaults.js         Default floor plan + guest roster (playable without editing)
     assetIndex.js       Loads the generated asset index; on-demand sheet/detail fetch
+    characterGenerator.js  Layered character-generator manifest + frame geometry (see below)
+    menu.js             Loads game-assets/default-menu.json; Storage.loadMenu() takes priority
   core/
-    Storage.js          localStorage + JSON export/import helpers
+    Storage.js          localStorage + JSON export/import helpers (plan/guests/menu)
     Palette.js          Frame picker; `only` option renders just non-empty frames
     MobileControls.js   Touch D-pad + action + menu buttons; auto-shows on touch/narrow screens
+    AppearanceCompositor.js  Bakes layered guest appearances into charKeys()-shaped textures
 tools/
   index_assets.py       Generates the asset index + docs (run from repo root)
 docs/
@@ -52,7 +56,9 @@ game-assets/
   asset-index.json      Generated summary (~12 KB, always loaded)
   asset-index/<key>.json  Generated per-sheet detail, fetched on demand
   asset-labels.json     Hand-written names (merged in; never overwritten)
+  default-menu.json     Default 8 menu items (editable/importable, not hardcoded JS)
   characters/           20 premade character sheets (48x48)
+  characters/generator/ Layered body/eyes/outfit/hairstyle/accessory sheets (+ _kids)
   ui/                   UI spritesheet + generated PWA icon
 ```
 
@@ -98,10 +104,12 @@ Default floor plan uses verified-opaque frames chosen via pixel analysis:
 - **Menu icons**: `kitchen` f:1 (burger), f:2 (salad), f:6 (coffee), f:7 (cake),
   f:400 (a green glass bottle, used for both beer and wine — the pack has no
   dedicated wine glass sprite, so wine reuses the bottle with a burgundy
-  `setTint()` applied only to the order-bubble icon; see `MENU_TINTS` in
-  catalog.js), f:384 (fries — closest available plated-dish icon, not a
-  literal fries sprite), f:385 (stir fry), f:354 (stack of plates — reused
-  both as the dish-area tile and the dirty-table indicator icon)
+  `tint` on its `game-assets/default-menu.json` entry, applied to the
+  order-bubble icon in `Game.showOrderBubble()`), f:384 (fries — closest
+  available plated-dish icon, not a literal fries sprite), f:385 (stir fry),
+  f:354 (stack of plates — reused both as the dish-area tile and the
+  dirty-table indicator icon). These are just the *default* menu's choices —
+  see "Menu Editor & Allergies" below for the data-driven system.
 
 ## Character Sprites
 
@@ -279,8 +287,9 @@ as the bartender for dine-in drinks.
 
 **Order flow**: taking a food order (step 3 of whole-table handling, above)
 calls `startCookPrep(g, food)`, which looks up the item's station via
-`STATION_FOR_FOOD` and, after a prep delay, pushes `{ guest, item,
-stationPost }` onto `this.readyFood`. From there, **either** the player
+`this.menuById.get(food)?.station` (falls back to `'grill'`) and, after a
+prep delay, pushes `{ guest, item, stationPost }` onto `this.readyFood`.
+From there, **either** the player
 (facing `plan.kitchen`, tray-capped multi-pickup) **or** a food runner can
 claim and deliver it — see "Food runners" below. State is re-checked at
 every async boundary (prep complete, delivery) so a guest who left angry
@@ -365,12 +374,97 @@ the ticket on its next hop and stops. Without this, two chains fight over the
 same sprite and a guest can end up flagged `seated` while their sprite is
 dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
 
+## Guest Custom Appearances (Character Generator)
+
+The Guest Editor's **Custom** tab (next to **Presets**) builds a guest's look
+from layered sprites in
+`assets/moderninteriors-win/2_Characters/Character_Generator/` (copied into
+`game-assets/characters/generator/<Category>/`), instead of picking one of
+the 20 premade characters: Body → Eyes → Outfit → Hairstyle → Accessory (the
+pack's own stacking order), plus a Kid toggle that swaps in the `_kids`
+sheets (much smaller grid, only one sit pose — see below).
+
+- `src/data/characterGenerator.js` — manifest of every layer variant (built
+  from real folder listings, cross-checked against actual filenames on disk)
+  plus two frame-geometry profiles, both real frames 48×96 (2-tile-tall, same
+  as legacy sheets):
+  - **Adult**: idle row 1 (4 direction blocks of 6 cols each; block order
+    right/up/left/down follows the legacy sheets' convention — not
+    independently re-verified per direction against the pack), sit row 4
+    (12 cols: left 0-5, right 6-11 — this exactly matches `SIT_GEOM`'s
+    legacy 12-frame split, which is strong corroboration the row/col math
+    here is right).
+  - **Kid**: much smaller sheet (1152×384 vs 2688×1968), same
+    row-1-idle/row-3-sit layout, but only one sit pose exists in the pack —
+    the "right" sit frame is produced by horizontally mirroring "left" at
+    bake time (`sitMirrorRight` on the profile).
+  - If a pack update ever shifts the grid, these are the constants to fix.
+    Verify by comparing a composited idle-down pose against a legacy
+    character side by side in the Guest Editor preview.
+- `src/core/AppearanceCompositor.js` — bakes a chosen combination into two
+  synthetic textures (`<key>_idle` 4-frame, `<key>_sit` frames 0/6) shaped
+  exactly like `charKeys()`'s output, using
+  `Phaser.GameObjects.RenderTexture` to stamp each layer. Because the output
+  shape matches `charKeys()`, `Game.js`'s guest rendering needed **zero**
+  changes — `resolveGuestKeys()` just picks `bakeAppearanceTextures()` over
+  `charKeys()` when `def.appearance.mode === 'custom'`.
+- Loading is lazy and two-tier: `Boot.js` only preloads the generator layer
+  files the *current* guest roster's custom guests actually reference
+  (mirrors the existing `CHARACTER_SHEETS` philosophy — not the whole 30MB
+  pack); the Guest Editor additionally loads a whole category's sheets
+  (~1-14MB depending on category) on first open of that slot's picker modal.
+- Guest shape gained `appearance: { mode: 'preset'|'custom', charName?,
+  custom?: { kid, body, eyes, outfit, hairstyle, accessory } }`. Guests
+  without it (old saves, imported files) are treated as `mode: 'preset'`
+  using their existing `charName` — fully backward compatible.
+
+## Menu Editor & Allergies
+
+Menu items are no longer hardcoded in `catalog.js` — `game-assets/default-menu.json`
+is the shipped default list, in the exact same shape Export Menu produces and
+Import Menu accepts, so "the defaults" and "a user's custom menu" are the same
+kind of file. Loaded via `src/data/menu.js`:
+`loadMenuItems()` = `Storage.loadMenu()` (the user's saved/edited menu) or,
+falling back, `loadDefaultMenuItems()` (fetches + caches the JSON file, same
+pattern as `loadAssetIndex()`). `Boot.js` warms this cache once at boot so
+every scene's `loadMenuItems()` call resolves instantly afterward.
+`Storage.loadMenu`/`saveMenu` is the third `loadX`/`saveX` pair, alongside
+guests and the floor plan.
+
+Item shape: `{ id, name, category: 'drink'|'food', sheet, frame,
+tint: number|null, station: string|null, allergens: string[] }`. `sheet`/
+`frame` can point at **any** indexed sheet, not just `kitchen` — the Menu
+Editor's sprite picker reuses `Palette`/`assetIndex.js` exactly like the
+Floor Plan Editor's palette (sheet ◀▶ + non-empty-frame grid), just without
+the painting tools. `station` (food items only) is one of the shared
+`STATION_KEYS` (now in `catalog.js`; the Floor Plan Editor's Station tool
+imports the same constant instead of keeping its own copy).
+
+`Game.js` resolves everything through `this.menuById` (a `Map` built from
+`loadMenuItems()` in `create()`, which is `async` now for this reason):
+`showOrderBubble()` reads `item.sheet`/`item.frame`/`item.tint` instead of
+hardcoded `'kitchen'` + the old `MENU_FRAMES`/`MENU_TINTS` dicts,
+`startCookPrep()` reads `item.station` instead of `STATION_FOR_FOOD`, and the
+carry-tray label text reads `item.name` instead of `MENU_LABELS` (with a
+`'Dirty Dish'` special case, since that tray entry is synthetic, never a real
+menu item). `Game.ensureMenuSheets()` loads any sheet a menu item references
+that Boot didn't preload — same on-demand pattern as `ensurePlanSheets()`.
+
+`ALLERGENS` (`catalog.js`) is a fixed 8-item vocabulary — Dairy, Egg, Fish,
+Gluten, Nuts, Shellfish, Soy, Other — shared by menu items (Menu Editor) and
+guests (Guest Editor's Allergies checklist, `guest.allergies: string[]`).
+Guest allergies are **metadata only**: they don't affect order generation,
+serving, or any other gameplay logic yet.
+
 ## Key Design Decisions
 
 - **48x48 tile size** throughout (assets have 16/32/48 variants; 48 chosen for visibility).
 - **Visual palette** approach: users pick tiles/frames directly from spritesheets in the editors,
   no hand-mapped frame indices needed.
-- **Export/Import JSON** for sharing floor plans and guest rosters (no backend, no localStorage dependency for sharing).
+- **Export/Import JSON** for sharing floor plans, guest rosters, and menus (no backend, no localStorage dependency for sharing).
+- **Default data as data, not code**: the default menu ships as
+  `game-assets/default-menu.json` rather than a hardcoded JS array, so it's
+  hand-editable and exactly what Export/Import already round-trip.
 - **BFS pathfinding** for guest AI (walk from door to waiting area, then to seat).
 - **Seat auto-derivation**: seats are the walkable tiles around a table's footprint; no manual seat placement needed.
 - **Host stand flow**: parties queue in the waiting area and an autonomous host NPC walks them to a table.

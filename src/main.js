@@ -3,6 +3,7 @@ import { BootScene } from './scenes/Boot.js';
 import { MenuScene } from './scenes/Menu.js';
 import { FloorPlanEditorScene } from './scenes/FloorPlanEditor.js';
 import { GuestEditorScene } from './scenes/GuestEditor.js';
+import { MenuEditorScene } from './scenes/MenuEditor.js';
 import { GameScene } from './scenes/Game.js';
 
 const config = {
@@ -15,7 +16,7 @@ const config = {
     width: '100%',
     height: '100%'
   },
-  scene: [BootScene, MenuScene, FloorPlanEditorScene, GuestEditorScene, GameScene],
+  scene: [BootScene, MenuScene, FloorPlanEditorScene, GuestEditorScene, MenuEditorScene, GameScene],
   dom: { createContainer: true },
   input: { activePointers: 3 }
 };

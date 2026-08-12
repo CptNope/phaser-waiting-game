@@ -1,12 +1,30 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { TILE, MENU_LABELS, MENU_FRAMES, MENU_TINTS, STATION_FOR_FOOD, charKeys, IDLE_FRAMES, IDLE_FRAME_DOWN, SIT_FRAMES, RUN_FRAMES } from '../data/catalog.js';
+import { TILE, charKeys, IDLE_FRAMES, IDLE_FRAME_DOWN, SIT_FRAMES, RUN_FRAMES } from '../data/catalog.js';
 
 // All character sprites are 48×96 on a 48px grid. Origin Y=0.75 puts feet at tile bottom.
 const CHAR_ORIGIN_Y = 0.75;
 import { loadAssetIndex, ensureSheetTexture } from '../data/assetIndex.js';
 import { Storage } from '../core/Storage.js';
 import { DEFAULT_FLOOR_PLAN, DEFAULT_GUESTS } from '../data/defaults.js';
+import { loadMenuItems } from '../data/menu.js';
 import { MobileControls } from '../core/MobileControls.js';
+import { bakeAppearanceTextures } from '../core/AppearanceCompositor.js';
+
+// Custom (generator-built) guests resolve to the same {idle, sit} shape as
+// charKeys() so every setTexture() call site below stays untouched. Boot.js
+// preloads the generator layer files for every custom guest in the current
+// roster, so bakeAppearanceTextures should never hit its "not loaded" path
+// in normal play; the catch is a defensive fallback, not the common case.
+function resolveGuestKeys(scene, def) {
+  if (def.appearance?.mode === 'custom' && def.appearance.custom) {
+    try {
+      return bakeAppearanceTextures(scene, def.appearance.custom);
+    } catch (e) {
+      console.warn('Custom guest appearance not loaded, using fallback:', e.message);
+    }
+  }
+  return charKeys(def.charName || 'Adam');
+}
 
 const DIRS = {
   up:    { x: 0, y: -1, anim: 'up' },
@@ -55,9 +73,11 @@ const INTERACTABLE_STATES = new Set(['seated', 'ordered_drink', 'drink_served', 
 export class GameScene extends Phaser.Scene {
   constructor() { super('Game'); }
 
-  create() {
+  async create() {
     this.plan = Storage.loadPlan() || DEFAULT_FLOOR_PLAN;
     this.guestDefs = Storage.loadGuests() || DEFAULT_GUESTS;
+    this.menuItems = await loadMenuItems();
+    this.menuById = new Map(this.menuItems.map(m => [m.id, m]));
     this.cols = this.plan.cols;
     this.rows = this.plan.rows;
     this.idx = (x, y) => y * this.cols + x;
@@ -82,6 +102,10 @@ export class GameScene extends Phaser.Scene {
     // The editor can paint with any indexed sheet, but Boot only preloads the
     // core ones. Pull in whatever this plan actually references, then redraw.
     this.ensurePlanSheets();
+    // Same idea for menu items: the Menu Editor can point an item at any
+    // sheet, not just 'kitchen'. Default items are all preloaded already,
+    // so this only does real work for custom items on other sheets.
+    this.ensureMenuSheets();
 
     // Game state — initialized BEFORE setupHUD() since updateHUD() reads these.
     this.guests = [];
@@ -148,6 +172,24 @@ export class GameScene extends Phaser.Scene {
     if (!loads.length) return;
     await Promise.all(loads);
     if (this.scene.isActive()) this.renderFloor();
+  }
+
+  /** Loads any spritesheet a menu item references that Boot did not preload. */
+  async ensureMenuSheets() {
+    const needed = new Set();
+    for (const m of this.menuItems) {
+      if (m.sheet && !this.textures.exists(m.sheet)) needed.add(m.sheet);
+    }
+    if (!needed.size) return;
+
+    const index = await loadAssetIndex();
+    if (!index?.sheets) return;
+    const loads = [];
+    for (const key of needed) {
+      const sheet = index.sheets.find(s => s.key === key);
+      if (sheet) loads.push(ensureSheetTexture(this, sheet).catch(() => null));
+    }
+    if (loads.length) await Promise.all(loads);
   }
 
   // Safe to call repeatedly: previously drawn tiles are discarded first so that
@@ -656,7 +698,7 @@ export class GameScene extends Phaser.Scene {
     if (this.carrying.length === 0) {
       this.carryText.setText('Hands free');
     } else {
-      const labels = this.carrying.map(c => MENU_LABELS[c.item] || c.item);
+      const labels = this.carrying.map(c => c.type === 'dirty_dish' ? 'Dirty Dish' : (this.menuById.get(c.item)?.name || c.item));
       this.carryText.setText(`Carrying (${this.carrying.length}/${CARRY_CAP}): ${labels.join(', ')}`);
     }
   }
@@ -741,7 +783,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const def of defs) {
-      const keys = charKeys(def.charName || 'Adam');
+      const keys = resolveGuestKeys(this, def);
       const g = {
         def,
         state: 'incoming',
@@ -871,7 +913,7 @@ export class GameScene extends Phaser.Scene {
    * to this dish yet — it just sits in the queue until someone claims it.
    */
   startCookPrep(g, food) {
-    const stationKey = STATION_FOR_FOOD[food] || 'grill';
+    const stationKey = this.menuById.get(food)?.station || 'grill';
     const stationPost = this.plan.stations?.[stationKey] || this.plan.kitchen;
     this.time.delayedCall(2000, () => {
       if (g.state !== 'ordered_food' || !this.guests.includes(g)) return; // left angry meanwhile
@@ -1547,9 +1589,9 @@ export class GameScene extends Phaser.Scene {
       if (foodTaken) parts.push(`took ${foodTaken} food order${foodTaken > 1 ? 's' : ''}`);
       this.hint(parts.join(', ') + '. Patience reset.');
     } else if (facedGuest.state === 'ordered_drink') {
-      this.hint(`Checked in — still waiting on ${MENU_LABELS[facedGuest.def.drinkOrder || 'coffee']}.`);
+      this.hint(`Checked in — still waiting on ${this.menuById.get(facedGuest.def.drinkOrder || 'coffee')?.name || 'their drink'}.`);
     } else if (facedGuest.state === 'ordered_food') {
-      this.hint(`Checked in — still waiting on ${MENU_LABELS[facedGuest.def.foodOrder || 'burger']}.`);
+      this.hint(`Checked in — still waiting on ${this.menuById.get(facedGuest.def.foodOrder || 'burger')?.name || 'their food'}.`);
     } else {
       this.hint('Checked in. Patience reset.');
     }
@@ -1557,17 +1599,15 @@ export class GameScene extends Phaser.Scene {
 
   showOrderBubble(g, itemId) {
     if (g.orderBubble) g.orderBubble.destroy();
+    const item = this.menuById.get(itemId);
     const bx = g.sprite.x, by = g.sprite.y - 88;
     g.orderBubble = this.add.container(bx, by).setDepth(60);
     const bg = this.add.rectangle(0, 0, 40, 28, 0xffffff, 0.9).setStrokeStyle(1, 0x333333);
-    const icon = this.add.image(0, 0, 'kitchen', this.menuFrameFor(itemId)).setDisplaySize(24, 24);
-    const tint = MENU_TINTS[itemId];
-    if (tint != null) icon.setTint(tint);
+    const icon = this.add.image(0, 0, item?.sheet || 'kitchen', item?.frame ?? 0).setDisplaySize(24, 24);
+    if (item?.tint != null) icon.setTint(item.tint);
     g.orderBubble.add([bg, icon]);
     this.worldOnly(g.orderBubble, bg, icon);
   }
-
-  menuFrameFor(id) { return MENU_FRAMES[id] ?? 0; }
 
   /**
    * Mid-visit drink delivery for dine-in guests: they stay seated and move

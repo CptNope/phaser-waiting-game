@@ -1,6 +1,7 @@
 // Lightweight persistence: localStorage cache + JSON export/import.
 const KEY_PLAN = 'waiting-game.floorplan';
 const KEY_GUESTS = 'waiting-game.guests';
+const KEY_MENU = 'waiting-game.menu';
 
 export const Storage = {
   loadPlan() {
@@ -20,6 +21,15 @@ export const Storage = {
   },
   saveGuests(guests) {
     try { localStorage.setItem(KEY_GUESTS, JSON.stringify(guests)); } catch {}
+  },
+  loadMenu() {
+    try {
+      const raw = localStorage.getItem(KEY_MENU);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+  saveMenu(items) {
+    try { localStorage.setItem(KEY_MENU, JSON.stringify(items)); } catch {}
   },
 
   downloadJSON(obj, filename) {

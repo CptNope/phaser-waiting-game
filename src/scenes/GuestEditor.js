@@ -1,7 +1,18 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { CHARACTERS, MENU_LABELS, MENU_DRINKS, MENU_FOODS, charKeys, IDLE_FRAME_DOWN, IDLE_FRAMES } from '../data/catalog.js';
+import { CHARACTERS, ALLERGENS, charKeys, IDLE_FRAME_DOWN, IDLE_FRAMES } from '../data/catalog.js';
 import { Storage } from '../core/Storage.js';
 import { DEFAULT_GUESTS } from '../data/defaults.js';
+import { loadMenuItems } from '../data/menu.js';
+import { CATEGORIES, LAYER_ORDER, randomAppearance, profileFor } from '../data/characterGenerator.js';
+import { bakeAppearanceTextures, ensureAppearanceTextures, preloadLayerFiles, registerLayerFrames, layerTexKey as layerKeyFor } from '../core/AppearanceCompositor.js';
+
+const SLOT_LABELS = { body: 'Body', eyes: 'Eyes', outfit: 'Outfit', hairstyle: 'Hairstyle', accessory: 'Accessory' };
+function defaultCustomAppearance(kid = false) {
+  const c = { kid, body: '1', eyes: '1', outfit: null, hairstyle: null, accessory: null };
+  c.outfit = kid ? CATEGORIES.outfit.kids[0].id : CATEGORIES.outfit.adult[0].id;
+  c.hairstyle = kid ? CATEGORIES.hairstyle.kids[0].id : CATEGORIES.hairstyle.adult[0].id;
+  return c;
+}
 
 const LIST_W = 240;
 const TOOLBAR_H = 56;
@@ -9,12 +20,18 @@ const TOOLBAR_H = 56;
 export class GuestEditorScene extends Phaser.Scene {
   constructor() { super('GuestEditor'); }
 
-  create() {
+  async create() {
     this.cameras.main.setBackgroundColor('#23232c');
     this.guests = Storage.loadGuests() || JSON.parse(JSON.stringify(DEFAULT_GUESTS));
     this.editingId = this.guests[0]?.id || null;
+    this.menuItems = await loadMenuItems();
+    this.drinkItems = this.menuItems.filter(m => m.category === 'drink');
+    this.foodItems = this.menuItems.filter(m => m.category === 'food');
 
     const { width, height } = this.scale;
+    this.slotModal = null;
+    this.pickerTab = 'preset';
+    this.loadedCategoryKids = {}; // category -> Set(kid bool) already lazy-loaded this session
     this.buildToolbar(width);
     this.buildCharPicker();
     this.buildList();
@@ -22,7 +39,10 @@ export class GuestEditorScene extends Phaser.Scene {
     this.refreshList();
     this.loadEditing();
 
-    this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
+    this.input.keyboard.on('keydown-ESC', () => {
+      if (this.slotModal) { this.closeSlotPicker(); return; }
+      this.scene.start('Menu');
+    });
   }
 
   buildToolbar(width) {
@@ -48,15 +68,51 @@ export class GuestEditorScene extends Phaser.Scene {
     return { bg, txt };
   }
 
-  // Character picker: scrollable grid of idle poses from all named characters.
+  // Appearance picker: tab between Presets (named characters) and Custom
+  // (layered generator: body/eyes/outfit/hairstyle/accessory).
   buildCharPicker() {
     const panelX = 8, panelY = TOOLBAR_H + 12;
     const panelW = LIST_W - 16;
-    const panelH = this.scale.height - panelY - 40;
+    this.pickerPanelX = panelX;
+    this.pickerPanelY = panelY;
+    this.pickerPanelW = panelW;
+    this.pickerPanelH = this.scale.height - panelY - 40;
 
-    this.add.text(panelX, panelY - 4, 'Character', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }).setDepth(60);
+    this.presetTabBtn = this.makeBtn(panelX, panelY - 4, panelW / 2 - 2, 24, 'Presets', () => this.onTabClick('preset'));
+    this.customTabBtn = this.makeBtn(panelX + panelW / 2 + 2, panelY - 4, panelW / 2 - 2, 24, 'Custom', () => this.onTabClick('custom'));
 
-    this.charContainer = this.add.container(panelX, panelY + 16).setDepth(50);
+    this.buildPresetPicker(panelX, panelY + 26, panelW, this.pickerPanelH - 26);
+    this.buildCustomPicker(panelX, panelY + 26, panelW, this.pickerPanelH - 26);
+    this.showPickerTab('preset');
+  }
+
+  /** Pure UI: shows the matching panel for a guest's existing appearance.mode. Does not touch data. */
+  showPickerTab(tab) {
+    this.pickerTab = tab;
+    this.presetContainer.setVisible(tab === 'preset');
+    this.customPanel.setVisible(tab === 'custom');
+    this.kidInput.setVisible(tab === 'custom');
+    this.presetTabBtn.bg.setFillStyle(tab === 'preset' ? 0x4a4a5e : 0x2b2b39);
+    this.customTabBtn.bg.setFillStyle(tab === 'custom' ? 0x4a4a5e : 0x2b2b39);
+  }
+
+  /** User clicked a tab button: switches the editing guest into that mode. */
+  onTabClick(tab) {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g) return;
+    if (tab === 'preset' && g.appearance?.mode !== 'preset') {
+      g.appearance = { mode: 'preset', charName: g.charName || 'Adam' };
+    } else if (tab === 'custom' && g.appearance?.mode !== 'custom') {
+      g.appearance = { mode: 'custom', custom: defaultCustomAppearance(false) };
+    }
+    this.showPickerTab(tab);
+    if (tab === 'custom') { this.updateCustomRowLabels(); this.updateCustomPreview(); }
+    this.refreshList();
+  }
+
+  // Preset picker: scrollable grid of idle poses from all named characters.
+  buildPresetPicker(panelX, panelY, panelW, panelH) {
+    this.presetContainer = this.add.container(panelX, panelY).setDepth(50);
     const cellW = 48, cellH = 72, pad = 4;
     const cols = Math.floor(panelW / (cellW + pad));
 
@@ -77,22 +133,23 @@ export class GuestEditorScene extends Phaser.Scene {
       bg.on('pointerover', () => bg.setFillStyle(0x3a3a4d));
       bg.on('pointerout', () => bg.setFillStyle(0x2b2b39));
       bg.on('pointerdown', () => this.pickCharacter(name));
-      this.charContainer.add([bg, img, label]);
+      this.presetContainer.add([bg, img, label]);
       this.charButtons.push({ name, bg });
     });
 
     // Mask for scrolling.
     const maskShape = this.make.graphics();
-    maskShape.fillStyle(0xffffff, 1).fillRect(panelX, panelY + 16, panelW, panelH - 20);
-    this.charContainer.setMask(maskShape.createGeometryMask());
+    maskShape.fillStyle(0xffffff, 1).fillRect(panelX, panelY, panelW, panelH - 4);
+    this.presetContainer.setMask(maskShape.createGeometryMask());
 
     // Wheel scroll.
     const contentH = Math.ceil(CHARACTERS.length / cols) * (cellH + pad);
     this.input.on('wheel', (pointer) => {
+      if (this.pickerTab !== 'preset') return;
       if (pointer.x < panelX || pointer.x > panelX + panelW) return;
-      const minY = panelH - 20 - contentH;
-      let ny = Phaser.Math.Clamp(this.charContainer.y - Math.sign(pointer.event.deltaY) * 50, Math.min(0, minY), 16);
-      this.charContainer.y = ny;
+      const minY = panelH - 4 - contentH;
+      let ny = Phaser.Math.Clamp(this.presetContainer.y - Math.sign(pointer.event.deltaY) * 50, panelY + Math.min(0, minY), panelY);
+      this.presetContainer.y = ny;
     });
   }
 
@@ -100,6 +157,7 @@ export class GuestEditorScene extends Phaser.Scene {
     const g = this.guests.find(x => x.id === this.editingId);
     if (!g) return;
     g.charName = name;
+    g.appearance = { mode: 'preset', charName: name };
     if (!g.name || g.name === '(unnamed)') g.name = name.replace(/_/g, ' ');
     // Highlight selected.
     for (const b of this.charButtons) {
@@ -107,6 +165,185 @@ export class GuestEditorScene extends Phaser.Scene {
     }
     this.loadEditing();
     this.refreshList();
+  }
+
+  // Custom picker: Kid toggle + 5 layered slots (body/eyes/outfit/hairstyle/accessory).
+  buildCustomPicker(panelX, panelY, panelW, panelH) {
+    this.customPanel = this.add.container(0, 0).setDepth(50).setVisible(false);
+
+    this.kidInput = this.add.dom(panelX, panelY + 10).createFromHTML(
+      `<label style="display:flex;align-items:center;gap:6px;font-family:system-ui;font-size:12px;color:#c9c9d6;cursor:pointer;">
+         <input type="checkbox" style="width:14px;height:14px;" /> Kid
+       </label>`
+    ).setOrigin(0, 0.5);
+    this.getInput(this.kidInput).addEventListener('change', () => this.setKid(this.getInput(this.kidInput).checked));
+    this.kidInput.setVisible(false); // DOM elements can't live inside a regular Container — track visibility alongside customPanel instead.
+
+    this.customRows = {};
+    let rowY = panelY + 30;
+    for (const category of LAYER_ORDER) {
+      const label = this.add.text(panelX, rowY, SLOT_LABELS[category], {
+        fontFamily: 'system-ui', fontSize: '12px', color: '#c9c9d6'
+      });
+      const value = this.add.text(panelX, rowY + 15, '', {
+        fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff'
+      });
+      const btn = this.makeBtn(panelX + panelW - 64, rowY - 2, 64, 24, 'Change', () => this.openSlotPicker(category));
+      this.customPanel.add([label, value, btn.bg, btn.txt]);
+      this.customRows[category] = { value };
+      rowY += 38;
+    }
+
+    const randomBtn = this.makeBtn(panelX, rowY + 4, panelW, 28, 'Randomize', () => this.randomizeCustom());
+    this.customPanel.add([randomBtn.bg, randomBtn.txt]);
+  }
+
+  setKid(kid) {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g || g.appearance?.mode !== 'custom') return;
+    g.appearance.custom = defaultCustomAppearance(kid);
+    this.updateCustomRowLabels();
+    this.updateCustomPreview();
+    this.refreshList();
+  }
+
+  randomizeCustom() {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g || g.appearance?.mode !== 'custom') return;
+    const kid = !!g.appearance.custom?.kid;
+    g.appearance.custom = randomAppearance(kid);
+    this.updateCustomRowLabels();
+    this.updateCustomPreview();
+    this.refreshList();
+  }
+
+  updateCustomRowLabels() {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g || g.appearance?.mode !== 'custom') return;
+    const custom = g.appearance.custom;
+    this.getInput(this.kidInput).checked = !!custom.kid;
+    for (const category of LAYER_ORDER) {
+      const id = custom[category];
+      const manifest = custom.kid ? CATEGORIES[category].kids : CATEGORIES[category].adult;
+      const variant = id != null ? manifest.find(v => v.id === id) : null;
+      this.customRows[category].value.setText(variant ? variant.label : 'None');
+    }
+  }
+
+  /** Bakes (or kicks off loading + baking) the custom preview and applies it. */
+  updateCustomPreview() {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g || g.appearance?.mode !== 'custom') return;
+    const custom = g.appearance.custom;
+    try {
+      const keys = bakeAppearanceTextures(this, custom);
+      this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+    } catch {
+      ensureAppearanceTextures(this, custom).then(keys => {
+        if (this.editingId === g.id && this.pickerTab === 'custom') {
+          this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+          this.refreshList();
+        }
+      }).catch(e => this.flash('Appearance load failed: ' + e.message));
+    }
+  }
+
+  /** Lazy-loads every layer file for a category (both kid/adult are cached separately per session). */
+  async loadCategoryFiles(category, kid) {
+    this.loadedCategoryKids[category] ??= new Set();
+    if (this.loadedCategoryKids[category].has(kid)) return;
+    const manifest = kid ? CATEGORIES[category].kids : CATEGORIES[category].adult;
+    const files = manifest.map(v => ({ key: layerKeyFor(v.path), path: v.path }));
+    await preloadLayerFiles(this, files);
+    const profile = profileFor(kid);
+    for (const f of files) registerLayerFrames(this.textures.get(f.key), profile);
+    this.loadedCategoryKids[category].add(kid);
+  }
+
+  openSlotPicker(category) {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g || g.appearance?.mode !== 'custom') return;
+    const custom = g.appearance.custom;
+    const kid = !!custom.kid;
+    const manifest = kid ? CATEGORIES[category].kids : CATEGORIES[category].adult;
+
+    const { width, height } = this.scale;
+    const modal = this.add.container(0, 0).setDepth(300);
+    const backdrop = this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0).setInteractive();
+    const panel = this.add.rectangle(40, 40, width - 80, height - 80, 0x23232c).setStrokeStyle(2, 0x4a4a5e).setOrigin(0);
+    const title = this.add.text(56, 52, `Choose ${SLOT_LABELS[category]}`, { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' });
+    const closeBtn = this.makeBtn(width - 110, 48, 54, 26, 'Close', () => this.closeSlotPicker());
+    const loadingTxt = this.add.text(width / 2, height / 2, `Loading ${SLOT_LABELS[category]}…`, {
+      fontFamily: 'system-ui', fontSize: '14px', color: '#c9c9d6'
+    }).setOrigin(0.5);
+    modal.add([backdrop, panel, title, closeBtn.bg, closeBtn.txt, loadingTxt]);
+    this.slotModal = modal;
+
+    this.loadCategoryFiles(category, kid).then(() => {
+      if (this.slotModal !== modal) return; // closed while loading
+      loadingTxt.destroy();
+      this.buildSlotGrid(modal, category, manifest, custom, 56, 88, width - 112, height - 140);
+    }).catch(e => {
+      loadingTxt.setText('Failed to load: ' + e.message);
+    });
+  }
+
+  buildSlotGrid(modal, category, manifest, custom, gx, gy, gw, gh) {
+    const cellW = 56, cellH = 76, pad = 6;
+    const cols = Math.floor(gw / (cellW + pad));
+    const grid = this.add.container(gx, gy).setDepth(301);
+    const entries = category === 'accessory' ? [{ id: null, label: 'None', path: null }, ...manifest] : manifest;
+
+    entries.forEach((v, i) => {
+      const cx = (i % cols) * (cellW + pad);
+      const cy = Math.floor(i / cols) * (cellH + pad);
+      const selected = custom[category] === v.id;
+      const bg = this.add.rectangle(cx, cy, cellW, cellH, selected ? 0x4a4a5e : 0x2b2b39)
+        .setOrigin(0, 0).setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true });
+      grid.add(bg);
+      if (v.path) {
+        const texKey = layerKeyFor(v.path);
+        if (this.textures.exists(texKey) && this.textures.get(texKey).has('gen_idle_down')) {
+          const img = this.add.image(cx + cellW / 2, cy + cellH - 14, texKey, 'gen_idle_down').setOrigin(0.5, 0.75).setDisplaySize(40, 80);
+          grid.add(img);
+        }
+      }
+      const label = this.add.text(cx + cellW / 2, cy + cellH - 8, v.label, {
+        fontFamily: 'system-ui', fontSize: '8px', color: '#8fb6ff'
+      }).setOrigin(0.5);
+      grid.add(label);
+      bg.on('pointerdown', () => this.selectSlotVariant(category, v.id));
+    });
+
+    const maskShape = this.make.graphics();
+    maskShape.fillStyle(0xffffff, 1).fillRect(gx, gy, gw, gh);
+    grid.setMask(maskShape.createGeometryMask());
+
+    const contentH = Math.ceil(entries.length / cols) * (cellH + pad);
+    const wheelHandler = (pointer) => {
+      if (pointer.x < gx || pointer.x > gx + gw || pointer.y < gy || pointer.y > gy + gh) return;
+      const minY = gh - contentH;
+      grid.y = Phaser.Math.Clamp(grid.y - Math.sign(pointer.event.deltaY) * 50, gy + Math.min(0, minY), gy);
+    };
+    this.input.on('wheel', wheelHandler);
+    modal.once('destroy', () => this.input.off('wheel', wheelHandler));
+    modal.add(grid);
+  }
+
+  selectSlotVariant(category, id) {
+    const g = this.guests.find(x => x.id === this.editingId);
+    if (!g || g.appearance?.mode !== 'custom') return;
+    g.appearance.custom[category] = id;
+    this.closeSlotPicker();
+    this.updateCustomRowLabels();
+    this.updateCustomPreview();
+    this.refreshList();
+  }
+
+  closeSlotPicker() {
+    if (!this.slotModal) return;
+    this.slotModal.destroy(true);
+    this.slotModal = null;
   }
 
   buildList() {
@@ -119,17 +356,20 @@ export class GuestEditorScene extends Phaser.Scene {
     this.listContainer.removeAll(true);
     this.guests.forEach((g, i) => {
       const y = i * 44;
-      const keys = charKeys(g.charName || 'Adam');
+      this.ensureAppearanceDefaults(g);
       const bg = this.add.rectangle(0, y, 220, 40, g.id === this.editingId ? 0x4a4a5e : 0x2b2b39)
         .setOrigin(0, 0).setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true });
       let preview;
-      try { preview = this.add.image(24, y + 36, keys.idle, IDLE_FRAME_DOWN).setOrigin(0.5, 0.75).setDisplaySize(28, 56); }
+      try {
+        const keys = this.resolveIdleKeysSync(g);
+        preview = this.add.image(24, y + 36, keys.idle, IDLE_FRAME_DOWN).setOrigin(0.5, 0.75).setDisplaySize(28, 56);
+      }
       catch { preview = this.add.rectangle(8, y + 4, 32, 32, 0x4a4a5e); }
       const name = this.add.text(48, y + 6, g.name || '(unnamed)', { fontFamily: 'system-ui', fontSize: '14px', color: '#e6e6f0' });
-      const drinkLabel = MENU_LABELS[g.drinkOrder] || g.drinkOrder || 'Coffee';
+      const drinkLabel = this.menuName(g.drinkOrder) || 'Coffee';
       const orderText = g.prefersBar
         ? `bar: ${drinkLabel}`
-        : `${drinkLabel} → ${MENU_LABELS[g.foodOrder] || g.foodOrder || 'Burger'}`;
+        : `${drinkLabel} → ${this.menuName(g.foodOrder) || 'Burger'}`;
       const order = this.add.text(48, y + 22, orderText, { fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff' });
       bg.on('pointerdown', () => { this.editingId = g.id; this.loadEditing(); this.refreshList(); });
       bg.on('pointerover', () => { if (g.id !== this.editingId) bg.setFillStyle(0x3a3a4d); });
@@ -181,7 +421,7 @@ export class GuestEditorScene extends Phaser.Scene {
 
     // Drink dropdown (stage 1 — everyone orders a drink first).
     this.add.text(x, TOOLBAR_H + 250, 'Drink', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
-    const drinkOpts = MENU_DRINKS.map(id => `<option value="${id}">${MENU_LABELS[id]}</option>`).join('');
+    const drinkOpts = this.drinkItems.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
     this.drinkInput = this.add.dom(x, TOOLBAR_H + 278).createFromHTML(
       `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${drinkOpts}</select>`
     ).setOrigin(0, 0.5);
@@ -189,7 +429,7 @@ export class GuestEditorScene extends Phaser.Scene {
 
     // Food dropdown (stage 2 — skipped entirely for prefersBar guests).
     this.foodLabel = this.add.text(x, TOOLBAR_H + 300, 'Food', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
-    const foodOpts = MENU_FOODS.map(id => `<option value="${id}">${MENU_LABELS[id]}</option>`).join('');
+    const foodOpts = this.foodItems.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
     this.foodInput = this.add.dom(x, TOOLBAR_H + 328).createFromHTML(
       `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${foodOpts}</select>`
     ).setOrigin(0, 0.5);
@@ -204,6 +444,21 @@ export class GuestEditorScene extends Phaser.Scene {
     ).setOrigin(0, 0.5);
     this.getInput(this.barInput).addEventListener('change', () => this.applyFormToEditing());
 
+    // Allergies — metadata only for now; doesn't affect order generation or serving.
+    this.add.text(x, TOOLBAR_H + 392, 'Allergies', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    this.allergyInputs = {};
+    ALLERGENS.forEach((name, i) => {
+      const col = i % 2, row = Math.floor(i / 2);
+      const ax = x + col * 130, ay = TOOLBAR_H + 416 + row * 24;
+      const dom = this.add.dom(ax, ay).createFromHTML(
+        `<label style="display:flex;align-items:center;gap:6px;font-family:system-ui;font-size:12px;color:#c9c9d6;cursor:pointer;">
+           <input type="checkbox" style="width:14px;height:14px;" /> ${name}
+         </label>`
+      ).setOrigin(0, 0.5);
+      this.getInput(dom).addEventListener('change', () => this.applyFormToEditing());
+      this.allergyInputs[name] = dom;
+    });
+
     this.add.text(x, height - 40,
       'Pick a character from the left panel. Idle pose shown for walking, sit pose used when seated.',
       { fontFamily: 'system-ui', fontSize: '12px', color: '#7a7a8a' });
@@ -211,17 +466,40 @@ export class GuestEditorScene extends Phaser.Scene {
 
   getInput(domEl) { return domEl.node.querySelector('input,select'); }
 
+  menuName(id) { return this.menuItems.find(m => m.id === id)?.name || id; }
+
+  ensureAppearanceDefaults(g) {
+    if (!g.appearance) g.appearance = { mode: 'preset', charName: g.charName || 'Adam' };
+  }
+
+  /** Throws if a custom guest's layer textures aren't loaded yet — callers decide the fallback. */
+  resolveIdleKeysSync(g) {
+    if (g.appearance?.mode === 'custom' && g.appearance.custom) {
+      return bakeAppearanceTextures(this, g.appearance.custom);
+    }
+    return charKeys(g.charName || 'Adam');
+  }
+
   loadEditing() {
     const g = this.guests.find(x => x.id === this.editingId);
     if (!g) return;
-    const keys = charKeys(g.charName || 'Adam');
-    this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+    this.ensureAppearanceDefaults(g);
+    this.showPickerTab(g.appearance.mode === 'custom' ? 'custom' : 'preset');
+
+    if (g.appearance.mode === 'custom') {
+      this.updateCustomRowLabels();
+      this.updateCustomPreview();
+    } else {
+      const keys = charKeys(g.charName || 'Adam');
+      this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+    }
     this.getInput(this.nameInput).value = g.name || '';
     this.getInput(this.patienceInput).value = g.patience;
     this.getInput(this.drinkInput).value = g.drinkOrder || 'coffee';
     this.getInput(this.foodInput).value = g.foodOrder || 'burger';
     this.getInput(this.barInput).checked = !!g.prefersBar;
     this.refreshFoodRow(!!g.prefersBar);
+    for (const name of ALLERGENS) this.getInput(this.allergyInputs[name]).checked = (g.allergies || []).includes(name);
     // Highlight selected character.
     for (const b of this.charButtons) {
       b.bg.setFillStyle(b.name === g.charName ? 0x4a4a5e : 0x2b2b39);
@@ -245,6 +523,7 @@ export class GuestEditorScene extends Phaser.Scene {
     g.foodOrder = this.getInput(this.foodInput).value;
     g.prefersBar = this.getInput(this.barInput).checked;
     this.refreshFoodRow(g.prefersBar);
+    g.allergies = ALLERGENS.filter(name => this.getInput(this.allergyInputs[name]).checked);
     this.refreshList();
   }
 
@@ -253,7 +532,9 @@ export class GuestEditorScene extends Phaser.Scene {
     const firstChar = CHARACTERS[0];
     this.guests.push({
       id, name: firstChar.replace(/_/g, ' '), charName: firstChar, patience: 60,
-      drinkOrder: 'coffee', foodOrder: 'burger', prefersBar: false
+      drinkOrder: this.drinkItems[0]?.id || 'coffee', foodOrder: this.foodItems[0]?.id || 'burger',
+      prefersBar: false, allergies: [],
+      appearance: { mode: 'preset', charName: firstChar }
     });
     this.editingId = id;
     this.refreshList();
