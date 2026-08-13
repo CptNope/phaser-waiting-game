@@ -20,24 +20,18 @@ export class MenuScene extends Phaser.Scene {
     const buttons = [
       { label: 'Play Shift',        action: () => this.scene.start('Game') },
       { label: 'Floor Plan Editor', action: () => this.scene.start('FloorPlanEditor') },
-      { label: 'Guest Editor',      action: () => this.scene.start('GuestEditor') },
+      { label: 'Guests & Staff',    action: () => this.scene.start('GuestEditor') },
       { label: 'Menu Editor',       action: () => this.scene.start('MenuEditor') },
       { label: 'Export Floor Plan', action: () => {
           const p = Storage.loadPlan();
           if (!p) return this.flash('No saved floor plan yet.');
           Storage.downloadJSON(p, 'floor-plan.json');
         } },
-      { label: 'Export Guests',     action: () => {
-          const g = Storage.loadGuests();
-          if (!g) return this.flash('No saved guests yet.');
-          Storage.downloadJSON(g, 'guests.json');
-        } },
-      { label: 'Import Floor Plan', action: () => this.import('plan') },
-      { label: 'Import Guests',     action: () => this.import('guests') }
+      { label: 'Import Floor Plan', action: () => this.importPlan() }
     ];
 
     const narrow = width < 900;
-    // Scale button height and vertical spacing so 7 buttons fit on short screens.
+    // Scale button height and vertical spacing so all buttons fit on short screens.
     const btnH = Phaser.Math.Clamp(Math.round(height * 0.10), 40, 56);
     const gap = Phaser.Math.Clamp(Math.round(height * 0.075), 32, 64);
     const startY = Math.round(height * 0.22);
@@ -68,11 +62,11 @@ export class MenuScene extends Phaser.Scene {
     return { bg, txt };
   }
 
-  async import(kind) {
+  async importPlan() {
     try {
       const data = await Storage.pickJSON();
-      if (kind === 'plan') { Storage.savePlan(data); this.flash('Floor plan imported & saved.'); }
-      else { Storage.saveGuests(data); this.flash('Guests imported & saved.'); }
+      Storage.savePlan(data);
+      this.flash('Floor plan imported & saved.');
     } catch (e) {
       if (e && e.message !== 'No file selected') this.flash('Import failed: ' + e.message);
     }

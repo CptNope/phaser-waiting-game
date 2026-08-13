@@ -31,17 +31,26 @@ Or any static server will do (`npx serve`, `php -S`, etc.).
   scoring. Plays on the default floor plan with the default roster out of the box.
 - **Floor Plan Editor** — paint tiles, place tables and a spawn point, resize the
   grid, toggle layers. Browse all 31 indexed sprite sheets; non-preloaded sheets
-  load on demand.
-- **Guest Editor** — pick from 20 named preset characters, or build a custom
-  look on the **Custom** tab (body/eyes/outfit/hairstyle/accessory, layered
-  from the pack's character generator sheets, plus a Kid toggle and a
-  Randomize button). Set patience, drink/food order, and allergies.
+  load on demand. On narrow/mobile screens the toolbar's tool and layer/size/
+  station rows become horizontally scrollable strips instead of shrinking
+  illegibly, and a Palette/Grid tab gives the tile grid the full screen width.
+- **Guests & Staff Editor** — a Guests tab and a Staff tab share one
+  appearance picker: 20 named preset characters, or a custom look on the
+  **Custom** tab (body/eyes/outfit/hairstyle/accessory, layered from the
+  pack's character generator sheets, plus a Kid toggle and a Randomize
+  button). Guests also get patience, drink/food order, and allergies; Staff
+  covers the host, bartender, five cooks, and two food runners — their
+  appearance and name badge are editable, though the roster itself is fixed
+  (each role is tied to a spot on the floor plan). Both tabs scroll and the
+  whole editor reflows into a single stacked column on narrow/mobile screens.
 - **Menu Editor** — create/edit menu items: name, drink or food, a sprite
   picked from any sprite sheet, an optional tint, a kitchen station (food),
-  and allergens. The Guest Editor's order dropdowns pull from this list.
-- **Import / Export** — share floor plans, guest rosters, and menus as JSON.
-  No backend, no account, no localStorage dependency for sharing. The
-  default menu itself ships as `game-assets/default-menu.json`.
+  and allergens. The Guests & Staff Editor's order dropdowns pull from this
+  list.
+- **Import / Export** — share floor plans, guest rosters, staff rosters, and
+  menus as JSON, from Export/Import buttons inside each editor. No backend,
+  no account, no localStorage dependency for sharing. The default menu
+  itself ships as `game-assets/default-menu.json`.
 
 ## Assets
 
@@ -78,7 +87,7 @@ manifest.json           PWA manifest
 sw.js                   Service worker (cache-first)
 src/
   main.js               Phaser config + scene registration + SW registration
-  scenes/               Boot, Menu, FloorPlanEditor, GuestEditor, MenuEditor, Game
+  scenes/               Boot, Menu, FloorPlanEditor, GuestEditor (Guests & Staff), MenuEditor, Game
   data/                 catalog, defaults, assetIndex loader, characterGenerator, menu
   core/                 Storage, Palette, AppearanceCompositor
 tools/

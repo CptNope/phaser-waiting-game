@@ -8,30 +8,34 @@ import {
 } from '../data/assetIndex.js';
 
 const PALETTE_W = 208;
-const TOOLBAR_H = 96; // two rows: tools on top, layers/size below
+const NARROW_BREAKPOINT = 700;
+// Wide layout: everything fits on two toolbar rows + a status line.
+const WIDE_TOOLBAR_H = 96;
+// Narrow layout: sheet+actions, tools strip, and the layers/size/table/station
+// strip each get their own full-width row so nothing has to shrink illegibly.
+const NARROW_TOOLBAR_H = 154;
 
 const MIN_COLS = 4, MAX_COLS = 60;
 const MIN_ROWS = 4, MAX_ROWS = 40;
 
-// `short` is used when the viewport is too narrow for full labels.
 const TOOLS = [
-  { id: 'ground',  label: 'Ground',  short: 'Grnd' },
-  { id: 'object',  label: 'Object',  short: 'Obj' },
-  { id: 'erase',   label: 'Erase',   short: 'Ers' },
-  { id: 'solid',   label: 'Solid',   short: 'Sld' },
-  { id: 'pick',    label: 'Pick',    short: 'Pick' },
-  { id: 'copy',    label: 'Copy',    short: 'Copy' },
-  { id: 'paste',   label: 'Paste',   short: 'Paste' },
-  { id: 'spawn',   label: 'Spawn',   short: 'Spwn' },
-  { id: 'kitchen', label: 'Kitchen', short: 'Ktch' },
-  { id: 'bar',     label: 'Bar',     short: 'Bar' },
-  { id: 'door',    label: 'Door',    short: 'Door' },
-  { id: 'host',    label: 'Host',    short: 'Host' },
-  { id: 'bench',   label: 'Bench',   short: 'Bnch' },
-  { id: 'table',   label: 'Table',   short: 'Tbl' },
-  { id: 'station', label: 'Station', short: 'Stn' },
-  { id: 'dish',    label: 'Dish',    short: 'Dish' },
-  { id: 'runner',  label: 'Runner',  short: 'Run' }
+  { id: 'ground',  label: 'Ground' },
+  { id: 'object',  label: 'Object' },
+  { id: 'erase',   label: 'Erase' },
+  { id: 'solid',   label: 'Solid' },
+  { id: 'pick',    label: 'Pick' },
+  { id: 'copy',    label: 'Copy' },
+  { id: 'paste',   label: 'Paste' },
+  { id: 'spawn',   label: 'Spawn' },
+  { id: 'kitchen', label: 'Kitchen' },
+  { id: 'bar',     label: 'Bar' },
+  { id: 'door',    label: 'Door' },
+  { id: 'host',    label: 'Host' },
+  { id: 'bench',   label: 'Bench' },
+  { id: 'table',   label: 'Table' },
+  { id: 'station', label: 'Station' },
+  { id: 'dish',    label: 'Dish' },
+  { id: 'runner',  label: 'Runner' }
 ];
 
 // Marker tools that auto-paint the selected object tile when placed.
@@ -87,25 +91,81 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     }));
     this.sheetKey = 'generic';
 
-    const { width, height } = this.scale;
-    this.gridX = PALETTE_W + 12;
-    this.gridY = TOOLBAR_H + 12;
+    // Narrow screens don't have room for the palette and grid side by side,
+    // so only one is shown at a time there.
+    this.panelTab = 'grid';
+
     this.cols = this.plan.cols;
     this.rows = this.plan.rows;
     this.pendingCols = this.cols;
     this.pendingRows = this.rows;
 
-    this.buildToolbar(width);
-    this.buildPalette();
-    this.buildGrid();
-    this.buildHelp(height);
+    this.build();
 
     this.input.keyboard.on('keydown-ESC', () => this.scene.start('Menu'));
 
     // Enable right-click detection for marker tile assignment.
     this.input.mouse.disableContextMenu();
 
+    this.scale.on('resize', this.onResize, this);
+    this.events.once('shutdown', () => {
+      this.scale.off('resize', this.onResize, this);
+      if (this._resizeTimer) this._resizeTimer.remove(false);
+    });
+
     this.initIndex();
+  }
+
+  onResize() {
+    if (this._resizeTimer) this._resizeTimer.remove(false);
+    this._resizeTimer = this.time.delayedCall(150, () => { this._resizeTimer = null; this.build(); });
+  }
+
+  // ---------------------------------------------------------------- layout
+
+  computeLayout() {
+    const { width, height } = this.scale;
+    const narrow = width < NARROW_BREAKPOINT;
+    const toolbarH = narrow ? NARROW_TOOLBAR_H : WIDE_TOOLBAR_H;
+    const paletteW = narrow ? width - 16 : PALETTE_W - 16;
+    const gridX = narrow ? 12 : PALETTE_W + 12;
+    const gridY = toolbarH + 12;
+    return { width, height, narrow, toolbarH, paletteW, gridX, gridY };
+  }
+
+  /** Destroys every display object + input listener from the previous build so a full rebuild never leaks or duplicates. */
+  teardown() {
+    this.clearSelection();
+    this.teardownHScroll('tools');
+    this.teardownHScroll('row2');
+    if (this.paletteWheel) { this.input.off('wheel', this.paletteWheel); this.paletteWheel = null; }
+    if (this._palettePointerDown) { this.input.off('pointerdown', this._palettePointerDown); this._palettePointerDown = null; }
+    if (this._palettePointerMove) { this.input.off('pointermove', this._palettePointerMove); this._palettePointerMove = null; }
+    if (this._palettePointerUp) {
+      this.input.off('pointerup', this._palettePointerUp);
+      this.input.off('pointerupoutside', this._palettePointerUp);
+      this._palettePointerUp = null;
+    }
+    if (this._paletteMaskShape) { this._paletteMaskShape.destroy(); this._paletteMaskShape = null; }
+    if (this._pointerUpCb) { this.input.off('pointerup', this._pointerUpCb); this._pointerUpCb = null; }
+    this._paletteDrag = null;
+    this.palette = null;
+    this.gridContainer = null;
+    this.paletteInfo = null;
+    this.children.removeAll(true);
+  }
+
+  build() {
+    this.teardown();
+    this.layout = this.computeLayout();
+    this.gridX = this.layout.gridX;
+    this.gridY = this.layout.gridY;
+    this.buildToolbar(this.layout);
+    this.panelTabBtns = null;
+    if (this.layout.narrow) this.buildPanelTabs(this.layout);
+    this.buildPalette();
+    this.buildGrid();
+    this.buildHelp(this.layout);
   }
 
   // ---------------------------------------------------------------- asset index
@@ -166,133 +226,58 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     if (s?.theme) parts.push(s.theme.replace(/_/g, ' '));
     if (s?.nonEmptyCount != null) parts.push(`${s.nonEmptyCount} tiles`);
     if (s?.objectCount) parts.push(`${s.objectCount} objects`);
-    parts.push('wheel to scroll');
+    parts.push('wheel/drag to scroll');
     this.paletteInfo.setText(parts.join(' · '));
   }
 
   // ------------------------------------------------------------------- toolbar
 
-  buildToolbar(width) {
-    this.add.rectangle(0, 0, width, TOOLBAR_H, 0x1b1b22).setOrigin(0, 0).setDepth(100);
+  buildToolbar(layout) {
+    const { width, narrow, toolbarH } = layout;
+    this.add.rectangle(0, 0, width, toolbarH, 0x1b1b22).setOrigin(0, 0).setDepth(100);
 
-    // Right-side actions are laid out first so the tool row knows its budget.
-    // Everything on this row shrinks with the viewport: there are 13 tools to
-    // fit, so the sheet selector and the action buttons give ground first.
-    const narrow = width < 900;
-    const actionW = narrow ? 50 : 68, actionGap = narrow ? 4 : 6;
+    if (narrow) this.buildNarrowToolbarRows(layout);
+    else this.buildWideToolbarRows(layout);
+  }
+
+  /** Wide: sheet selector + tools + actions share one row; layers/size/table/station share a second. */
+  buildWideToolbarRows(layout) {
+    const actionW = 68, actionGap = 6;
     const actionsW = actionW * 4 + actionGap * 3;
-    const actionsX = Math.max(12, width - 12 - actionsW);
-    const toolsX = narrow ? 148 : 200;
+    const actionsX = Math.max(12, layout.width - 12 - actionsW);
+    const toolsX = 200;
 
-    // Row 1: sheet selector + tools, sized to whatever space is left.
-    this.add.text(12, 6, 'Sheet', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
-      .setDepth(101);
-    this.makeBtn(12, 20, 24, 22, '◀', () => this.selectSheet(this.sheetIdx - 1));
-    this.makeBtn(38, 20, 24, 22, '▶', () => this.selectSheet(this.sheetIdx + 1));
-    this.sheetLabel = this.add.text(68, 25, this.sheetKey, {
-      fontFamily: 'system-ui', fontSize: narrow ? '11px' : '13px', color: '#ffe9a8'
-    }).setDepth(101);
-
-    // The tool row must never run under the action buttons, so the width is
-    // whatever divides the remaining budget; the label drops to its short form
-    // and then to a smaller font as the row tightens.
-    const gap = 3;
-    const budget = Math.max(0, actionsX - 8 - toolsX);
-    const btnW = Math.max(14, Math.min(72, Math.floor(budget / TOOLS.length) - gap));
-    const useShort = btnW < 58;
-    const toolFont = btnW < 30 ? 8 : (btnW < 38 ? 10 : (btnW < 46 ? 11 : 13));
-
-    this.toolBtns = {};
-    this.markerPreviews = {};
-    TOOLS.forEach((t, i) => {
-      const bx = toolsX + i * (btnW + gap);
-      const btn = this.makeBtn(bx, 20, btnW, 22,
-        useShort ? t.short : t.label, () => this.setTool(t.id), toolFont);
-      this.toolBtns[t.id] = btn;
-      // Per-marker tile preview: small icon below marker tool buttons.
-      // Right-click to assign current palette selection to this marker.
-      if (MARKER_TOOLS.includes(t.id)) {
-        const pv = this.add.image(bx + btnW - 6, 20 + 22 - 2, '__pixel')
-          .setOrigin(0.5).setDisplaySize(12, 12).setDepth(103)
-          .setTint(0x4a4a5e);
-        pv.setInteractive({ useHandCursor: true });
-        pv.on('pointerdown', (pointer) => {
-          if (pointer.rightButtonDown()) {
-            this.assignMarkerTile(t.id);
-          } else {
-            this.setTool(t.id);
-          }
-        });
-        pv.on('pointerover', () => {
-          const mt = this.markerTiles[t.id];
-          this.setStatus(mt ? `${t.id} tile: ${mt.s}#${mt.f}` : `${t.id}: click to use, right-click preview to assign tile`);
-        });
-        // Prevent context menu on right-click
-        pv.on('contextmenu', (e) => { e.event?.preventDefault?.(); });
-        this.markerPreviews[t.id] = pv;
-      }
-    });
-    this.refreshToolBtns();
-    this.refreshMarkerPreviews();
-
-    // Row 2: layer toggles + grid size.
-    let x2 = 12;
-    this.add.text(x2, 54, 'Layers', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
-      .setDepth(101);
-    x2 += 48;
-    this.layerBtns = {};
-    LAYERS.forEach((l) => {
-      this.layerBtns[l.id] = this.makeBtn(x2, 52, 66, 22, l.label, () => this.toggleLayer(l.id));
-      x2 += 70;
-    });
-    this.refreshLayerBtns();
-    x2 += 16;
-
-    this.add.text(x2, 54, 'Size', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
-      .setDepth(101);
-    x2 += 34;
-    this.makeBtn(x2, 52, 22, 22, '-', () => this.nudgeSize(-1, 0));
-    this.makeBtn(x2 + 24, 52, 22, 22, '+', () => this.nudgeSize(1, 0));
-    this.makeBtn(x2 + 52, 52, 22, 22, '-', () => this.nudgeSize(0, -1));
-    this.makeBtn(x2 + 76, 52, 22, 22, '+', () => this.nudgeSize(0, 1));
-    this.sizeLabel = this.add.text(x2 + 104, 57, '', {
-      fontFamily: 'system-ui', fontSize: '12px', color: '#e6e6f0'
-    }).setDepth(101);
-    this.applyBtn = this.makeBtn(x2 + 186, 52, 60, 22, 'Apply', () => this.applyResize());
-    this.refreshSizeLabel();
-    x2 += 258;
-
-    // Table footprint picker — only meaningful for the Table tool.
-    this.add.text(x2, 54, 'Table', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
-      .setDepth(101);
-    x2 += 40;
-    this.tableSizeBtns = TABLE_SIZES.map((s, i) => {
-      const btn = this.makeBtn(x2 + i * 40, 52, 36, 22, s.label, () => this.setTableSize(i));
-      return btn;
-    });
-    this.refreshTableSizeBtns();
-    x2 += TABLE_SIZES.length * 40 + 12;
-
-    // Toggle: newly placed tables are flagged isBar (bar counter/tables).
-    this.barTableBtn = this.makeBtn(x2, 52, 62, 22, 'Bar Tbl', () => this.toggleTableIsBar());
-    this.refreshBarTableBtn();
-    x2 += 62 + 12;
-
-    // Station picker — which kitchen station the Station tool stamps.
-    this.add.text(x2, 54, 'Station', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' })
-      .setDepth(101);
-    x2 += 46;
-    this.stationKeyBtns = STATION_KEYS.map((s, i) => {
-      const btn = this.makeBtn(x2 + i * 44, 52, 40, 22, s.label, () => this.setStationKey(i), 10);
-      return btn;
-    });
-    this.refreshStationKeyBtns();
-    x2 += STATION_KEYS.length * 44 + 12;
-
-    this.statusText = this.add.text(x2, 57, '', {
+    this.buildSheetSelector(12, 6, false);
+    const toolsW = Math.max(40, actionsX - 8 - toolsX);
+    this.buildToolsStrip(toolsX, 20, toolsW, 22);
+    this.buildActions(actionsX, 20, actionW, actionGap);
+    this.buildRow2Strip(8, 52, layout.width - 16, 22);
+    this.statusText = this.add.text(12, 78, '', {
       fontFamily: 'system-ui', fontSize: '12px', color: '#8fb6ff'
     }).setDepth(101);
+  }
 
+  /** Narrow: sheet+actions, then the tools strip, then the row-2 strip each get a full-width row. */
+  buildNarrowToolbarRows(layout) {
+    this.buildSheetSelector(8, 8, true);
+    this.buildActions(layout.width - 8 - (50 * 4 + 4 * 3), 8, 50, 4);
+    this.buildToolsStrip(8, 40, layout.width - 16, 26);
+    this.buildRow2Strip(8, 72, layout.width - 16, 26);
+    this.statusText = this.add.text(12, 104, '', {
+      fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff', wordWrap: { width: layout.width - 24 }
+    }).setDepth(101);
+  }
+
+  buildSheetSelector(x, y, narrow) {
+    this.add.text(x, y, 'Sheet', { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' }).setDepth(101);
+    this.makeBtn(x, y + 14, 24, 22, '◀', () => this.selectSheet(this.sheetIdx - 1));
+    this.makeBtn(x + 26, y + 14, 24, 22, '▶', () => this.selectSheet(this.sheetIdx + 1));
+    this.sheetLabel = this.add.text(x + 56, y + 19, this.sheetKey, {
+      fontFamily: 'system-ui', fontSize: narrow ? '11px' : '13px', color: '#ffe9a8'
+    }).setDepth(101);
+  }
+
+  buildActions(actionsX, y, actionW, actionGap) {
     const actions = [
       ['Menu', () => this.scene.start('Menu')],
       ['Import', () => this.importPlan()],
@@ -300,7 +285,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       ['Save', () => this.save()]
     ];
     actions.forEach(([label, fn], i) => {
-      this.makeBtn(actionsX + i * (actionW + actionGap), 20, actionW, 22, label, fn);
+      this.makeBtn(actionsX + i * (actionW + actionGap), y, actionW, 22, label, fn, actionW < 60 ? 10 : undefined);
     });
   }
 
@@ -315,6 +300,196 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     bg.on('pointerout', () => bg.setFillStyle(0x2b2b39));
     bg.on('pointerdown', onClick);
     return { bg, txt };
+  }
+
+  /** Same as makeBtn but adds into a container instead of the scene root, for horizontally-scrollable strips. */
+  makeStripBtn(container, x, y, w, h, label, onClick, fontSize) {
+    const bg = this.add.rectangle(x, y, w, h, 0x2b2b39).setOrigin(0, 0)
+      .setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true });
+    const size = fontSize ?? Math.min(13, Math.max(10, h - 8));
+    const txt = this.add.text(x + w / 2, y + h / 2, label, {
+      fontFamily: 'system-ui', fontSize: size + 'px', color: '#e6e6f0'
+    }).setOrigin(0.5);
+    bg.on('pointerover', () => bg.setFillStyle(0x3a3a4d));
+    bg.on('pointerout', () => bg.setFillStyle(0x2b2b39));
+    bg.on('pointerdown', onClick);
+    container.add([bg, txt]);
+    return { bg, txt };
+  }
+
+  /**
+   * Generic horizontally-scrollable strip: a masked container with wheel +
+   * drag scrolling (drag covers touch devices, which never fire 'wheel').
+   * `key` must be unique per strip — it names the instance fields used to
+   * track and clean up this strip's mask/listeners across rebuilds.
+   */
+  buildHScroll(key, x, y, w, h) {
+    const container = this.add.container(x, y).setDepth(101);
+    const maskKey = '_' + key + 'MaskShape';
+    if (this[maskKey]) this[maskKey].destroy();
+    const maskShape = this.make.graphics();
+    maskShape.fillStyle(0xffffff, 1).fillRect(x, y, w, h);
+    container.setMask(maskShape.createGeometryMask());
+    this[maskKey] = maskShape;
+
+    const wheelKey = '_' + key + 'Wheel';
+    if (this[wheelKey]) this.input.off('wheel', this[wheelKey]);
+    this[wheelKey] = (pointer) => {
+      if (pointer.x < x || pointer.x > x + w || pointer.y < y || pointer.y > y + h) return;
+      const ev = pointer.event;
+      const delta = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+      const contentW = this[key + 'ContentWidth'] || 0;
+      const minX = x + Math.min(0, w - contentW);
+      container.x = Phaser.Math.Clamp(container.x - Math.sign(delta) * 60, minX, x);
+    };
+    this.input.on('wheel', this[wheelKey]);
+
+    const downKey = '_' + key + 'PointerDown', moveKey = '_' + key + 'PointerMove', upKey = '_' + key + 'PointerUp', dragKey = '_' + key + 'Drag';
+    if (this[downKey]) this.input.off('pointerdown', this[downKey]);
+    if (this[moveKey]) this.input.off('pointermove', this[moveKey]);
+    if (this[upKey]) { this.input.off('pointerup', this[upKey]); this.input.off('pointerupoutside', this[upKey]); }
+    this[downKey] = (pointer) => {
+      if (pointer.x < x || pointer.x > x + w || pointer.y < y || pointer.y > y + h) return;
+      this[dragKey] = { startX: pointer.x, startContainerX: container.x };
+    };
+    this[moveKey] = (pointer) => {
+      const drag = this[dragKey];
+      if (!drag || !pointer.isDown) return;
+      const dx = pointer.x - drag.startX;
+      const contentW = this[key + 'ContentWidth'] || 0;
+      const minX = x + Math.min(0, w - contentW);
+      container.x = Phaser.Math.Clamp(drag.startContainerX + dx, minX, x);
+    };
+    this[upKey] = () => { this[dragKey] = null; };
+    this.input.on('pointerdown', this[downKey]);
+    this.input.on('pointermove', this[moveKey]);
+    this.input.on('pointerup', this[upKey]);
+    this.input.on('pointerupoutside', this[upKey]);
+
+    return container;
+  }
+
+  teardownHScroll(key) {
+    const wheelKey = '_' + key + 'Wheel', downKey = '_' + key + 'PointerDown', moveKey = '_' + key + 'PointerMove',
+      upKey = '_' + key + 'PointerUp', maskKey = '_' + key + 'MaskShape';
+    if (this[wheelKey]) { this.input.off('wheel', this[wheelKey]); this[wheelKey] = null; }
+    if (this[downKey]) { this.input.off('pointerdown', this[downKey]); this[downKey] = null; }
+    if (this[moveKey]) { this.input.off('pointermove', this[moveKey]); this[moveKey] = null; }
+    if (this[upKey]) {
+      this.input.off('pointerup', this[upKey]);
+      this.input.off('pointerupoutside', this[upKey]);
+      this[upKey] = null;
+    }
+    if (this[maskKey]) { this[maskKey].destroy(); this[maskKey] = null; }
+    this['_' + key + 'Drag'] = null;
+  }
+
+  /** Tools row: fixed-size, comfortably tappable buttons — overflow scrolls instead of shrinking illegibly. */
+  buildToolsStrip(x, y, w, h) {
+    const container = this.buildHScroll('tools', x, y, w, h);
+    const btnW = 62, gap = 4;
+
+    this.toolBtns = {};
+    this.markerPreviews = {};
+    TOOLS.forEach((t, i) => {
+      const bx = i * (btnW + gap);
+      const btn = this.makeStripBtn(container, bx, 0, btnW, h, t.label, () => this.setTool(t.id));
+      this.toolBtns[t.id] = btn;
+      // Per-marker tile preview: small icon on top of marker tool buttons.
+      // Right-click to assign the current palette selection to this marker.
+      if (MARKER_TOOLS.includes(t.id)) {
+        const pv = this.add.image(bx + btnW - 6, h - 2, '__pixel')
+          .setOrigin(0.5).setDisplaySize(12, 12).setTint(0x4a4a5e);
+        pv.setInteractive({ useHandCursor: true });
+        pv.on('pointerdown', (pointer) => {
+          if (pointer.rightButtonDown()) this.assignMarkerTile(t.id);
+          else this.setTool(t.id);
+        });
+        pv.on('pointerover', () => {
+          const mt = this.markerTiles[t.id];
+          this.setStatus(mt ? `${t.id} tile: ${mt.s}#${mt.f}` : `${t.id}: click to use, right-click preview to assign tile`);
+        });
+        pv.on('contextmenu', (e) => { e.event?.preventDefault?.(); });
+        container.add(pv);
+        this.markerPreviews[t.id] = pv;
+      }
+    });
+    this.toolsContentWidth = TOOLS.length * (btnW + gap);
+    this.refreshToolBtns();
+    this.refreshMarkerPreviews();
+  }
+
+  /** Layers / size / table footprint / station picker, as one scrollable strip. */
+  buildRow2Strip(x, y, w, h) {
+    const container = this.buildHScroll('row2', x, y, w, h);
+    let x2 = 0;
+    const addLabel = (text) => container.add(this.add.text(x2, 2, text, { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a' }));
+
+    addLabel('Layers');
+    x2 += 48;
+    this.layerBtns = {};
+    LAYERS.forEach((l) => {
+      this.layerBtns[l.id] = this.makeStripBtn(container, x2, 0, 66, h, l.label, () => this.toggleLayer(l.id));
+      x2 += 70;
+    });
+    this.refreshLayerBtns();
+    x2 += 16;
+
+    addLabel('Size');
+    x2 += 34;
+    this.makeStripBtn(container, x2, 0, 22, h, '-', () => this.nudgeSize(-1, 0));
+    this.makeStripBtn(container, x2 + 24, 0, 22, h, '+', () => this.nudgeSize(1, 0));
+    this.makeStripBtn(container, x2 + 52, 0, 22, h, '-', () => this.nudgeSize(0, -1));
+    this.makeStripBtn(container, x2 + 76, 0, 22, h, '+', () => this.nudgeSize(0, 1));
+    this.sizeLabel = this.add.text(x2 + 104, 5, '', {
+      fontFamily: 'system-ui', fontSize: '12px', color: '#e6e6f0'
+    });
+    container.add(this.sizeLabel);
+    this.applyBtn = this.makeStripBtn(container, x2 + 186, 0, 60, h, 'Apply', () => this.applyResize());
+    this.refreshSizeLabel();
+    x2 += 258;
+
+    addLabel('Table');
+    x2 += 40;
+    this.tableSizeBtns = TABLE_SIZES.map((s, i) => this.makeStripBtn(container, x2 + i * 40, 0, 36, h, s.label, () => this.setTableSize(i)));
+    this.refreshTableSizeBtns();
+    x2 += TABLE_SIZES.length * 40 + 12;
+
+    this.barTableBtn = this.makeStripBtn(container, x2, 0, 62, h, 'Bar Tbl', () => this.toggleTableIsBar());
+    this.refreshBarTableBtn();
+    x2 += 62 + 12;
+
+    addLabel('Station');
+    x2 += 46;
+    this.stationKeyBtns = STATION_KEYS.map((s, i) => this.makeStripBtn(container, x2 + i * 44, 0, 40, h, s.label, () => this.setStationKey(i), 10));
+    this.refreshStationKeyBtns();
+    x2 += STATION_KEYS.length * 44 + 12;
+
+    this.row2ContentWidth = x2;
+  }
+
+  // ----------------------------------------------- narrow-screen panel tabs
+
+  buildPanelTabs(layout) {
+    const y = NARROW_TOOLBAR_H - 32;
+    const w = (layout.width - 16 - 8) / 2;
+    this.paletteTabBtn = this.makeBtn(8, y, w, 26, 'Palette', () => this.setPanelTab('palette'));
+    this.gridTabBtn = this.makeBtn(8 + w + 8, y, w, 26, 'Grid', () => this.setPanelTab('grid'));
+    this.refreshPanelTabButtons();
+  }
+
+  refreshPanelTabButtons() {
+    if (!this.paletteTabBtn) return;
+    this.paletteTabBtn.bg.setFillStyle(this.panelTab === 'palette' ? 0x4a4a5e : 0x2b2b39);
+    this.gridTabBtn.bg.setFillStyle(this.panelTab === 'grid' ? 0x4a4a5e : 0x2b2b39);
+  }
+
+  setPanelTab(name) {
+    if (this.panelTab === name) return;
+    this.panelTab = name;
+    this.refreshPanelTabButtons();
+    this.palette?.setVisible(!this.layout.narrow || this.panelTab === 'palette');
+    this.gridContainer?.setVisible(!this.layout.narrow || this.panelTab === 'grid');
   }
 
   setStatus(msg) { this.statusText?.setText(msg || ''); }
@@ -521,18 +696,22 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       { cols: 4, only });
 
     const panelX = 8;
-    const panelY = TOOLBAR_H + 12;
-    const panelW = PALETTE_W - 16;
-    const panelH = this.scale.height - panelY - 40;
+    const panelY = this.gridY;
+    const panelW = this.layout.paletteW;
+    const panelH = this.layout.height - panelY - 40;
     this.palette.container.setPosition(panelX, panelY);
     this.palette.container.setDepth(50);
+    this.palette.setVisible(!this.layout.narrow || this.panelTab === 'palette');
 
+    if (this._paletteMaskShape) this._paletteMaskShape.destroy();
     const maskShape = this.make.graphics({ x: 0, y: 0 });
     maskShape.fillStyle(0xffffff, 1).fillRect(panelX, panelY, panelW, panelH);
     this.palette.container.setMask(maskShape.createGeometryMask());
+    this._paletteMaskShape = maskShape;
 
     if (this.paletteWheel) this.input.off('wheel', this.paletteWheel);
     this.paletteWheel = (pointer, over, dx, dy) => {
+      if (this.layout.narrow && this.panelTab !== 'palette') return;
       if (pointer.x < panelX || pointer.x > panelX + panelW) return;
       const minY = Math.min(panelY, panelY + panelH - this.palette.contentHeight - 8);
       this.palette.container.y =
@@ -540,8 +719,29 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     };
     this.input.on('wheel', this.paletteWheel);
 
+    // Drag-to-scroll so the palette is reachable on touch devices, which never fire 'wheel'.
+    if (this._palettePointerDown) this.input.off('pointerdown', this._palettePointerDown);
+    if (this._palettePointerMove) this.input.off('pointermove', this._palettePointerMove);
+    if (this._palettePointerUp) { this.input.off('pointerup', this._palettePointerUp); this.input.off('pointerupoutside', this._palettePointerUp); }
+    this._palettePointerDown = (pointer) => {
+      if (this.layout.narrow && this.panelTab !== 'palette') return;
+      if (pointer.x < panelX || pointer.x > panelX + panelW || pointer.y < panelY || pointer.y > panelY + panelH) return;
+      this._paletteDrag = { startY: pointer.y, startContainerY: this.palette.container.y };
+    };
+    this._palettePointerMove = (pointer) => {
+      if (!this._paletteDrag || !pointer.isDown) return;
+      const dy = pointer.y - this._paletteDrag.startY;
+      const minY = Math.min(panelY, panelY + panelH - this.palette.contentHeight - 8);
+      this.palette.container.y = Phaser.Math.Clamp(this._paletteDrag.startContainerY + dy, minY, panelY);
+    };
+    this._palettePointerUp = () => { this._paletteDrag = null; };
+    this.input.on('pointerdown', this._palettePointerDown);
+    this.input.on('pointermove', this._palettePointerMove);
+    this.input.on('pointerup', this._palettePointerUp);
+    this.input.on('pointerupoutside', this._palettePointerUp);
+
     if (!this.paletteInfo) {
-      this.paletteInfo = this.add.text(panelX + 4, this.scale.height - 34, '', {
+      this.paletteInfo = this.add.text(panelX + 4, this.layout.height - 34, '', {
         fontFamily: 'system-ui', fontSize: '11px', color: '#6b6b7a',
         wordWrap: { width: panelW }
       }).setDepth(60);
@@ -594,6 +794,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
 
     this.fitGrid();
     this.renderAll();
+    this.gridContainer.setVisible(!this.layout.narrow || this.panelTab === 'grid');
 
     // Finish copy selection on pointer up (anywhere on the grid)
     this.input.off('pointerup', this._pointerUpCb);
@@ -930,7 +1131,8 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.setStatus(`pasted ${w}x${h} region at (${x},${y})`);
   }
 
-  buildHelp(height) {
+  buildHelp(layout) {
+    if (layout.narrow) return; // no room on narrow screens; the toolbar already reads as self-explanatory buttons
     const lines = [
       'Pick a frame in the left palette, choose a tool, then click/drag on the grid.',
       'Ground/Object: paint tile.  Erase: clear cell.  Solid: toggle collision.',
@@ -948,7 +1150,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     ];
     // Sits in the band fitGrid() reserves at the bottom; depth keeps it above
     // the grid container, which would otherwise cover it on tall layouts.
-    this.add.text(PALETTE_W + 16, height - 6, lines.join('\n'), {
+    this.add.text(PALETTE_W + 16, layout.height - 6, lines.join('\n'), {
       fontFamily: 'system-ui', fontSize: '12px', color: '#7a7a8a', lineSpacing: 2
     }).setOrigin(0, 1).setDepth(60);
   }

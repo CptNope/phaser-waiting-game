@@ -1,7 +1,7 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { CHARACTERS, ALLERGENS, charKeys, IDLE_FRAME_DOWN, IDLE_FRAMES } from '../data/catalog.js';
+import { CHARACTERS, ALLERGENS, STATION_KEYS, charKeys, IDLE_FRAME_DOWN, IDLE_FRAMES } from '../data/catalog.js';
 import { Storage } from '../core/Storage.js';
-import { DEFAULT_GUESTS } from '../data/defaults.js';
+import { DEFAULT_GUESTS, DEFAULT_NPCS } from '../data/defaults.js';
 import { loadMenuItems } from '../data/menu.js';
 import { CATEGORIES, LAYER_ORDER, randomAppearance, profileFor } from '../data/characterGenerator.js';
 import { bakeAppearanceTextures, ensureAppearanceTextures, preloadLayerFiles, registerLayerFrames, layerTexKey as layerKeyFor } from '../core/AppearanceCompositor.js';
@@ -14,53 +14,144 @@ function defaultCustomAppearance(kid = false) {
   return c;
 }
 
-const LIST_W = 240;
 const TOOLBAR_H = 56;
+const ENTITY_TAB_Y = TOOLBAR_H + 6;
+const ENTITY_TAB_H = 26;
+const PANEL_TAB_Y = ENTITY_TAB_Y + ENTITY_TAB_H + 6;
+const PANEL_TAB_H = 24;
+const NARROW_BREAKPOINT = 760;
 
 export class GuestEditorScene extends Phaser.Scene {
   constructor() { super('GuestEditor'); }
 
+  get entities() { return this.tab === 'guests' ? this.guests : this.npcs; }
+  get editingId() { return this.tab === 'guests' ? this.editingGuestId : this.editingNpcId; }
+  set editingId(v) { if (this.tab === 'guests') this.editingGuestId = v; else this.editingNpcId = v; }
+
   async create() {
     this.cameras.main.setBackgroundColor('#23232c');
     this.guests = Storage.loadGuests() || JSON.parse(JSON.stringify(DEFAULT_GUESTS));
-    this.editingId = this.guests[0]?.id || null;
+    this.npcs = Storage.loadNPCs() || JSON.parse(JSON.stringify(DEFAULT_NPCS));
+    this.tab = 'guests';
+    this.panelTab = 'list'; // only used on narrow screens: 'char' | 'list' | 'form'
+    this.pickerTab = 'preset';
+    this.editingGuestId = this.guests[0]?.id || null;
+    this.editingNpcId = this.npcs[0]?.id || null;
+    this.loadedCategoryKids = {}; // category -> Set(kid bool) already lazy-loaded this session
     this.menuItems = await loadMenuItems();
     this.drinkItems = this.menuItems.filter(m => m.category === 'drink');
     this.foodItems = this.menuItems.filter(m => m.category === 'food');
 
-    const { width, height } = this.scale;
-    this.slotModal = null;
-    this.pickerTab = 'preset';
-    this.loadedCategoryKids = {}; // category -> Set(kid bool) already lazy-loaded this session
-    this.buildToolbar(width);
-    this.buildCharPicker();
-    this.buildList();
-    this.buildForm(height);
-    this.refreshList();
-    this.loadEditing();
+    this.build();
 
     this.input.keyboard.on('keydown-ESC', () => {
       if (this.slotModal) { this.closeSlotPicker(); return; }
       this.scene.start('Menu');
     });
+
+    this.scale.on('resize', this.onResize, this);
+    this.events.once('shutdown', () => {
+      this.scale.off('resize', this.onResize, this);
+      if (this._resizeTimer) this._resizeTimer.remove(false);
+    });
   }
 
-  buildToolbar(width) {
+  onResize() {
+    if (this._resizeTimer) this._resizeTimer.remove(false);
+    this._resizeTimer = this.time.delayedCall(120, () => { this._resizeTimer = null; this.build(); });
+  }
+
+  // ---------------------------------------------------------------- layout
+
+  computeLayout() {
+    const { width, height } = this.scale;
+    const narrow = width < NARROW_BREAKPOINT;
+    const margin = 8, gap = 16;
+    const tabsBottom = narrow ? (PANEL_TAB_Y + PANEL_TAB_H) : (ENTITY_TAB_Y + ENTITY_TAB_H);
+    const contentTop = tabsBottom + 10;
+    const panelH = Math.max(200, height - contentTop - margin);
+
+    let pickerX, pickerW, listX, listW, formX, formW;
+    if (narrow) {
+      pickerX = listX = formX = margin;
+      pickerW = listW = formW = width - margin * 2;
+    } else {
+      pickerW = Phaser.Math.Clamp(Math.round(width * 0.20), 170, 260);
+      listW = Phaser.Math.Clamp(Math.round(width * 0.24), 200, 320);
+      pickerX = margin;
+      listX = pickerX + pickerW + gap;
+      formX = listX + listW + gap;
+      formW = Math.max(260, width - formX - margin);
+    }
+    return { width, height, narrow, margin, gap, contentTop, panelH, pickerX, pickerW, listX, listW, formX, formW };
+  }
+
+  isPanelActive(name) { return !this.layout.narrow || this.panelTab === name; }
+
+  /** Destroys every display object + input listener from the previous build so a full rebuild never leaks or duplicates. */
+  teardown() {
+    if (this.slotModal) { this.slotModal.destroy(true); this.slotModal = null; }
+    if (this._presetWheel) { this.input.off('wheel', this._presetWheel); this._presetWheel = null; }
+    if (this._listWheel) { this.input.off('wheel', this._listWheel); this._listWheel = null; }
+    if (this._listPointerDown) { this.input.off('pointerdown', this._listPointerDown); this._listPointerDown = null; }
+    if (this._listPointerMove) { this.input.off('pointermove', this._listPointerMove); this._listPointerMove = null; }
+    if (this._listPointerUp) {
+      this.input.off('pointerup', this._listPointerUp);
+      this.input.off('pointerupoutside', this._listPointerUp);
+      this._listPointerUp = null;
+    }
+    // Graphics used only for a geometry mask live outside the display list
+    // (this.make, not this.add), so children.removeAll() below won't catch them.
+    if (this._presetMaskShape) { this._presetMaskShape.destroy(); this._presetMaskShape = null; }
+    if (this._listMaskShape) { this._listMaskShape.destroy(); this._listMaskShape = null; }
+    this._listDrag = null;
+    this.children.removeAll(true);
+  }
+
+  build() {
+    this.teardown();
+    this.layout = this.computeLayout();
+    this.buildToolbar(this.layout);
+    this.buildEntityTabs(this.layout);
+    this.panelTabBtns = null;
+    if (this.layout.narrow) this.buildPanelTabs(this.layout);
+    this.buildCharPicker(this.layout);
+    this.buildList(this.layout);
+    this.buildForm(this.layout);
+    this.refreshList();
+    this.loadEditing();
+  }
+
+  // ------------------------------------------------------------- toolbar
+
+  buildToolbar(layout) {
+    const { width, narrow } = layout;
     this.add.rectangle(0, 0, width, TOOLBAR_H, 0x1b1b22).setOrigin(0).setDepth(100);
-    this.add.text(12, 18, 'Guest Editor', { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' });
+    this.add.text(10, 18, narrow ? 'Guests & Staff' : 'Guest & Staff Editor', {
+      fontFamily: 'system-ui', fontSize: narrow ? '13px' : '16px', color: '#ffe9a8'
+    });
 
-    const right = width - 12;
-    this.makeBtn(right - 70, 14, 70, 30, 'Save', () => this.save());
-    this.makeBtn(right - 150, 14, 70, 30, 'Export', () => Storage.downloadJSON(this.guests, 'guests.json'));
-    this.makeBtn(right - 230, 14, 70, 30, 'Import', () => this.importGuests());
-    this.makeBtn(right - 310, 14, 70, 30, 'Menu', () => this.scene.start('Menu'));
+    const btnW = narrow ? 52 : 70, btnH = 28, gap = 6;
+    const specs = [
+      { label: 'Menu', onClick: () => this.scene.start('Menu') },
+      { label: 'Import', onClick: () => this.importActive(), ref: 'importBtn' },
+      { label: 'Export', onClick: () => this.exportActive(), ref: 'exportBtn' },
+      { label: 'Save', onClick: () => this.save() },
+    ];
+    let x = width - 8 - btnW;
+    for (const s of specs) {
+      const btn = this.makeBtn(x, 14, btnW, btnH, s.label, s.onClick, narrow ? 10 : undefined);
+      if (s.ref) this[s.ref] = btn;
+      x -= btnW + gap;
+    }
   }
 
-  makeBtn(x, y, w, h, label, onClick) {
+  makeBtn(x, y, w, h, label, onClick, fontSize) {
     const bg = this.add.rectangle(x, y, w, h, 0x2b2b39).setOrigin(0).setStrokeStyle(1, 0x4a4a5e)
       .setInteractive({ useHandCursor: true }).setDepth(101);
+    const size = fontSize ?? Math.max(10, h - 4);
     const txt = this.add.text(x + w / 2, y + h / 2, label, {
-      fontFamily: 'system-ui', fontSize: Math.max(10, h - 4) + 'px', color: '#e6e6f0'
+      fontFamily: 'system-ui', fontSize: size + 'px', color: '#e6e6f0'
     }).setOrigin(0.5).setDepth(102);
     bg.on('pointerover', () => bg.setFillStyle(0x3a3a4d));
     bg.on('pointerout', () => bg.setFillStyle(0x2b2b39));
@@ -68,40 +159,100 @@ export class GuestEditorScene extends Phaser.Scene {
     return { bg, txt };
   }
 
+  // ---------------------------------------------------------- entity tabs
+
+  buildEntityTabs(layout) {
+    const w = layout.narrow ? (layout.width - 16 - 8) / 2 : 110;
+    this.guestsTabBtn = this.makeBtn(8, ENTITY_TAB_Y, w, ENTITY_TAB_H, 'Guests', () => this.setTab('guests'));
+    this.staffTabBtn = this.makeBtn(8 + w + 8, ENTITY_TAB_Y, w, ENTITY_TAB_H, 'Staff', () => this.setTab('staff'));
+    if (!layout.narrow) {
+      this.add.text(layout.width - 10, ENTITY_TAB_Y + ENTITY_TAB_H / 2, 'Export/Import apply to the selected tab', {
+        fontFamily: 'system-ui', fontSize: '10px', color: '#5a5a6a'
+      }).setOrigin(1, 0.5);
+    }
+    this.refreshEntityTabButtons();
+  }
+
+  refreshEntityTabButtons() {
+    this.guestsTabBtn.bg.setFillStyle(this.tab === 'guests' ? 0x4a4a5e : 0x2b2b39);
+    this.staffTabBtn.bg.setFillStyle(this.tab === 'staff' ? 0x4a4a5e : 0x2b2b39);
+  }
+
+  setTab(tab) {
+    if (this.tab === tab) return;
+    this.tab = tab;
+    this.refreshEntityTabButtons();
+    this.refreshList();
+    this.refreshFormVisibility();
+    this.loadEditing();
+  }
+
+  // ----------------------------------------------- narrow-screen panel tabs
+
+  buildPanelTabs(layout) {
+    const w = (layout.width - 16 - 16) / 3;
+    const defs = [['char', 'Character'], ['list', 'List'], ['form', 'Form']];
+    this.panelTabBtns = {};
+    defs.forEach(([key, label], i) => {
+      this.panelTabBtns[key] = this.makeBtn(8 + i * (w + 8), PANEL_TAB_Y, w, PANEL_TAB_H, label, () => this.setPanelTab(key), 10);
+    });
+    this.refreshPanelTabButtons();
+  }
+
+  refreshPanelTabButtons() {
+    if (!this.panelTabBtns) return;
+    for (const [key, btn] of Object.entries(this.panelTabBtns)) {
+      btn.bg.setFillStyle(this.panelTab === key ? 0x4a4a5e : 0x2b2b39);
+    }
+  }
+
+  setPanelTab(name) {
+    if (this.panelTab === name) return;
+    this.panelTab = name;
+    this.refreshPanelTabButtons();
+    this.showPickerTab(this.pickerTab);
+    this.refreshList();
+    this.refreshFormVisibility();
+  }
+
   // Appearance picker: tab between Presets (named characters) and Custom
-  // (layered generator: body/eyes/outfit/hairstyle/accessory).
-  buildCharPicker() {
-    const panelX = 8, panelY = TOOLBAR_H + 12;
-    const panelW = LIST_W - 16;
+  // (layered generator: body/eyes/outfit/hairstyle/accessory). Shared as-is
+  // between guests and staff — both use the same {mode, charName|custom} shape.
+  buildCharPicker(layout) {
+    const panelX = layout.pickerX, panelY = layout.contentTop;
+    const panelW = layout.pickerW, panelH = layout.panelH;
     this.pickerPanelX = panelX;
     this.pickerPanelY = panelY;
     this.pickerPanelW = panelW;
-    this.pickerPanelH = this.scale.height - panelY - 40;
+    this.pickerPanelH = panelH;
 
-    this.presetTabBtn = this.makeBtn(panelX, panelY - 4, panelW / 2 - 2, 24, 'Presets', () => this.onTabClick('preset'));
-    this.customTabBtn = this.makeBtn(panelX + panelW / 2 + 2, panelY - 4, panelW / 2 - 2, 24, 'Custom', () => this.onTabClick('custom'));
+    this.presetTabBtn = this.makeBtn(panelX, panelY, panelW / 2 - 2, 24, 'Presets', () => this.onAppearanceTabClick('preset'));
+    this.customTabBtn = this.makeBtn(panelX + panelW / 2 + 2, panelY, panelW / 2 - 2, 24, 'Custom', () => this.onAppearanceTabClick('custom'));
 
-    this.buildPresetPicker(panelX, panelY + 26, panelW, this.pickerPanelH - 26);
-    this.buildCustomPicker(panelX, panelY + 26, panelW, this.pickerPanelH - 26);
-    this.showPickerTab('preset');
+    this.buildPresetPicker(panelX, panelY + 28, panelW, panelH - 28);
+    this.buildCustomPicker(panelX, panelY + 28, panelW, panelH - 28);
+    this.showPickerTab(this.pickerTab);
   }
 
-  /** Pure UI: shows the matching panel for a guest's existing appearance.mode. Does not touch data. */
+  /** Pure UI: shows the matching panel for the current entity's appearance.mode, gated by which top-level panel is active on narrow screens. Does not touch data. */
   showPickerTab(tab) {
     this.pickerTab = tab;
-    this.presetContainer.setVisible(tab === 'preset');
-    this.customPanel.setVisible(tab === 'custom');
-    this.kidInput.setVisible(tab === 'custom');
+    const active = this.isPanelActive('char');
+    this.presetContainer.setVisible(active && tab === 'preset');
+    this.customPanel.setVisible(active && tab === 'custom');
+    this.kidInput.setVisible(active && tab === 'custom');
+    this.presetTabBtn.bg.setVisible(active); this.presetTabBtn.txt.setVisible(active);
+    this.customTabBtn.bg.setVisible(active); this.customTabBtn.txt.setVisible(active);
     this.presetTabBtn.bg.setFillStyle(tab === 'preset' ? 0x4a4a5e : 0x2b2b39);
     this.customTabBtn.bg.setFillStyle(tab === 'custom' ? 0x4a4a5e : 0x2b2b39);
   }
 
-  /** User clicked a tab button: switches the editing guest into that mode. */
-  onTabClick(tab) {
-    const g = this.guests.find(x => x.id === this.editingId);
+  /** User clicked a tab button: switches the editing entity into that appearance mode. */
+  onAppearanceTabClick(tab) {
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g) return;
     if (tab === 'preset' && g.appearance?.mode !== 'preset') {
-      g.appearance = { mode: 'preset', charName: g.charName || 'Adam' };
+      g.appearance = { mode: 'preset', charName: g.appearance?.charName || g.charName || 'Adam' };
     } else if (tab === 'custom' && g.appearance?.mode !== 'custom') {
       g.appearance = { mode: 'custom', custom: defaultCustomAppearance(false) };
     }
@@ -114,7 +265,7 @@ export class GuestEditorScene extends Phaser.Scene {
   buildPresetPicker(panelX, panelY, panelW, panelH) {
     this.presetContainer = this.add.container(panelX, panelY).setDepth(50);
     const cellW = 48, cellH = 72, pad = 4;
-    const cols = Math.floor(panelW / (cellW + pad));
+    const cols = Math.max(1, Math.floor(panelW / (cellW + pad)));
 
     this.charButtons = [];
     CHARACTERS.forEach((name, i) => {
@@ -141,25 +292,27 @@ export class GuestEditorScene extends Phaser.Scene {
     const maskShape = this.make.graphics();
     maskShape.fillStyle(0xffffff, 1).fillRect(panelX, panelY, panelW, panelH - 4);
     this.presetContainer.setMask(maskShape.createGeometryMask());
+    this._presetMaskShape = maskShape;
 
     // Wheel scroll.
     const contentH = Math.ceil(CHARACTERS.length / cols) * (cellH + pad);
-    this.input.on('wheel', (pointer) => {
-      if (this.pickerTab !== 'preset') return;
+    this._presetWheel = (pointer) => {
+      if (this.pickerTab !== 'preset' || !this.isPanelActive('char')) return;
       if (pointer.x < panelX || pointer.x > panelX + panelW) return;
       const minY = panelH - 4 - contentH;
-      let ny = Phaser.Math.Clamp(this.presetContainer.y - Math.sign(pointer.event.deltaY) * 50, panelY + Math.min(0, minY), panelY);
-      this.presetContainer.y = ny;
-    });
+      this.presetContainer.y = Phaser.Math.Clamp(this.presetContainer.y - Math.sign(pointer.event.deltaY) * 50, panelY + Math.min(0, minY), panelY);
+    };
+    this.input.on('wheel', this._presetWheel);
   }
 
   pickCharacter(name) {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g) return;
-    g.charName = name;
     g.appearance = { mode: 'preset', charName: name };
-    if (!g.name || g.name === '(unnamed)') g.name = name.replace(/_/g, ' ');
-    // Highlight selected.
+    if (this.tab === 'guests') {
+      g.charName = name; // legacy mirror — some read paths still check it directly
+      if (!g.name || g.name === '(unnamed)') g.name = name.replace(/_/g, ' ');
+    }
     for (const b of this.charButtons) {
       b.bg.setFillStyle(b.name === name ? 0x4a4a5e : 0x2b2b39);
     }
@@ -199,7 +352,7 @@ export class GuestEditorScene extends Phaser.Scene {
   }
 
   setKid(kid) {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g || g.appearance?.mode !== 'custom') return;
     g.appearance.custom = defaultCustomAppearance(kid);
     this.updateCustomRowLabels();
@@ -208,7 +361,7 @@ export class GuestEditorScene extends Phaser.Scene {
   }
 
   randomizeCustom() {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g || g.appearance?.mode !== 'custom') return;
     const kid = !!g.appearance.custom?.kid;
     g.appearance.custom = randomAppearance(kid);
@@ -218,7 +371,7 @@ export class GuestEditorScene extends Phaser.Scene {
   }
 
   updateCustomRowLabels() {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g || g.appearance?.mode !== 'custom') return;
     const custom = g.appearance.custom;
     this.getInput(this.kidInput).checked = !!custom.kid;
@@ -232,16 +385,16 @@ export class GuestEditorScene extends Phaser.Scene {
 
   /** Bakes (or kicks off loading + baking) the custom preview and applies it. */
   updateCustomPreview() {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g || g.appearance?.mode !== 'custom') return;
     const custom = g.appearance.custom;
     try {
       const keys = bakeAppearanceTextures(this, custom);
-      this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+      this.setPreviewTexture(keys.idle);
     } catch {
       ensureAppearanceTextures(this, custom).then(keys => {
         if (this.editingId === g.id && this.pickerTab === 'custom') {
-          this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+          this.setPreviewTexture(keys.idle);
           this.refreshList();
         }
       }).catch(e => this.flash('Appearance load failed: ' + e.message));
@@ -261,7 +414,7 @@ export class GuestEditorScene extends Phaser.Scene {
   }
 
   openSlotPicker(category) {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g || g.appearance?.mode !== 'custom') return;
     const custom = g.appearance.custom;
     const kid = !!custom.kid;
@@ -326,12 +479,12 @@ export class GuestEditorScene extends Phaser.Scene {
       grid.y = Phaser.Math.Clamp(grid.y - Math.sign(pointer.event.deltaY) * 50, gy + Math.min(0, minY), gy);
     };
     this.input.on('wheel', wheelHandler);
-    modal.once('destroy', () => this.input.off('wheel', wheelHandler));
+    modal.once('destroy', () => { this.input.off('wheel', wheelHandler); maskShape.destroy(); });
     modal.add(grid);
   }
 
   selectSlotVariant(category, id) {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g || g.appearance?.mode !== 'custom') return;
     g.appearance.custom[category] = id;
     this.closeSlotPicker();
@@ -346,18 +499,68 @@ export class GuestEditorScene extends Phaser.Scene {
     this.slotModal = null;
   }
 
-  buildList() {
-    const x = LIST_W + 16;
-    this.add.text(x, TOOLBAR_H + 12, 'Guests', { fontFamily: 'system-ui', fontSize: '18px', color: '#ffe9a8' });
-    this.listContainer = this.add.container(x, TOOLBAR_H + 40).setDepth(10);
+  // ---------------------------------------------------------------------- list
+
+  buildList(layout) {
+    const x = layout.listX;
+    const w = layout.listW;
+    const headingY = layout.contentTop;
+    const containerY = headingY + 28;
+    const panelH = layout.panelH - 28;
+
+    this.listHeading = this.add.text(x, headingY, this.tab === 'guests' ? 'Guests' : 'Staff', {
+      fontFamily: 'system-ui', fontSize: '18px', color: '#ffe9a8'
+    });
+    this.listContainer = this.add.container(x, containerY).setDepth(10);
+
+    this.listPanelX = x; this.listPanelY = containerY; this.listPanelW = w; this.listPanelH = panelH;
+    this.listRowW = Math.max(160, w - 20);
+
+    const maskShape = this.make.graphics();
+    maskShape.fillStyle(0xffffff, 1).fillRect(x, containerY, w, panelH - 4);
+    this.listContainer.setMask(maskShape.createGeometryMask());
+    this._listMaskShape = maskShape;
+
+    this._listWheel = (pointer) => {
+      if (!this.isPanelActive('list')) return;
+      if (pointer.x < x || pointer.x > x + w || pointer.y < containerY || pointer.y > containerY + panelH) return;
+      const minY = containerY + Math.min(0, panelH - 4 - (this.listContentHeight || 0));
+      this.listContainer.y = Phaser.Math.Clamp(this.listContainer.y - Math.sign(pointer.event.deltaY) * 50, minY, containerY);
+    };
+    this.input.on('wheel', this._listWheel);
+
+    // Drag-to-scroll so the list is reachable on touch devices, which never fire 'wheel'.
+    this._listPointerDown = (pointer) => {
+      if (!this.isPanelActive('list')) return;
+      if (pointer.x < x || pointer.x > x + w || pointer.y < containerY || pointer.y > containerY + panelH) return;
+      this._listDrag = { startY: pointer.y, startContainerY: this.listContainer.y };
+    };
+    this._listPointerMove = (pointer) => {
+      if (!this._listDrag || !pointer.isDown) return;
+      const dy = pointer.y - this._listDrag.startY;
+      const minY = containerY + Math.min(0, panelH - 4 - (this.listContentHeight || 0));
+      this.listContainer.y = Phaser.Math.Clamp(this._listDrag.startContainerY + dy, minY, containerY);
+    };
+    this._listPointerUp = () => { this._listDrag = null; };
+    this.input.on('pointerdown', this._listPointerDown);
+    this.input.on('pointermove', this._listPointerMove);
+    this.input.on('pointerup', this._listPointerUp);
+    this.input.on('pointerupoutside', this._listPointerUp);
   }
 
   refreshList() {
     this.listContainer.removeAll(true);
-    this.guests.forEach((g, i) => {
-      const y = i * 44;
+    const active = this.isPanelActive('list');
+    this.listContainer.setVisible(active);
+    this.listHeading.setVisible(active);
+    this.listHeading.setText(this.tab === 'guests' ? 'Guests' : 'Staff');
+
+    const rowH = 44;
+    const rowW = this.listRowW;
+    this.entities.forEach((g, i) => {
+      const y = i * rowH;
       this.ensureAppearanceDefaults(g);
-      const bg = this.add.rectangle(0, y, 220, 40, g.id === this.editingId ? 0x4a4a5e : 0x2b2b39)
+      const bg = this.add.rectangle(0, y, rowW, 40, g.id === this.editingId ? 0x4a4a5e : 0x2b2b39)
         .setOrigin(0, 0).setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true });
       let preview;
       try {
@@ -365,91 +568,135 @@ export class GuestEditorScene extends Phaser.Scene {
         preview = this.add.image(24, y + 36, keys.idle, IDLE_FRAME_DOWN).setOrigin(0.5, 0.75).setDisplaySize(28, 56);
       }
       catch { preview = this.add.rectangle(8, y + 4, 32, 32, 0x4a4a5e); }
-      const name = this.add.text(48, y + 6, g.name || '(unnamed)', { fontFamily: 'system-ui', fontSize: '14px', color: '#e6e6f0' });
-      const drinkLabel = this.menuName(g.drinkOrder) || 'Coffee';
-      const orderText = g.prefersBar
-        ? `bar: ${drinkLabel}`
-        : `${drinkLabel} → ${this.menuName(g.foodOrder) || 'Burger'}`;
-      const order = this.add.text(48, y + 22, orderText, { fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff' });
+
+      let primary, secondary;
+      if (this.tab === 'guests') {
+        primary = g.name || '(unnamed)';
+        const drinkLabel = this.menuName(g.drinkOrder) || 'Coffee';
+        secondary = g.prefersBar ? `bar: ${drinkLabel}` : `${drinkLabel} → ${this.menuName(g.foodOrder) || 'Burger'}`;
+      } else {
+        primary = g.badge || this.describeRole(g);
+        secondary = g.appearance?.charName || g.charName || 'Custom';
+      }
+      const name = this.add.text(48, y + 6, primary, { fontFamily: 'system-ui', fontSize: '14px', color: '#e6e6f0' });
+      const sub = this.add.text(48, y + 22, secondary, { fontFamily: 'system-ui', fontSize: '11px', color: '#8fb6ff' });
       bg.on('pointerdown', () => { this.editingId = g.id; this.loadEditing(); this.refreshList(); });
       bg.on('pointerover', () => { if (g.id !== this.editingId) bg.setFillStyle(0x3a3a4d); });
       bg.on('pointerout', () => { if (g.id !== this.editingId) bg.setFillStyle(0x2b2b39); });
-      this.listContainer.add([bg, preview, name, order]);
+      this.listContainer.add([bg, preview, name, sub]);
     });
 
-    const addY = this.guests.length * 44 + 4;
-    const addBg = this.add.rectangle(0, addY, 220, 32, 0x2b4a2b).setOrigin(0, 0).setStrokeStyle(1, 0x4a6a4a)
-      .setInteractive({ useHandCursor: true });
-    const addTxt = this.add.text(110, addY + 16, '+ Add guest', { fontFamily: 'system-ui', fontSize: '14px', color: '#9aff9a' }).setOrigin(0.5);
-    addBg.on('pointerdown', () => this.addGuest());
-    addBg.on('pointerover', () => addBg.setFillStyle(0x3a6a3a));
-    addBg.on('pointerout', () => addBg.setFillStyle(0x2b4a2b));
-    this.listContainer.add([addBg, addTxt]);
-
-    if (this.editingId) {
-      const delY = addY + 40;
-      const delBg = this.add.rectangle(0, delY, 220, 28, 0x4a2b2b).setOrigin(0, 0).setStrokeStyle(1, 0x6a4a4a)
+    let nextY = this.entities.length * rowH + 4;
+    if (this.tab === 'guests') {
+      const addBg = this.add.rectangle(0, nextY, rowW, 32, 0x2b4a2b).setOrigin(0, 0).setStrokeStyle(1, 0x4a6a4a)
         .setInteractive({ useHandCursor: true });
-      const delTxt = this.add.text(110, delY + 14, 'Delete selected', { fontFamily: 'system-ui', fontSize: '13px', color: '#ff9a9a' }).setOrigin(0.5);
-      delBg.on('pointerdown', () => this.deleteGuest());
-      delBg.on('pointerover', () => delBg.setFillStyle(0x6a3a3a));
-      delBg.on('pointerout', () => delBg.setFillStyle(0x4a2b2b));
-      this.listContainer.add([delBg, delTxt]);
+      const addTxt = this.add.text(rowW / 2, nextY + 16, '+ Add guest', { fontFamily: 'system-ui', fontSize: '14px', color: '#9aff9a' }).setOrigin(0.5);
+      addBg.on('pointerdown', () => this.addGuest());
+      addBg.on('pointerover', () => addBg.setFillStyle(0x3a6a3a));
+      addBg.on('pointerout', () => addBg.setFillStyle(0x2b4a2b));
+      this.listContainer.add([addBg, addTxt]);
+      nextY += 40;
+
+      if (this.editingId) {
+        const delBg = this.add.rectangle(0, nextY, rowW, 28, 0x4a2b2b).setOrigin(0, 0).setStrokeStyle(1, 0x6a4a4a)
+          .setInteractive({ useHandCursor: true });
+        const delTxt = this.add.text(rowW / 2, nextY + 14, 'Delete selected', { fontFamily: 'system-ui', fontSize: '13px', color: '#ff9a9a' }).setOrigin(0.5);
+        delBg.on('pointerdown', () => this.deleteGuest());
+        delBg.on('pointerover', () => delBg.setFillStyle(0x6a3a3a));
+        delBg.on('pointerout', () => delBg.setFillStyle(0x4a2b2b));
+        this.listContainer.add([delBg, delTxt]);
+        nextY += 28;
+      }
     }
+    this.listContentHeight = nextY;
+
+    // Clamp scroll in case the roster shrank (e.g. a delete) since the last scroll position.
+    const minY = this.listPanelY + Math.min(0, this.listPanelH - 4 - this.listContentHeight);
+    this.listContainer.y = Phaser.Math.Clamp(this.listContainer.y, minY, this.listPanelY);
   }
 
-  buildForm(height) {
-    const x = LIST_W + 16 + 240;
-    this.add.text(x, TOOLBAR_H + 12, 'Edit guest', { fontFamily: 'system-ui', fontSize: '18px', color: '#ffe9a8' });
+  describeRole(g) {
+    if (g.kind === 'host') return 'Host';
+    if (g.kind === 'bartender') return 'Bartender';
+    if (g.kind === 'cook') {
+      const s = STATION_KEYS.find(s => s.key === g.stationKey);
+      return `${s?.label || g.stationKey} Cook`;
+    }
+    if (g.kind === 'runner') return `Food Runner ${(g.slot ?? 0) + 1}`;
+    return g.kind || 'Staff';
+  }
 
-    // Preview (idle pose, 96px tall).
-    this.preview = this.add.image(x + 48, TOOLBAR_H + 96, '__pixel').setOrigin(0.5, 0.75).setDisplaySize(48, 96);
+  // ---------------------------------------------------------------------- form
 
-    // Name field.
-    this.add.text(x, TOOLBAR_H + 150, 'Name', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
-    this.nameInput = this.add.dom(x, TOOLBAR_H + 178).createFromHTML(
-      `<input type="text" style="width:240px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;" />`
+  buildForm(layout) {
+    const x = layout.formX, w = layout.formW, y0 = layout.contentTop;
+
+    this.formHeading = this.add.text(x, y0, this.tab === 'guests' ? 'Edit guest' : 'Edit staff', {
+      fontFamily: 'system-ui', fontSize: '18px', color: '#ffe9a8'
+    });
+    this.preview = this.add.image(x + 48, y0 + 84, '__pixel').setOrigin(0.5, 0.75).setDisplaySize(48, 96);
+
+    this.guestFormObjects = [];
+    this.staffFormObjects = [];
+    this.buildGuestForm(x, y0, w);
+    this.buildStaffForm(x, y0, w);
+
+    this.refreshFormVisibility();
+  }
+
+  buildGuestForm(x, y0, w) {
+    const inputW = Math.min(240, w - 16);
+    const push = (...objs) => this.guestFormObjects.push(...objs);
+
+    push(this.add.text(x, y0 + 138, 'Name', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }));
+    this.nameInput = this.add.dom(x, y0 + 166).createFromHTML(
+      `<input type="text" style="width:${inputW}px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;" />`
     ).setOrigin(0, 0.5);
     this.getInput(this.nameInput).addEventListener('input', () => this.applyFormToEditing());
+    push(this.nameInput);
 
-    // Patience field.
-    this.add.text(x, TOOLBAR_H + 200, 'Patience (seconds)', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
-    this.patienceInput = this.add.dom(x, TOOLBAR_H + 228).createFromHTML(
+    push(this.add.text(x, y0 + 188, 'Patience (seconds)', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }));
+    this.patienceInput = this.add.dom(x, y0 + 216).createFromHTML(
       `<input type="number" min="10" max="300" style="width:120px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;" />`
     ).setOrigin(0, 0.5);
     this.getInput(this.patienceInput).addEventListener('input', () => this.applyFormToEditing());
+    push(this.patienceInput);
 
     // Drink dropdown (stage 1 — everyone orders a drink first).
-    this.add.text(x, TOOLBAR_H + 250, 'Drink', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    push(this.add.text(x, y0 + 238, 'Drink', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }));
     const drinkOpts = this.drinkItems.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-    this.drinkInput = this.add.dom(x, TOOLBAR_H + 278).createFromHTML(
+    this.drinkInput = this.add.dom(x, y0 + 266).createFromHTML(
       `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${drinkOpts}</select>`
     ).setOrigin(0, 0.5);
     this.getInput(this.drinkInput).addEventListener('change', () => this.applyFormToEditing());
+    push(this.drinkInput);
 
     // Food dropdown (stage 2 — skipped entirely for prefersBar guests).
-    this.foodLabel = this.add.text(x, TOOLBAR_H + 300, 'Food', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    this.foodLabel = this.add.text(x, y0 + 288, 'Food', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    push(this.foodLabel);
     const foodOpts = this.foodItems.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-    this.foodInput = this.add.dom(x, TOOLBAR_H + 328).createFromHTML(
+    this.foodInput = this.add.dom(x, y0 + 316).createFromHTML(
       `<select style="width:160px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;">${foodOpts}</select>`
     ).setOrigin(0, 0.5);
     this.getInput(this.foodInput).addEventListener('change', () => this.applyFormToEditing());
+    push(this.foodInput);
 
     // Prefers bar checkbox — skips the host queue, drink-only visit.
-    this.barInput = this.add.dom(x, TOOLBAR_H + 360).createFromHTML(
+    this.barInput = this.add.dom(x, y0 + 348).createFromHTML(
       `<label style="display:flex;align-items:center;gap:6px;font-family:system-ui;font-size:13px;color:#c9c9d6;cursor:pointer;">
          <input type="checkbox" style="width:16px;height:16px;" />
          Prefers bar (drink only, skips queue)
        </label>`
     ).setOrigin(0, 0.5);
     this.getInput(this.barInput).addEventListener('change', () => this.applyFormToEditing());
+    push(this.barInput);
 
     // Allergies — metadata only for now; doesn't affect order generation or serving.
-    this.add.text(x, TOOLBAR_H + 392, 'Allergies', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' });
+    push(this.add.text(x, y0 + 380, 'Allergies', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }));
     this.allergyInputs = {};
     ALLERGENS.forEach((name, i) => {
       const col = i % 2, row = Math.floor(i / 2);
-      const ax = x + col * 130, ay = TOOLBAR_H + 416 + row * 24;
+      const ax = x + col * 130, ay = y0 + 404 + row * 24;
       const dom = this.add.dom(ax, ay).createFromHTML(
         `<label style="display:flex;align-items:center;gap:6px;font-family:system-ui;font-size:12px;color:#c9c9d6;cursor:pointer;">
            <input type="checkbox" style="width:14px;height:14px;" /> ${name}
@@ -457,14 +704,52 @@ export class GuestEditorScene extends Phaser.Scene {
       ).setOrigin(0, 0.5);
       this.getInput(dom).addEventListener('change', () => this.applyFormToEditing());
       this.allergyInputs[name] = dom;
+      push(dom);
     });
 
-    this.add.text(x, height - 40,
+    push(this.add.text(x, this.layout.height - 40,
       'Pick a character from the left panel. Idle pose shown for walking, sit pose used when seated.',
-      { fontFamily: 'system-ui', fontSize: '12px', color: '#7a7a8a' });
+      { fontFamily: 'system-ui', fontSize: '12px', color: '#7a7a8a', wordWrap: { width: w } }));
+  }
+
+  buildStaffForm(x, y0, w) {
+    const inputW = Math.min(240, w - 16);
+    const push = (...objs) => this.staffFormObjects.push(...objs);
+
+    push(this.add.text(x, y0 + 138, 'Role', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }));
+    this.roleValueText = this.add.text(x, y0 + 162, '', { fontFamily: 'system-ui', fontSize: '15px', color: '#8fb6ff' });
+    push(this.roleValueText);
+
+    push(this.add.text(x, y0 + 200, 'Badge label', { fontFamily: 'system-ui', fontSize: '13px', color: '#c9c9d6' }));
+    this.badgeInput = this.add.dom(x, y0 + 228).createFromHTML(
+      `<input type="text" style="width:${inputW}px;padding:6px 8px;font-size:14px;background:#1b1b22;color:#e6e6f0;border:1px solid #4a4a5e;border-radius:3px;" />`
+    ).setOrigin(0, 0.5);
+    this.getInput(this.badgeInput).addEventListener('input', () => this.applyNpcFormToEditing());
+    push(this.badgeInput);
+
+    push(this.add.text(x, y0 + 262,
+      'Staff roles are fixed slots tied to the floor plan (one host, one bartender, one cook per station, two food runners) — pick an appearance on the left and set the label shown above them in-game.',
+      { fontFamily: 'system-ui', fontSize: '11px', color: '#7a7a8a', wordWrap: { width: w } }));
+  }
+
+  refreshFormVisibility() {
+    const active = this.isPanelActive('form');
+    const guestActive = active && this.tab === 'guests';
+    const staffActive = active && this.tab === 'staff';
+    this.formHeading.setVisible(active);
+    this.formHeading.setText(this.tab === 'guests' ? 'Edit guest' : 'Edit staff');
+    this.preview.setVisible(active);
+    for (const o of this.guestFormObjects) o.setVisible(guestActive);
+    for (const o of this.staffFormObjects) o.setVisible(staffActive);
   }
 
   getInput(domEl) { return domEl.node.querySelector('input,select'); }
+
+  /** setTexture() alone resets the frame's base size but not scale, so a display size set against
+   * the placeholder '__pixel' texture would otherwise carry over — always re-lock the size after. */
+  setPreviewTexture(idleKey) {
+    this.preview.setTexture(idleKey, IDLE_FRAME_DOWN).setDisplaySize(48, 96);
+  }
 
   menuName(id) { return this.menuItems.find(m => m.id === id)?.name || id; }
 
@@ -472,16 +757,16 @@ export class GuestEditorScene extends Phaser.Scene {
     if (!g.appearance) g.appearance = { mode: 'preset', charName: g.charName || 'Adam' };
   }
 
-  /** Throws if a custom guest's layer textures aren't loaded yet — callers decide the fallback. */
+  /** Throws if a custom entity's layer textures aren't loaded yet — callers decide the fallback. */
   resolveIdleKeysSync(g) {
     if (g.appearance?.mode === 'custom' && g.appearance.custom) {
       return bakeAppearanceTextures(this, g.appearance.custom);
     }
-    return charKeys(g.charName || 'Adam');
+    return charKeys(g.appearance?.charName || g.charName || 'Adam');
   }
 
   loadEditing() {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g) return;
     this.ensureAppearanceDefaults(g);
     this.showPickerTab(g.appearance.mode === 'custom' ? 'custom' : 'preset');
@@ -490,19 +775,27 @@ export class GuestEditorScene extends Phaser.Scene {
       this.updateCustomRowLabels();
       this.updateCustomPreview();
     } else {
-      const keys = charKeys(g.charName || 'Adam');
-      this.preview.setTexture(keys.idle, IDLE_FRAME_DOWN);
+      const keys = charKeys(g.appearance.charName || g.charName || 'Adam');
+      this.setPreviewTexture(keys.idle);
     }
-    this.getInput(this.nameInput).value = g.name || '';
-    this.getInput(this.patienceInput).value = g.patience;
-    this.getInput(this.drinkInput).value = g.drinkOrder || 'coffee';
-    this.getInput(this.foodInput).value = g.foodOrder || 'burger';
-    this.getInput(this.barInput).checked = !!g.prefersBar;
-    this.refreshFoodRow(!!g.prefersBar);
-    for (const name of ALLERGENS) this.getInput(this.allergyInputs[name]).checked = (g.allergies || []).includes(name);
+
+    if (this.tab === 'guests') {
+      this.getInput(this.nameInput).value = g.name || '';
+      this.getInput(this.patienceInput).value = g.patience;
+      this.getInput(this.drinkInput).value = g.drinkOrder || 'coffee';
+      this.getInput(this.foodInput).value = g.foodOrder || 'burger';
+      this.getInput(this.barInput).checked = !!g.prefersBar;
+      this.refreshFoodRow(!!g.prefersBar);
+      for (const name of ALLERGENS) this.getInput(this.allergyInputs[name]).checked = (g.allergies || []).includes(name);
+    } else {
+      this.getInput(this.badgeInput).value = g.badge || '';
+      this.roleValueText.setText(this.describeRole(g));
+    }
+
     // Highlight selected character.
+    const activeCharName = g.appearance.charName || g.charName;
     for (const b of this.charButtons) {
-      b.bg.setFillStyle(b.name === g.charName ? 0x4a4a5e : 0x2b2b39);
+      b.bg.setFillStyle(b.name === activeCharName ? 0x4a4a5e : 0x2b2b39);
     }
   }
 
@@ -515,7 +808,7 @@ export class GuestEditorScene extends Phaser.Scene {
   }
 
   applyFormToEditing() {
-    const g = this.guests.find(x => x.id === this.editingId);
+    const g = this.entities.find(x => x.id === this.editingId);
     if (!g) return;
     g.name = this.getInput(this.nameInput).value || '(unnamed)';
     g.patience = Math.max(10, parseInt(this.getInput(this.patienceInput).value, 10) || 60);
@@ -524,6 +817,13 @@ export class GuestEditorScene extends Phaser.Scene {
     g.prefersBar = this.getInput(this.barInput).checked;
     this.refreshFoodRow(g.prefersBar);
     g.allergies = ALLERGENS.filter(name => this.getInput(this.allergyInputs[name]).checked);
+    this.refreshList();
+  }
+
+  applyNpcFormToEditing() {
+    const g = this.entities.find(x => x.id === this.editingId);
+    if (!g) return;
+    g.badge = this.getInput(this.badgeInput).value || g.badge || 'STAFF';
     this.refreshList();
   }
 
@@ -550,17 +850,29 @@ export class GuestEditorScene extends Phaser.Scene {
 
   save() {
     Storage.saveGuests(this.guests);
-    this.flash('Guests saved.');
+    Storage.saveNPCs(this.npcs);
+    this.flash('Saved.');
   }
 
-  async importGuests() {
+  exportActive() {
+    Storage.downloadJSON(this.entities, this.tab === 'guests' ? 'guests.json' : 'npcs.json');
+  }
+
+  async importActive() {
     try {
       const data = await Storage.pickJSON();
-      this.guests = data;
-      Storage.saveGuests(data);
-      this.editingId = this.guests[0]?.id || null;
+      if (this.tab === 'guests') {
+        this.guests = data;
+        Storage.saveGuests(data);
+        this.editingGuestId = this.guests[0]?.id || null;
+      } else {
+        this.npcs = data;
+        Storage.saveNPCs(data);
+        this.editingNpcId = this.npcs[0]?.id || null;
+      }
       this.refreshList();
       this.loadEditing();
+      this.flash('Imported.');
     } catch (e) {
       if (e && e.message !== 'No file selected') this.flash('Import failed: ' + e.message);
     }

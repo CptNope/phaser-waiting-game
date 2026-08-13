@@ -1,18 +1,20 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
 import { SHEETS, CHARACTER_SHEETS, WAITER_SHEETS, SIT_SHEETS, SIT_GEOM, RUN_FRAMES } from '../data/catalog.js';
 import { Storage } from '../core/Storage.js';
-import { DEFAULT_GUESTS } from '../data/defaults.js';
+import { DEFAULT_GUESTS, DEFAULT_NPCS } from '../data/defaults.js';
 import { collectLayerFiles } from '../core/AppearanceCompositor.js';
 import { loadDefaultMenuItems } from '../data/menu.js';
 
-// Only the generator-layer files actually referenced by guests in the current
-// roster get preloaded — same philosophy as CHARACTER_SHEETS only listing the
-// 20 named legacy characters, not the whole pack. Custom appearances added
-// later via Import are loaded lazily by the Guest Editor / AppearanceCompositor.
+// Only the generator-layer files actually referenced by guests/staff in the
+// current roster get preloaded — same philosophy as CHARACTER_SHEETS only
+// listing the 20 named legacy characters, not the whole pack. Custom
+// appearances added later via Import are loaded lazily by the Guest & Staff
+// Editor / AppearanceCompositor.
 function currentRosterAppearances() {
   const guests = Storage.loadGuests() || DEFAULT_GUESTS;
-  return guests
-    .map(g => g.appearance)
+  const npcs = Storage.loadNPCs() || DEFAULT_NPCS;
+  return [...guests, ...npcs]
+    .map(e => e.appearance)
     .filter(a => a?.mode === 'custom' && a.custom)
     .map(a => a.custom);
 }

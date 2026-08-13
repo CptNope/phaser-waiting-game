@@ -29,19 +29,21 @@ src/
   main.js               Phaser game config + scene registration + SW registration
   scenes/
     Boot.js             Asset loading with progress bar, creates __pixel texture, warms default-menu cache
-    Menu.js             Main menu: Play / Floor Plan Editor / Guest Editor / Menu Editor / Import-Export
-    FloorPlanEditor.js  Tile-based floor plan editor with visual palette
-    GuestEditor.js      Guest roster editor: Presets/Custom appearance tabs, allergies, DOM form inputs
-    MenuEditor.js       Menu item editor: sprite picker (any sheet), category/station/tint/allergens
+    Menu.js             Main menu: Play / Floor Plan Editor / Guests & Staff / Menu Editor / floor-plan Import-Export
+    FloorPlanEditor.js  Tile-based floor plan editor: scrollable toolbar strips + Palette/Grid tabs on narrow screens
+    GuestEditor.js      Guests & Staff editor: Guests/Staff tabs, Presets/Custom appearance tabs, scrollable
+                        lists, own Export/Import, responsive narrow-screen layout (resize-reactive)
+    MenuEditor.js       Menu item editor: sprite picker (any sheet), category/station/tint/allergens,
+                        scrollable list, responsive narrow-screen layout
     Game.js             Core gameplay: seat guests, take orders, deliver food, score
   data/
     catalog.js          Spritesheet definitions, tile size, ALLERGENS, STATION_KEYS
-    defaults.js         Default floor plan + guest roster (playable without editing)
+    defaults.js         Default floor plan + guest roster + staff roster (playable without editing)
     assetIndex.js       Loads the generated asset index; on-demand sheet/detail fetch
     characterGenerator.js  Layered character-generator manifest + frame geometry (see below)
     menu.js             Loads game-assets/default-menu.json; Storage.loadMenu() takes priority
   core/
-    Storage.js          localStorage + JSON export/import helpers (plan/guests/menu)
+    Storage.js          localStorage + JSON export/import helpers (plan/guests/npcs/menu)
     Palette.js          Frame picker; `only` option renders just non-empty frames
     MobileControls.js   Touch D-pad + action + menu buttons; auto-shows on touch/narrow screens
     AppearanceCompositor.js  Bakes layered guest appearances into charKeys()-shaped textures
@@ -221,8 +223,9 @@ conflict handling needed since JS is single-threaded.
 
 ### Bartender NPC
 
-The bartender is an `Alex` sprite with a "BARTENDER" badge, posted at
-`plan.bar`, with two independent jobs:
+The bartender's appearance and badge come from the bartender-role entry in
+`npcDefs` (default: an `Alex` sprite, "BARTENDER" badge — see "Staff as
+data" below), posted at `plan.bar`, with two independent jobs:
 
 1. **Dine-in drink pickup** — the "kitchen for drinks". Taking a dine-in
    guest's drink order pushes `{ guest, item }` onto `this.readyDrinks`
@@ -280,10 +283,11 @@ stations are told apart by their cook's badge, not unique art, same as
 HOST/BARTENDER. `plan.kitchen` is no longer tied to any one station — it's
 the food pickup point (plus a "FOOD PICKUP" stand-in label — below), a
 status/decoration anchor sitting in a gap column, central to the whole span.
-`COOK_STATIONS` in Game.js maps each `plan.stations.<key>` position (row 2,
-under the station's first appliance tile) to a character + badge;
-`spawnCooks()` places one static sprite+badge per station, no AI, same model
-as the bartender for dine-in drinks.
+Each `npcDefs` entry with `kind: 'cook'` carries a `stationKey` mapping it to
+a `plan.stations.<key>` position (row 2, under the station's first appliance
+tile) plus a character + badge — see "Staff as data" below for where
+`npcDefs` comes from. `spawnCooks()` places one static sprite+badge per
+station, no AI, same model as the bartender for dine-in drinks.
 
 **Order flow**: taking a food order (step 3 of whole-table handling, above)
 calls `startCookPrep(g, food)`, which looks up the item's station via
@@ -295,7 +299,8 @@ claim and deliver it — see "Food runners" below. State is re-checked at
 every async boundary (prep complete, delivery) so a guest who left angry
 mid-flight is dropped cleanly instead of crashing.
 
-**Food runners** (`FOOD_RUNNER_CHARACTERS`, posts at `plan.runnerPosts`) are
+**Food runners** (two `npcDefs` entries with `kind: 'runner'` and `slot` 0/1,
+posts at `plan.runnerPosts`) are
 the only kitchen NPCs that walk — they reuse `walkActorTo()` exactly like
 the host does — and have two jobs, checked in priority order each tick for
 every idle runner (`updateFoodRunners()`):
@@ -331,9 +336,10 @@ pickup-counter frames are chosen from the kitchen sheet.
 
 ### Host NPC
 
-`spawnHost()` places a staff character (`HOST_CHARACTER`, default
-`Conference_woman`, with a "HOST" badge) on a walkable tile beside the host
-stand. `updateHost()` runs a four-state machine each frame:
+`spawnHost()` places a staff character on a walkable tile beside the host
+stand, using the host-role entry in `npcDefs` for appearance + badge
+(default: `Conference_woman`, "HOST" — see "Staff as data" below).
+`updateHost()` runs a four-state machine each frame:
 
 `idle` → `fetching` (walk to the head of the queue) → `escorting` (lead the
 party to the table, guests peeling off to their seats 120 ms apart) →
@@ -374,10 +380,11 @@ the ticket on its next hop and stops. Without this, two chains fight over the
 same sprite and a guest can end up flagged `seated` while their sprite is
 dragged back to the queue. `walkGuestTo()` is a thin wrapper over it.
 
-## Guest Custom Appearances (Character Generator)
+## Guest & Staff Custom Appearances (Character Generator)
 
-The Guest Editor's **Custom** tab (next to **Presets**) builds a guest's look
-from layered sprites in
+The Guests & Staff Editor's **Custom** tab (next to **Presets**) — shared by
+both the Guests and Staff tabs — builds an entity's look from layered sprites
+in
 `assets/moderninteriors-win/2_Characters/Character_Generator/` (copied into
 `game-assets/characters/generator/<Category>/`), instead of picking one of
 the 20 premade characters: Body → Eyes → Outfit → Hairstyle → Accessory (the
@@ -400,23 +407,62 @@ sheets (much smaller grid, only one sit pose — see below).
     bake time (`sitMirrorRight` on the profile).
   - If a pack update ever shifts the grid, these are the constants to fix.
     Verify by comparing a composited idle-down pose against a legacy
-    character side by side in the Guest Editor preview.
+    character side by side in the Guests & Staff Editor preview.
 - `src/core/AppearanceCompositor.js` — bakes a chosen combination into two
   synthetic textures (`<key>_idle` 4-frame, `<key>_sit` frames 0/6) shaped
   exactly like `charKeys()`'s output, using
   `Phaser.GameObjects.RenderTexture` to stamp each layer. Because the output
-  shape matches `charKeys()`, `Game.js`'s guest rendering needed **zero**
-  changes — `resolveGuestKeys()` just picks `bakeAppearanceTextures()` over
-  `charKeys()` when `def.appearance.mode === 'custom'`.
+  shape matches `charKeys()`, `Game.js`'s guest/staff rendering needed
+  **zero** changes — `resolveCharacterKeys()` (renamed from
+  `resolveGuestKeys()` when staff started using it too) just picks
+  `bakeAppearanceTextures()` over `charKeys()` when
+  `def.appearance.mode === 'custom'`.
 - Loading is lazy and two-tier: `Boot.js` only preloads the generator layer
-  files the *current* guest roster's custom guests actually reference
-  (mirrors the existing `CHARACTER_SHEETS` philosophy — not the whole 30MB
-  pack); the Guest Editor additionally loads a whole category's sheets
-  (~1-14MB depending on category) on first open of that slot's picker modal.
+  files the *current* guest and staff rosters' custom entries actually
+  reference (mirrors the existing `CHARACTER_SHEETS` philosophy — not the
+  whole 30MB pack); the Guests & Staff Editor additionally loads a whole
+  category's sheets (~1-14MB depending on category) on first open of that
+  slot's picker modal.
 - Guest shape gained `appearance: { mode: 'preset'|'custom', charName?,
   custom?: { kid, body, eyes, outfit, hairstyle, accessory } }`. Guests
   without it (old saves, imported files) are treated as `mode: 'preset'`
-  using their existing `charName` — fully backward compatible.
+  using their existing `charName` — fully backward compatible. Staff
+  (`npcDefs`) uses the exact same `appearance` shape — see "Staff as data"
+  below.
+
+## Staff as data (Host / Bartender / Cooks / Food Runners)
+
+The host, bartender, five cooks, and two food runners used to be hardcoded
+consts in `Game.js` (`HOST_CHARACTER`, `BARTENDER_CHARACTER`,
+`COOK_STATIONS`, `FOOD_RUNNER_CHARACTERS`) with no editor UI. They're now
+data, following the same "default data as data, not code" philosophy as the
+default menu:
+
+- `DEFAULT_NPCS` (`data/defaults.js`) is an array of
+  `{ id, kind: 'host'|'bartender'|'cook'|'runner', stationKey?, slot?,
+  badge, appearance }`. `stationKey` (cooks only) is one of `STATION_KEYS`;
+  `slot` (runners only) is `0`/`1`. `appearance` is the exact same
+  `{mode, charName|custom}` shape guests use.
+- `Storage.loadNPCs()`/`saveNPCs()` mirror `loadGuests`/`saveGuests` — a
+  fourth `loadX`/`saveX` pair under `waiting-game.npcs`.
+- `Game.create()` sets `this.npcDefs = Storage.loadNPCs() || DEFAULT_NPCS`.
+  `findNpc(pred)` looks up a role in `npcDefs`, falling back to the matching
+  entry in `DEFAULT_NPCS` if a saved/imported set is missing it — staff
+  drive core gameplay actors, so a missing role shouldn't silently break
+  spawning the way a missing *guest* harmlessly would. `spawnHost`/
+  `spawnBartender` look up by `kind`; `spawnCooks` iterates `STATION_KEYS`
+  and looks up by `stationKey`; `spawnFoodRunners` iterates `[0, 1]` and
+  looks up by `slot` — all more robust than positional array indexing if a
+  user imports a reordered NPC file.
+- The **Staff** tab in `GuestEditor.js` (the Guests & Staff Editor) edits
+  this roster: badge text (a plain input) and appearance (the same
+  Presets/Custom picker guests use). Unlike guests, there's no Add/Delete —
+  the roster is a fixed set of floor-plan-bound slots, not a free list.
+- `Boot.js`'s `currentRosterAppearances()` scans both
+  `Storage.loadGuests() || DEFAULT_GUESTS` and
+  `Storage.loadNPCs() || DEFAULT_NPCS` for `mode: 'custom'` appearances, so
+  a custom-appearance staff member's generator-layer files get preloaded
+  exactly like a custom guest's do.
 
 ## Menu Editor & Allergies
 
@@ -452,7 +498,7 @@ that Boot didn't preload — same on-demand pattern as `ensurePlanSheets()`.
 
 `ALLERGENS` (`catalog.js`) is a fixed 8-item vocabulary — Dairy, Egg, Fish,
 Gluten, Nuts, Shellfish, Soy, Other — shared by menu items (Menu Editor) and
-guests (Guest Editor's Allergies checklist, `guest.allergies: string[]`).
+guests (the Guests & Staff Editor's Allergies checklist, `guest.allergies: string[]`).
 Guest allergies are **metadata only**: they don't affect order generation,
 serving, or any other gameplay logic yet.
 
@@ -464,7 +510,20 @@ serving, or any other gameplay logic yet.
 - **Export/Import JSON** for sharing floor plans, guest rosters, and menus (no backend, no localStorage dependency for sharing).
 - **Default data as data, not code**: the default menu ships as
   `game-assets/default-menu.json` rather than a hardcoded JS array, so it's
-  hand-editable and exactly what Export/Import already round-trip.
+  hand-editable and exactly what Export/Import already round-trip. Staff
+  (`DEFAULT_NPCS`) followed the same move — see "Staff as data" above.
+- **A `setTexture()`-then-`setDisplaySize()` gotcha**: an `Image` created
+  against a placeholder texture (e.g. the 1x1 `__pixel`) and immediately
+  `setDisplaySize()`'d, then later switched to a real texture via
+  `setTexture()`, keeps its *old* scale — `setTexture()` resets the frame's
+  base width/height but not `scaleX`/`scaleY`, so the display size balloons
+  to the old scale times the new frame's real size. Hit this in both editor
+  preview images (`GuestEditor.setPreviewTexture()`,
+  `MenuEditor.setPreviewTexture()`) — it was invisible before because other
+  panels visually covered the oversized image; a layout change that
+  isolates the form panel (the narrow single-column mode) exposed it. Any
+  new preview-style image needs the same "re-call `setDisplaySize()` after
+  every `setTexture()`" treatment.
 - **BFS pathfinding** for guest AI (walk from door to waiting area, then to seat).
 - **Seat auto-derivation**: seats are the walkable tiles around a table's footprint; no manual seat placement needed.
 - **Host stand flow**: parties queue in the waiting area and an autonomous host NPC walks them to a table.
@@ -487,8 +546,13 @@ serving, or any other gameplay logic yet.
 
 ## Floor Plan Editor
 
-Toolbar row 1: sheet selector + paint tools. Row 2: layer toggles + grid size.
-The toolbar sizes itself to the viewport and abbreviates tool labels when narrow.
+Wide screens: toolbar row 1 is sheet selector + paint tools + Menu/Import/
+Export/Save; row 2 is layer toggles + grid size + table footprint + station
+picker; the palette sits left of the grid. Narrow screens (< 700px) get more
+toolbar rows instead of shrinking anything (sheet+actions, then tools, then
+row 2, then a status line), and a **Palette**/**Grid** tab below the toolbar
+gives whichever one is active the full screen width — see "Responsive
+rebuild-on-resize" below.
 
 - **Sheet ◀ ▶** — browses all 31 indexed sheets. Non-preloaded sheets load on
   demand; the label shows `n/31 key` and the palette footer shows theme + counts.
@@ -540,12 +604,41 @@ The toolbar sizes itself to the viewport and abbreviates tool labels when narrow
   - **Runner** = a food-runner idle post (`plan.runnerPosts`, an array like
     Bench — click again on the same tile to remove it).
 
-The tool row is responsive: with 16 tools it shrinks the sheet selector, the
-action buttons, the button width and finally the font so it never runs under
-the Menu/Import/Export/Save buttons. Row 2 (Layers/Size/Table/Station
-pickers) is not responsive — it can overflow on narrow viewports.
+The 17-button tool row and the Layers/Size/Table/Station row are each a
+horizontally-scrollable strip (`buildHScroll()`) — fixed, comfortably
+tappable button sizes rather than shrinking illegibly to fit; overflow
+scrolls via wheel (vertical wheel motion scrolls the strip horizontally too,
+since plain mice have no horizontal wheel) or touch drag. Both strips sit
+inside the toolbar's own depth-100 background rectangle, so they're built at
+depth 101 — a strip left at a lower depth than the toolbar background
+renders invisibly *behind* it, which is exactly what happened the first time
+this was built; if a new strip mysteriously doesn't render, check this first.
 
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
+
+### Responsive rebuild-on-resize (Floor Plan Editor, Guests & Staff Editor, Menu Editor)
+
+All three editor scenes listen for `this.scale.on('resize', ...)`, debounce
+~120-150ms (`this.time.delayedCall`, cancelling any pending one), and then
+call a scene-specific `build()` that: tears down every display object
+(`this.children.removeAll(true)`) and manually-tracked input listener/mask
+(Phaser's `wheel`/`pointerdown`/`pointermove`/`pointerup` listeners and
+`this.make.graphics()` mask shapes are **not** part of the display list, so
+`removeAll()` won't catch them — each scene's `teardown()` explicitly
+`input.off()`s and `.destroy()`s them, guarded so a rebuild never leaks or
+double-registers), then rebuilds from a freshly computed layout. Below a
+width breakpoint each editor drops from its normal side-by-side panels to a
+single full-width column with its own small tab switcher (Character/List/
+Form in the Guests & Staff Editor and Menu Editor; Palette/Grid in the Floor
+Plan Editor) — only one panel visible at a time, toggled without a full
+rebuild since that's a frequent, latency-sensitive interaction.
+
+Frequent in-panel interactions (typing in a form field, picking an
+appearance layer, clicking a list row) deliberately do **not** go through
+this rebuild path — they mutate data and call cheap, targeted refresh
+methods (`refreshList()`, `loadEditing()`, etc.) instead, the same as before
+resize-reactivity existed. Rebuilding the whole scene on every keystroke
+would drop focus from the DOM `<input>` being typed into.
 
 ## Controls
 

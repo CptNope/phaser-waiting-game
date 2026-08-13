@@ -2,6 +2,7 @@
 const KEY_PLAN = 'waiting-game.floorplan';
 const KEY_GUESTS = 'waiting-game.guests';
 const KEY_MENU = 'waiting-game.menu';
+const KEY_NPCS = 'waiting-game.npcs';
 
 export const Storage = {
   loadPlan() {
@@ -21,6 +22,15 @@ export const Storage = {
   },
   saveGuests(guests) {
     try { localStorage.setItem(KEY_GUESTS, JSON.stringify(guests)); } catch {}
+  },
+  loadNPCs() {
+    try {
+      const raw = localStorage.getItem(KEY_NPCS);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+  saveNPCs(npcs) {
+    try { localStorage.setItem(KEY_NPCS, JSON.stringify(npcs)); } catch {}
   },
   loadMenu() {
     try {

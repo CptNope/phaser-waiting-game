@@ -307,5 +307,36 @@ function buildDefaultGuests() {
   ];
 }
 
+// Front-of-house and kitchen staff. Each role is a fixed slot tied to the
+// floor plan (a station key, a runner slot, or a singleton like host/
+// bartender) — the Guest & Staff Editor can restyle/relabel these, but can't
+// add or remove roles, since a stray cook has nowhere on the floor plan to
+// stand. `appearance` uses the same {mode:'preset'|'custom'} shape as guests
+// so every appearance-resolution helper (Game.js, GuestEditor.js) works
+// unchanged for staff too.
+function buildDefaultNPCs() {
+  return [
+    { id: 'host', kind: 'host', badge: 'HOST',
+      appearance: { mode: 'preset', charName: 'Conference_woman' } },
+    { id: 'bartender', kind: 'bartender', badge: 'BARTENDER',
+      appearance: { mode: 'preset', charName: 'Alex' } },
+    { id: 'cook_grill', kind: 'cook', stationKey: 'grill', badge: 'GRILL COOK',
+      appearance: { mode: 'preset', charName: 'Bruce' } },
+    { id: 'cook_fry', kind: 'cook', stationKey: 'fry', badge: 'FRY COOK',
+      appearance: { mode: 'preset', charName: 'Conference_man' } },
+    { id: 'cook_saute', kind: 'cook', stationKey: 'saute', badge: 'SAUTE COOK',
+      appearance: { mode: 'preset', charName: 'Dan' } },
+    { id: 'cook_salad', kind: 'cook', stationKey: 'salad', badge: 'SALAD CHEF',
+      appearance: { mode: 'preset', charName: 'Amelia' } },
+    { id: 'cook_dessert', kind: 'cook', stationKey: 'dessert', badge: 'PASTRY CHEF',
+      appearance: { mode: 'preset', charName: 'Molly' } },
+    { id: 'runner_0', kind: 'runner', slot: 0, badge: 'FOOD RUNNER',
+      appearance: { mode: 'preset', charName: 'kid_Karen' } },
+    { id: 'runner_1', kind: 'runner', slot: 1, badge: 'FOOD RUNNER',
+      appearance: { mode: 'preset', charName: 'Rob' } },
+  ];
+}
+
 export const DEFAULT_FLOOR_PLAN = buildDefaultFloorPlan();
 export const DEFAULT_GUESTS = buildDefaultGuests();
+export const DEFAULT_NPCS = buildDefaultNPCs();

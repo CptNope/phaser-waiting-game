@@ -1,29 +1,30 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { TILE, charKeys, IDLE_FRAMES, IDLE_FRAME_DOWN, SIT_FRAMES, RUN_FRAMES } from '../data/catalog.js';
+import { TILE, charKeys, IDLE_FRAMES, IDLE_FRAME_DOWN, SIT_FRAMES, RUN_FRAMES, STATION_KEYS } from '../data/catalog.js';
 
 // All character sprites are 48×96 on a 48px grid. Origin Y=0.75 puts feet at tile bottom.
 const CHAR_ORIGIN_Y = 0.75;
 import { loadAssetIndex, ensureSheetTexture } from '../data/assetIndex.js';
 import { Storage } from '../core/Storage.js';
-import { DEFAULT_FLOOR_PLAN, DEFAULT_GUESTS } from '../data/defaults.js';
+import { DEFAULT_FLOOR_PLAN, DEFAULT_GUESTS, DEFAULT_NPCS } from '../data/defaults.js';
 import { loadMenuItems } from '../data/menu.js';
 import { MobileControls } from '../core/MobileControls.js';
 import { bakeAppearanceTextures } from '../core/AppearanceCompositor.js';
 
-// Custom (generator-built) guests resolve to the same {idle, sit} shape as
-// charKeys() so every setTexture() call site below stays untouched. Boot.js
-// preloads the generator layer files for every custom guest in the current
-// roster, so bakeAppearanceTextures should never hit its "not loaded" path
-// in normal play; the catch is a defensive fallback, not the common case.
-function resolveGuestKeys(scene, def) {
+// Custom (generator-built) guests/staff resolve to the same {idle, sit} shape
+// as charKeys() so every setTexture() call site below stays untouched. Boot.js
+// preloads the generator layer files for every custom guest/NPC in the
+// current roster, so bakeAppearanceTextures should never hit its "not
+// loaded" path in normal play; the catch is a defensive fallback, not the
+// common case.
+function resolveCharacterKeys(scene, def) {
   if (def.appearance?.mode === 'custom' && def.appearance.custom) {
     try {
       return bakeAppearanceTextures(scene, def.appearance.custom);
     } catch (e) {
-      console.warn('Custom guest appearance not loaded, using fallback:', e.message);
+      console.warn('Custom appearance not loaded, using fallback:', e.message);
     }
   }
-  return charKeys(def.charName || 'Adam');
+  return charKeys(def.appearance?.charName || def.charName || 'Adam');
 }
 
 const DIRS = {
@@ -33,31 +34,11 @@ const DIRS = {
   right: { x: 1, y: 0,  anim: 'right' }
 };
 
-// Front-of-house NPC. Any name from CHARACTERS works; this one is not in the
-// default guest roster so the host is visually distinct from the customers.
-const HOST_CHARACTER = 'Conference_woman';
-
-// The bartender is a purely decorative NPC — it never moves. It plays the
-// same "instant prep" role for drinks that the (NPC-less) kitchen plays for
-// food: taking a drink order immediately makes it ready for pickup.
-const BARTENDER_CHARACTER = 'Alex';
-
-// Five stations, each a static cook NPC (same decorative/no-AI model as the
-// bartender) that "prepares" its category of food after a short delay. Only
-// 2 of the 20 named characters aren't already used by HOST/BARTENDER/the
-// default guest roster, so most cooks share a look with some guest — that's
-// cosmetic only, staff are told apart by badge and position, not unique art.
-const COOK_STATIONS = [
-  { key: 'grill',   character: 'Bruce',          badge: 'GRILL COOK' },
-  { key: 'fry',     character: 'Conference_man', badge: 'FRY COOK' },
-  { key: 'saute',   character: 'Dan',            badge: 'SAUTE COOK' },
-  { key: 'salad',   character: 'Amelia',         badge: 'SALAD CHEF' },
-  { key: 'dessert', character: 'Molly',          badge: 'PASTRY CHEF' },
-];
-// Food runners carry a finished dish from its station straight to the
-// guest's table and deliver it, and bus a dirty table when there's no food
-// waiting. The player can do either job too — whoever gets there first.
-const FOOD_RUNNER_CHARACTERS = ['kid_Karen', 'Rob'];
+// Staff (host, bartender, cooks, food runners) are data now — see
+// DEFAULT_NPCS in data/defaults.js — so they can be restyled/relabeled from
+// the Guest & Staff Editor. findNpc() falls back to the shipped default for
+// a role if it's missing from a saved/imported set, since these NPCs drive
+// core gameplay (a missing role shouldn't silently break spawning).
 
 // Max items the player's tray holds at once (drinks, dishes, dirty plates —
 // any mix). A believable tray size: the largest small table (4 seats) fits
@@ -76,6 +57,7 @@ export class GameScene extends Phaser.Scene {
   async create() {
     this.plan = Storage.loadPlan() || DEFAULT_FLOOR_PLAN;
     this.guestDefs = Storage.loadGuests() || DEFAULT_GUESTS;
+    this.npcDefs = Storage.loadNPCs() || DEFAULT_NPCS;
     this.menuItems = await loadMenuItems();
     this.menuById = new Map(this.menuItems.map(m => [m.id, m]));
     this.cols = this.plan.cols;
@@ -231,6 +213,11 @@ export class GameScene extends Phaser.Scene {
     this.worldOnly(this.waiter);
   }
 
+  /** Looks up an NPC def in the current roster, falling back to the shipped default for that role. */
+  findNpc(pred) {
+    return this.npcDefs.find(pred) || DEFAULT_NPCS.find(pred);
+  }
+
   /**
    * The host is an NPC who works the front of house on their own: they collect
    * the party at the head of the queue, walk them to a table and seat them.
@@ -245,7 +232,8 @@ export class GameScene extends Phaser.Scene {
     const near = this.tilesNear(stand, 6);
     const postTile = near.find(t => !queue.some(q => q.x === t.x && q.y === t.y))
       || near[0] || stand;
-    const keys = charKeys(HOST_CHARACTER);
+    const hostDef = this.findNpc(n => n.kind === 'host');
+    const keys = resolveCharacterKeys(this, hostDef);
     this.host = {
       post: postTile,
       state: 'idle',        // idle | fetching | escorting | returning
@@ -260,7 +248,7 @@ export class GameScene extends Phaser.Scene {
     this.worldOnly(this.host.sprite);
 
     // A small badge so the host reads as staff rather than another guest.
-    this.host.badge = this.add.text(this.host.sprite.x, this.host.sprite.y - 78, 'HOST', {
+    this.host.badge = this.add.text(this.host.sprite.x, this.host.sprite.y - 78, hostDef.badge, {
       fontFamily: 'system-ui', fontSize: '10px', fontStyle: 'bold',
       color: '#1b1b22', backgroundColor: '#ffe9a8', padding: { x: 3, y: 1 }
     }).setOrigin(0.5).setDepth(52);
@@ -276,14 +264,15 @@ export class GameScene extends Phaser.Scene {
   spawnBartender() {
     const post = this.plan.bar;
     if (!post) { this.bartender = null; return; }
-    const keys = charKeys(BARTENDER_CHARACTER);
+    const bartenderDef = this.findNpc(n => n.kind === 'bartender');
+    const keys = resolveCharacterKeys(this, bartenderDef);
     const sprite = this.add.image(
       post.x * TILE + TILE / 2, post.y * TILE + TILE / 2,
       keys.idle, IDLE_FRAME_DOWN
     ).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(11);
     this.worldOnly(sprite);
 
-    const badge = this.add.text(sprite.x, sprite.y - 78, 'BARTENDER', {
+    const badge = this.add.text(sprite.x, sprite.y - 78, bartenderDef.badge, {
       fontFamily: 'system-ui', fontSize: '10px', fontStyle: 'bold',
       color: '#1b1b22', backgroundColor: '#a8e6ff', padding: { x: 3, y: 1 }
     }).setOrigin(0.5).setDepth(52);
@@ -320,23 +309,24 @@ export class GameScene extends Phaser.Scene {
    */
   spawnCooks() {
     this.cooks = {};
-    for (const s of COOK_STATIONS) {
-      const post = this.plan.stations?.[s.key] || this.plan.kitchen;
+    for (const { key: stationKey } of STATION_KEYS) {
+      const post = this.plan.stations?.[stationKey] || this.plan.kitchen;
       if (!post) continue;
-      const keys = charKeys(s.character);
+      const cookDef = this.findNpc(n => n.kind === 'cook' && n.stationKey === stationKey);
+      const keys = resolveCharacterKeys(this, cookDef);
       const sprite = this.add.image(
         post.x * TILE + TILE / 2, post.y * TILE + TILE / 2,
         keys.idle, IDLE_FRAME_DOWN
       ).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(11);
       this.worldOnly(sprite);
 
-      const badge = this.add.text(sprite.x, sprite.y - 78, s.badge, {
+      const badge = this.add.text(sprite.x, sprite.y - 78, cookDef.badge, {
         fontFamily: 'system-ui', fontSize: '9px', fontStyle: 'bold',
         color: '#1b1b22', backgroundColor: '#ffcf9e', padding: { x: 3, y: 1 }
       }).setOrigin(0.5).setDepth(52);
       this.worldOnly(badge);
 
-      this.cooks[s.key] = { post, sprite, badge };
+      this.cooks[stationKey] = { post, sprite, badge };
     }
   }
 
@@ -346,16 +336,17 @@ export class GameScene extends Phaser.Scene {
    * updateFoodRunners() dispatches them to fetch a ready dish.
    */
   spawnFoodRunners() {
-    this.foodRunners = FOOD_RUNNER_CHARACTERS.map((character, i) => {
+    this.foodRunners = [0, 1].map((i) => {
       const post = this.plan.runnerPosts?.[i] || this.plan.kitchen || { x: 0, y: 0 };
-      const keys = charKeys(character);
+      const runnerDef = this.findNpc(n => n.kind === 'runner' && n.slot === i);
+      const keys = resolveCharacterKeys(this, runnerDef);
       const sprite = this.add.image(
         post.x * TILE + TILE / 2, post.y * TILE + TILE / 2,
         keys.idle, IDLE_FRAME_DOWN
       ).setOrigin(0.5, CHAR_ORIGIN_Y).setDepth(11);
       this.worldOnly(sprite);
 
-      const badge = this.add.text(sprite.x, sprite.y - 78, 'FOOD RUNNER', {
+      const badge = this.add.text(sprite.x, sprite.y - 78, runnerDef.badge, {
         fontFamily: 'system-ui', fontSize: '9px', fontStyle: 'bold',
         color: '#1b1b22', backgroundColor: '#c9f2a0', padding: { x: 3, y: 1 }
       }).setOrigin(0.5).setDepth(52);
@@ -783,7 +774,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const def of defs) {
-      const keys = resolveGuestKeys(this, def);
+      const keys = resolveCharacterKeys(this, def);
       const g = {
         def,
         state: 'incoming',
