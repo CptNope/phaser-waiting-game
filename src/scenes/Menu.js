@@ -1,5 +1,4 @@
 import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.esm.js';
-import { Storage } from '../core/Storage.js';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super('Menu'); }
@@ -21,13 +20,7 @@ export class MenuScene extends Phaser.Scene {
       { label: 'Play Shift',        action: () => this.scene.start('Game') },
       { label: 'Floor Plan Editor', action: () => this.scene.start('FloorPlanEditor') },
       { label: 'Guests & Staff',    action: () => this.scene.start('GuestEditor') },
-      { label: 'Menu Editor',       action: () => this.scene.start('MenuEditor') },
-      { label: 'Export Floor Plan', action: () => {
-          const p = Storage.loadPlan();
-          if (!p) return this.flash('No saved floor plan yet.');
-          Storage.downloadJSON(p, 'floor-plan.json');
-        } },
-      { label: 'Import Floor Plan', action: () => this.importPlan() }
+      { label: 'Menu Editor',       action: () => this.scene.start('MenuEditor') }
     ];
 
     const narrow = width < 900;
@@ -43,10 +36,6 @@ export class MenuScene extends Phaser.Scene {
     this.add.text(width / 2, height - 20, controlsHint, {
       fontFamily: 'system-ui', fontSize: narrow ? '13px' : '14px', color: '#6b6b7a'
     }).setOrigin(0.5);
-
-    this.flashText = this.add.text(width / 2, height - 60, '', {
-      fontFamily: 'system-ui', fontSize: '16px', color: '#ff9a9a'
-    }).setOrigin(0.5);
   }
 
   makeButton(x, y, w, h, label, onClick) {
@@ -60,20 +49,5 @@ export class MenuScene extends Phaser.Scene {
     bg.on('pointerout', () => { bg.setFillStyle(0x2b2b39); txt.setColor('#e6e6f0'); });
     bg.on('pointerdown', onClick);
     return { bg, txt };
-  }
-
-  async importPlan() {
-    try {
-      const data = await Storage.pickJSON();
-      Storage.savePlan(data);
-      this.flash('Floor plan imported & saved.');
-    } catch (e) {
-      if (e && e.message !== 'No file selected') this.flash('Import failed: ' + e.message);
-    }
-  }
-
-  flash(msg) {
-    this.flashText.setText(msg);
-    this.time.delayedCall(2500, () => this.flashText.setText(''));
   }
 }

@@ -34,6 +34,10 @@ Or any static server will do (`npx serve`, `php -S`, etc.).
   load on demand. On narrow/mobile screens the toolbar's tool and layer/size/
   station rows become horizontally scrollable strips instead of shrinking
   illegibly, and a Palette/Grid tab gives the tile grid the full screen width.
+  The grid itself renders on its own camera, so it's zoomable and pannable on
+  every screen size — mouse wheel or the +/−/Fit buttons to zoom, right-click-drag
+  or two-finger touch drag to pan, pinch to zoom on touch — independent of the
+  toolbar and palette around it.
 - **Guests & Staff Editor** — a Guests tab and a Staff tab share one
   appearance picker: 20 named preset characters, or a custom look on the
   **Custom** tab (body/eyes/outfit/hairstyle/accessory, layered from the

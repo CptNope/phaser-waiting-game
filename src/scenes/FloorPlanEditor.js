@@ -95,6 +95,14 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     // so only one is shown at a time there.
     this.panelTab = 'grid';
 
+    // Grid zoom: null means "not set yet" — setupGridCamera() defaults it to
+    // the fit-to-screen zoom on first build, then preserves the user's choice
+    // across resizes (only ever clamped up to the current fit zoom, never
+    // reset). applyResize() nulls it out again since a new grid size makes
+    // any prior pan/zoom position meaningless.
+    this._userZoom = null;
+    this._zoomMax = 4;
+
     this.cols = this.plan.cols;
     this.rows = this.plan.rows;
     this.pendingCols = this.cols;
@@ -130,7 +138,17 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     const paletteW = narrow ? width - 16 : PALETTE_W - 16;
     const gridX = narrow ? 12 : PALETTE_W + 12;
     const gridY = toolbarH + 12;
-    return { width, height, narrow, toolbarH, paletteW, gridX, gridY };
+    // Wide layout reserves room at the bottom for the help text. Unlike the
+    // old single-camera version (where the grid just drew *behind* the text
+    // at a lower depth), the grid now renders on its own camera that paints
+    // its whole viewport rectangle every frame — any overlap would fully
+    // blank the text out, not just sit visually behind it — so this margin
+    // must clear the help text's real rendered height (13 lines), not just
+    // approximate it. Narrow hides the help text entirely, so it only needs
+    // a small margin.
+    const gridViewW = Math.max(100, width - gridX - 12);
+    const gridViewH = Math.max(100, height - gridY - (narrow ? 12 : 240));
+    return { width, height, narrow, toolbarH, paletteW, gridX, gridY, gridViewW, gridViewH };
   }
 
   /** Destroys every display object + input listener from the previous build so a full rebuild never leaks or duplicates. */
@@ -148,10 +166,23 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     }
     if (this._paletteMaskShape) { this._paletteMaskShape.destroy(); this._paletteMaskShape = null; }
     if (this._pointerUpCb) { this.input.off('pointerup', this._pointerUpCb); this._pointerUpCb = null; }
+    if (this._gridWheel) { this.input.off('wheel', this._gridWheel); this._gridWheel = null; }
+    if (this._gridPointerDown) { this.input.off('pointerdown', this._gridPointerDown); this._gridPointerDown = null; }
+    if (this._gridPointerMove) { this.input.off('pointermove', this._gridPointerMove); this._gridPointerMove = null; }
+    if (this._gridPointerUp) {
+      this.input.off('pointerup', this._gridPointerUp);
+      this.input.off('pointerupoutside', this._gridPointerUp);
+      this.input.off('pointercancel', this._gridPointerUp);
+      this._gridPointerUp = null;
+    }
+    if (this.gridCam) { this.cameras.remove(this.gridCam); this.gridCam = null; }
     this._paletteDrag = null;
+    this._panState = null;
+    this._pinchState = null;
     this.palette = null;
     this.gridContainer = null;
     this.paletteInfo = null;
+    this.zoomControlObjects = null;
     this.children.removeAll(true);
   }
 
@@ -165,7 +196,22 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     if (this.layout.narrow) this.buildPanelTabs(this.layout);
     this.buildPalette();
     this.buildGrid();
+    this.buildGridZoomControls(this.layout);
     this.buildHelp(this.layout);
+    this.syncCameraOwnership();
+  }
+
+  /**
+   * The grid renders on its own camera (this.gridCam) so it can zoom/pan
+   * independently of the toolbar/palette; each camera must ignore what the
+   * other one owns, or both draw the same objects at the wrong transform.
+   * Anything created *after* build() runs (sheet-switch rebuilding the
+   * palette, the save/import flash message) needs this re-run too, since a
+   * fresh top-level object starts out visible on every camera by default.
+   */
+  syncCameraOwnership() {
+    this.gridCam.ignore(this.children.list.filter(o => o !== this.gridContainer));
+    this.cameras.main.ignore(this.gridContainer);
   }
 
   // ---------------------------------------------------------------- asset index
@@ -206,6 +252,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.selectedFrame = nonEmptyFrames(this.sheetDetail)[0] ?? 0;
     this.palette?.destroy();
     this.buildPalette();
+    if (this.gridCam) this.syncCameraOwnership(); // new palette container defaults to visible on every camera
     this.refreshSheetLabel();
     this.refreshMarkerPreviews();
     this.setStatus(describeFrame(this.sheetDetail, this.selectedFrame));
@@ -489,7 +536,10 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.panelTab = name;
     this.refreshPanelTabButtons();
     this.palette?.setVisible(!this.layout.narrow || this.panelTab === 'palette');
-    this.gridContainer?.setVisible(!this.layout.narrow || this.panelTab === 'grid');
+    const gridActive = !this.layout.narrow || this.panelTab === 'grid';
+    this.gridContainer?.setVisible(gridActive);
+    this.gridCam?.setVisible(gridActive);
+    this.refreshZoomControlsVisibility();
   }
 
   setStatus(msg) { this.statusText?.setText(msg || ''); }
@@ -624,7 +674,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.cols = nc;
     this.rows = nr;
     this.gridContainer.destroy();
+    this._userZoom = null; // new dimensions make any prior pan/zoom meaningless — recompute fit
     this.buildGrid();
+    this.syncCameraOwnership(); // buildGrid() made a fresh gridCam — redo the ownership split
     this.refreshSizeLabel();
     this.setStatus(`resized to ${nc}x${nr}`);
   }
@@ -752,7 +804,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
   // ---------------------------------------------------------------------- grid
 
   buildGrid() {
-    this.gridContainer = this.add.container(this.gridX, this.gridY).setDepth(10);
+    // World space is just the grid's own pixel size (0,0)-(cols*TILE, rows*TILE);
+    // this.gridCam (set up below) handles zoom/pan, not the container itself.
+    this.gridContainer = this.add.container(0, 0).setDepth(10);
     this.cellGround = [];
     this.cellObject = [];
     this.cellMarker = [];
@@ -765,12 +819,13 @@ export class FloorPlanEditorScene extends Phaser.Scene {
           hitArea: new Phaser.Geom.Rectangle(0, 0, TILE, TILE),
           useHandCursor: true
         });
-        cell.on('pointerdown', () => {
+        cell.on('pointerdown', (p) => {
+          if (p.rightButtonDown() || this.isMultiTouch()) return; // right-drag pans, two fingers pinch/pan
           if (this.tool === 'copy') this.startSelection(x, y);
           else this.applyTool(x, y);
         });
         cell.on('pointerover', (p) => {
-          if (!p.isDown) return;
+          if (!p.isDown || p.rightButtonDown() || this.isMultiTouch()) return;
           if (this.tool === 'copy') this.updateSelection(x, y);
           else this.applyTool(x, y);
         });
@@ -792,9 +847,12 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     for (let y = 0; y <= this.rows; y++) gfx.lineBetween(0, y * TILE, this.cols * TILE, y * TILE);
     this.gridContainer.add(gfx);
 
-    this.fitGrid();
+    this.setupGridCamera();
+    this.setupGridZoomPan();
     this.renderAll();
-    this.gridContainer.setVisible(!this.layout.narrow || this.panelTab === 'grid');
+    const gridActive = !this.layout.narrow || this.panelTab === 'grid';
+    this.gridContainer.setVisible(gridActive);
+    this.gridCam.setVisible(gridActive);
 
     // Finish copy selection on pointer up (anywhere on the grid)
     this.input.off('pointerup', this._pointerUpCb);
@@ -804,13 +862,170 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.input.on('pointerup', this._pointerUpCb);
   }
 
-  /** Scales the grid so any size stays fully visible in the available area. */
-  fitGrid() {
-    const availW = this.scale.width - this.gridX - 12;
-    const availH = this.scale.height - this.gridY - 84;
-    const scale = Math.min(1, availW / (this.cols * TILE), availH / (this.rows * TILE));
-    this.gridScale = scale;
-    this.gridContainer.setScale(scale);
+  isMultiTouch() { return this.input.pointer1.isDown && this.input.pointer2.isDown; }
+
+  /** The most the grid can be zoomed out while still fitting the whole plan in the viewport. */
+  computeFitZoom() {
+    return Math.max(0.05, Math.min(1, this.gridViewW / (this.cols * TILE), this.gridViewH / (this.rows * TILE)));
+  }
+
+  /**
+   * Creates the camera the grid renders through, independent of the
+   * toolbar/palette's default camera so it can zoom/pan on its own.
+   * `_userZoom` is preserved across resizes (clamped up to the new fit zoom,
+   * never reset) but nulled by applyResize() since a new grid size makes any
+   * prior pan/zoom position meaningless.
+   */
+  setupGridCamera() {
+    this.gridViewW = this.layout.gridViewW;
+    this.gridViewH = this.layout.gridViewH;
+    if (this.gridCam) this.cameras.remove(this.gridCam);
+    this.gridCam = this.cameras.add(this.gridX, this.gridY, this.gridViewW, this.gridViewH);
+    this.gridCam.setBackgroundColor('#1b1b22').setRoundPixels(true);
+
+    this._fitZoom = this.computeFitZoom();
+    this._userZoom = Math.max(this._userZoom ?? this._fitZoom, this._fitZoom);
+    this.gridCam.setZoom(this._userZoom);
+    this.centerGridView();
+  }
+
+  /** Centers the grid in the viewport — used for the initial view and the Fit button. */
+  centerGridView() {
+    const zoom = this.gridCam.zoom;
+    const viewW = this.gridViewW / zoom, viewH = this.gridViewH / zoom;
+    this.gridCam.setScroll((this.cols * TILE - viewW) / 2, (this.rows * TILE - viewH) / 2);
+  }
+
+  /** Keeps the current scroll valid after a zoom/pan — centers whichever axis has slack instead of pinning to (0,0). */
+  clampGridScroll() {
+    const zoom = this.gridCam.zoom;
+    const viewW = this.gridViewW / zoom, viewH = this.gridViewH / zoom;
+    const worldW = this.cols * TILE, worldH = this.rows * TILE;
+    const clampAxis = (view, world, current) => {
+      if (world <= view) return (world - view) / 2;
+      return Phaser.Math.Clamp(current, 0, world - view);
+    };
+    this.gridCam.scrollX = clampAxis(viewW, worldW, this.gridCam.scrollX);
+    this.gridCam.scrollY = clampAxis(viewH, worldH, this.gridCam.scrollY);
+  }
+
+  /** Zoom anchored at a screen point (so whatever's under the cursor/pinch-midpoint stays put), then re-clamped. */
+  applyGridZoom(newZoom, anchorScreenX, anchorScreenY) {
+    const clamped = Phaser.Math.Clamp(newZoom, this._fitZoom, this._zoomMax);
+    const cam = this.gridCam;
+    const before = cam.getWorldPoint(anchorScreenX, anchorScreenY);
+    cam.setZoom(clamped);
+    const after = cam.getWorldPoint(anchorScreenX, anchorScreenY);
+    cam.scrollX += before.x - after.x;
+    cam.scrollY += before.y - after.y;
+    this._userZoom = clamped;
+    this.clampGridScroll();
+    this.refreshZoomLabel();
+  }
+
+  zoomGridBy(delta) {
+    this.applyGridZoom(this._userZoom + delta, this.gridX + this.gridViewW / 2, this.gridY + this.gridViewH / 2);
+  }
+
+  resetGridZoom() {
+    this._userZoom = this._fitZoom;
+    this.gridCam.setZoom(this._fitZoom);
+    this.centerGridView();
+    this.refreshZoomLabel();
+  }
+
+  refreshZoomLabel() { this.zoomLabel?.setText(Math.round(this._userZoom * 100) + '%'); }
+
+  buildGridZoomControls(layout) {
+    const bw = 30, bh = 26, gap = 4;
+    const x = layout.width - 8 - bw;
+    const y = this.gridY + 8;
+    this.zoomInBtn = this.makeBtn(x, y, bw, bh, '+', () => this.zoomGridBy(0.25));
+    this.zoomOutBtn = this.makeBtn(x, y + bh + gap, bw, bh, '−', () => this.zoomGridBy(-0.25));
+    this.zoomFitBtn = this.makeBtn(x, y + (bh + gap) * 2, bw, bh, '⤢', () => this.resetGridZoom(), 13);
+    this.zoomLabel = this.add.text(x + bw / 2, y + (bh + gap) * 3 + 9, '', {
+      fontFamily: 'system-ui', fontSize: '10px', color: '#8fb6ff'
+    }).setOrigin(0.5).setDepth(101);
+    this.zoomControlObjects = [
+      this.zoomInBtn.bg, this.zoomInBtn.txt, this.zoomOutBtn.bg, this.zoomOutBtn.txt,
+      this.zoomFitBtn.bg, this.zoomFitBtn.txt, this.zoomLabel
+    ];
+    this.refreshZoomLabel();
+    this.refreshZoomControlsVisibility();
+  }
+
+  refreshZoomControlsVisibility() {
+    const gridActive = !this.layout.narrow || this.panelTab === 'grid';
+    this.zoomControlObjects?.forEach(o => o.setVisible(gridActive));
+  }
+
+  /**
+   * Wheel-zoom (desktop), pinch-zoom + two-finger pan combined (touch, like
+   * a map app — zoom anchors on the pinch midpoint, pan follows how much
+   * that midpoint moves), and right-click-drag pan (desktop, since
+   * left-drag already means "paint"). All gated to the grid's own viewport
+   * rectangle and to whichever panel is actually active on narrow screens.
+   */
+  setupGridZoomPan() {
+    const inGrid = (p) => {
+      if (this.layout.narrow && this.panelTab !== 'grid') return false;
+      return p.x >= this.gridX && p.x <= this.gridX + this.gridViewW &&
+        p.y >= this.gridY && p.y <= this.gridY + this.gridViewH;
+    };
+
+    this._gridWheel = (pointer) => {
+      if (!inGrid(pointer)) return;
+      const step = pointer.event.deltaY > 0 ? -0.15 : 0.15;
+      this.applyGridZoom(this._userZoom + step, pointer.x, pointer.y);
+    };
+    this.input.on('wheel', this._gridWheel);
+
+    this._panState = null;
+    this._pinchState = null;
+    this._gridPointerDown = (pointer) => {
+      if (!inGrid(pointer)) return;
+      if (pointer.rightButtonDown()) {
+        this._panState = { startScrollX: this.gridCam.scrollX, startScrollY: this.gridCam.scrollY, startX: pointer.x, startY: pointer.y };
+        return;
+      }
+      const p1 = this.input.pointer1, p2 = this.input.pointer2;
+      if (p1.isDown && p2.isDown) {
+        this._pinchState = {
+          dist: Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y),
+          midX: (p1.x + p2.x) / 2, midY: (p1.y + p2.y) / 2
+        };
+      }
+    };
+    this._gridPointerMove = (pointer) => {
+      if (this._panState && pointer.rightButtonDown()) {
+        const zoom = this.gridCam.zoom;
+        this.gridCam.scrollX = this._panState.startScrollX - (pointer.x - this._panState.startX) / zoom;
+        this.gridCam.scrollY = this._panState.startScrollY - (pointer.y - this._panState.startY) / zoom;
+        this.clampGridScroll();
+        return;
+      }
+      const p1 = this.input.pointer1, p2 = this.input.pointer2;
+      if (p1.isDown && p2.isDown && this._pinchState) {
+        const dist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+        const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
+        const distDelta = dist - this._pinchState.dist;
+        if (Math.abs(distDelta) > 2) this.applyGridZoom(this._userZoom + distDelta * 0.004, midX, midY);
+        const zoom = this.gridCam.zoom;
+        this.gridCam.scrollX -= (midX - this._pinchState.midX) / zoom;
+        this.gridCam.scrollY -= (midY - this._pinchState.midY) / zoom;
+        this.clampGridScroll();
+        this._pinchState = { dist, midX, midY };
+      }
+    };
+    this._gridPointerUp = () => {
+      this._panState = null;
+      if (!this.isMultiTouch()) this._pinchState = null;
+    };
+    this.input.on('pointerdown', this._gridPointerDown);
+    this.input.on('pointermove', this._gridPointerMove);
+    this.input.on('pointerup', this._gridPointerUp);
+    this.input.on('pointerupoutside', this._gridPointerUp);
+    this.input.on('pointercancel', this._gridPointerUp);
   }
 
   renderAll() {
@@ -1148,8 +1363,9 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       'Right-click a marker preview icon to assign a tile to that marker type.',
       'Sheet ◀ ▶ browses all indexed sheets. Layers hide artwork. Size +/- resizes.'
     ];
-    // Sits in the band fitGrid() reserves at the bottom; depth keeps it above
-    // the grid container, which would otherwise cover it on tall layouts.
+    // Sits in the band computeLayout() reserves at the bottom of the grid
+    // camera's viewport (see the gridViewH comment there) so the grid
+    // camera's own per-frame background paint can never cover it.
     this.add.text(PALETTE_W + 16, layout.height - 6, lines.join('\n'), {
       fontFamily: 'system-ui', fontSize: '12px', color: '#7a7a8a', lineSpacing: 2
     }).setOrigin(0, 1).setDepth(60);
@@ -1177,6 +1393,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.flashText = this.add.text(this.scale.width / 2, this.scale.height - 16, msg, {
       fontFamily: 'system-ui', fontSize: '14px', color: '#9aff9a'
     }).setOrigin(0.5).setDepth(200);
+    this.gridCam?.ignore(this.flashText); // otherwise it also renders inside the grid's zoom/pan transform
     this.time.delayedCall(2000, () => this.flashText?.setText(''));
   }
 }

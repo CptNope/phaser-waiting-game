@@ -29,8 +29,9 @@ src/
   main.js               Phaser game config + scene registration + SW registration
   scenes/
     Boot.js             Asset loading with progress bar, creates __pixel texture, warms default-menu cache
-    Menu.js             Main menu: Play / Floor Plan Editor / Guests & Staff / Menu Editor / floor-plan Import-Export
-    FloorPlanEditor.js  Tile-based floor plan editor: scrollable toolbar strips + Palette/Grid tabs on narrow screens
+    Menu.js             Main menu: Play / Floor Plan Editor / Guests & Staff / Menu Editor (each editor owns its own Import/Export now)
+    FloorPlanEditor.js  Tile-based floor plan editor: scrollable toolbar strips + Palette/Grid tabs on narrow
+                        screens; the grid renders on its own zoomable/pannable camera (own Import/Export too)
     GuestEditor.js      Guests & Staff editor: Guests/Staff tabs, Presets/Custom appearance tabs, scrollable
                         lists, own Export/Import, responsive narrow-screen layout (resize-reactive)
     MenuEditor.js       Menu item editor: sprite picker (any sheet), category/station/tint/allergens,
@@ -565,8 +566,42 @@ rebuild-on-resize" below.
 - **Size -/+ then Apply** — resizes the grid. Overlapping cells keep their
   content, growing pads with empties, shrinking crops. Markers are clamped into
   bounds and out-of-range tables are dropped. Apply turns amber when pending.
-- **Auto-fit** — `fitGrid()` scales the grid container so any size stays visible;
-  clicks stay accurate because cells are children of the scaled container.
+- **Zoom/pan (its own camera)** — the grid renders through `this.gridCam`, a
+  dedicated `Camera` bound to the grid's viewport rectangle (`gridX, gridY,
+  gridViewW, gridViewH` from `computeLayout()`), separate from `cameras.main`
+  which renders the toolbar/palette/help text. `gridContainer` sits at world
+  origin `(0,0)` — zoom/pan is entirely the camera's job now, not the
+  container's (`setScale()`/manual offset, the old approach, is gone).
+  - `computeFitZoom()` — the min zoom (whole plan visible); `_zoomMax = 4`.
+  - `applyGridZoom(zoom, screenX, screenY)` — anchors so whatever's under
+    that screen point stays put: reads the point's world coords via
+    `cam.getWorldPoint()` before and after `setZoom()`, then shifts scroll by
+    the difference. Note Phaser always zooms around the viewport's own
+    *center* internally — the center's world point never moves on its own,
+    so a center-anchored zoom (the +/− buttons) is a `setZoom()` with no
+    scroll adjustment needed; `getWorldPoint()` is what makes off-center
+    anchors (wheel at the cursor, pinch at the midpoint) work the same way.
+  - `clampGridScroll()` — clamps scroll into `[0, world-view]` per axis, or
+    centers that axis if the world is smaller than the view (so a small
+    plan or a very zoomed-out view doesn't pin to the top-left with dead
+    space on one side only). Called after every zoom/pan.
+  - Inputs: mouse wheel (anchored at the cursor), pinch-to-zoom + two-finger
+    pan combined like a map app (anchored at the pinch midpoint, panned by
+    the midpoint's own movement — same distance-between-pointers math as
+    the Game scene's pinch-zoom, see "Camera" under Controls below, just
+    also repositioning scroll instead of only rezooming), and right-click-drag
+    pan on desktop (left-drag already means "paint"). Cell handlers skip
+    painting when the right button is down or a second pointer is active
+    (`isMultiTouch()`), so a pinch/pan gesture never also paints a tile.
+  - `+`/`−`/**⤢ (Fit)** buttons, pinned to the toolbar's default camera at
+    the grid viewport's top-right corner, plus a live zoom-% label.
+  - Any object created *outside* the normal `build()` sequence — the
+    sheet-switch palette rebuild in `selectSheet()`, the save/import flash
+    message — must call `syncCameraOwnership()` (or be individually
+    `.ignore()`'d) or it renders on *both* cameras: once correctly on
+    `cameras.main`, and again warped through the grid's zoom/pan transform.
+    Hit this exact bug once already; if a new top-level object mysteriously
+    shows up twice or in the wrong place, this is why.
 
 ### Tools
 
@@ -626,7 +661,11 @@ call a scene-specific `build()` that: tears down every display object
 `this.make.graphics()` mask shapes are **not** part of the display list, so
 `removeAll()` won't catch them — each scene's `teardown()` explicitly
 `input.off()`s and `.destroy()`s them, guarded so a rebuild never leaks or
-double-registers), then rebuilds from a freshly computed layout. Below a
+double-registers). Cameras are a third thing `removeAll()` doesn't touch —
+the Floor Plan Editor's `gridCam` (see "Zoom/pan (its own camera)" above) is
+explicitly `this.cameras.remove()`'d in `teardown()` and recreated in
+`buildGrid()` on every rebuild, same reasoning. Then it all rebuilds from a
+freshly computed layout. Below a
 width breakpoint each editor drops from its normal side-by-side panels to a
 single full-width column with its own small tab switcher (Character/List/
 Form in the Guests & Staff Editor and Menu Editor; Palette/Grid in the Floor
