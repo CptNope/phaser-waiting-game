@@ -3,6 +3,7 @@ const KEY_PLAN = 'waiting-game.floorplan';
 const KEY_GUESTS = 'waiting-game.guests';
 const KEY_MENU = 'waiting-game.menu';
 const KEY_NPCS = 'waiting-game.npcs';
+const KEY_COMPONENTS = 'waiting-game.components';
 
 export const Storage = {
   loadPlan() {
@@ -31,6 +32,15 @@ export const Storage = {
   },
   saveNPCs(npcs) {
     try { localStorage.setItem(KEY_NPCS, JSON.stringify(npcs)); } catch {}
+  },
+  loadComponents() {
+    try {
+      const raw = localStorage.getItem(KEY_COMPONENTS);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+  saveComponents(data) {
+    try { localStorage.setItem(KEY_COMPONENTS, JSON.stringify(data)); } catch {}
   },
   loadMenu() {
     try {
@@ -67,6 +77,24 @@ export const Storage = {
         };
         reader.onerror = () => reject(reader.error);
         reader.readAsText(file);
+      };
+      input.click();
+    });
+  },
+
+  // Returns a Promise<dataURL string> from a user-picked image file.
+  pickImage() {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = () => {
+        const file = input.files && input.files[0];
+        if (!file) return reject(new Error('No file selected'));
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
       };
       input.click();
     });

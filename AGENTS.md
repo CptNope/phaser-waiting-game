@@ -29,9 +29,13 @@ src/
   main.js               Phaser game config + scene registration + SW registration
   scenes/
     Boot.js             Asset loading with progress bar, creates __pixel texture, warms default-menu cache
-    Menu.js             Main menu: Play / Floor Plan Editor / Guests & Staff / Menu Editor (each editor owns its own Import/Export now)
+    Menu.js             Main menu: Play / Floor Plan Editor / Components / Guests & Staff / Menu Editor (each editor owns its own Import/Export now)
     FloorPlanEditor.js  Tile-based floor plan editor: scrollable toolbar strips + Palette/Grid tabs on narrow
-                        screens; the grid renders on its own zoomable/pannable camera (own Import/Export too)
+                        screens; the grid renders on its own zoomable/pannable camera (own Import/Export too);
+                        Component tool paints a Components-catalog sprite + its collision default in one click
+    ComponentEditor.js  Components catalog editor: named sprite+attribute presets (collision, tint, category)
+                        for the Floor Plan Editor's Component tool; Sheets/Custom sprite picker sub-tabs, the
+                        Custom tab uploads + reuses your own images, own Export/Import, responsive layout
     GuestEditor.js      Guests & Staff editor: Guests/Staff tabs, Presets/Custom appearance tabs, scrollable
                         lists, own Export/Import, responsive narrow-screen layout (resize-reactive)
     MenuEditor.js       Menu item editor: sprite picker (any sheet), category/station/tint/allergens,
@@ -39,15 +43,17 @@ src/
     Game.js             Core gameplay: seat guests, take orders, deliver food, score
   data/
     catalog.js          Spritesheet definitions, tile size, ALLERGENS, STATION_KEYS
-    defaults.js         Default floor plan + guest roster + staff roster (playable without editing)
+    defaults.js         Default floor plan + guest roster + staff roster + component catalog (playable without editing)
     assetIndex.js       Loads the generated asset index; on-demand sheet/detail fetch
     characterGenerator.js  Layered character-generator manifest + frame geometry (see below)
     menu.js             Loads game-assets/default-menu.json; Storage.loadMenu() takes priority
   core/
-    Storage.js          localStorage + JSON export/import helpers (plan/guests/npcs/menu)
+    Storage.js          localStorage + JSON export/import helpers (plan/guests/npcs/menu/components), pickImage()
     Palette.js          Frame picker; `only` option renders just non-empty frames
     MobileControls.js   Touch D-pad + action + menu buttons; auto-shows on touch/narrow screens
     AppearanceCompositor.js  Bakes layered guest appearances into charKeys()-shaped textures
+    ComponentSprites.js Registers a Components catalog's uploaded images as Phaser textures (addBase64);
+                        shared by ComponentEditor.js, FloorPlanEditor.js, and Game.js
 tools/
   index_assets.py       Generates the asset index + docs (run from repo root)
 docs/
@@ -545,6 +551,88 @@ serving, or any other gameplay logic yet.
   `spawnCooks()`/`spawnFoodRunners()` fall back to `plan.kitchen`'s position
   for, so nothing crashes — it just visually clusters until placed.
 
+## Components (named sprite + attribute presets, with custom image uploads)
+
+Every tile-type used to be a raw `{sheet, frame}` reference the Floor Plan
+Editor's Ground/Object tools painted directly, with collision toggled
+separately via the Solid tool — no reusable "this is a Stove, it's solid"
+concept. `ComponentEditor.js` (menu label **Components**) fixes that, and
+adds something new: sprites don't have to come from the packaged sheets at
+all — you can upload your own image.
+
+- **Component** shape: `{ id, label, category, solid, tint, custom,
+  sheet?, frame?, customId? }`. Pack-sourced sprites use `sheet`/`frame`
+  (`custom: false`) — identical shape to a menu item's sprite reference.
+  Custom-image sprites use `customId` (`custom: true`) instead, pointing
+  into a separate small library rather than embedding the image inline on
+  every component that uses it.
+- **CustomSprite** shape: `{ id, name, dataURL }` — the uploaded image as a
+  base64 data URI. Small enough (single 48×48-ish tile PNGs) that storing
+  it inline in localStorage/export JSON is fine; this is the same
+  "self-contained, no separate asset files" tradeoff Export/Import already
+  makes everywhere else. There's no delete-custom-sprite UI yet — the
+  library is append-only, so a component can never end up pointing at a
+  `customId` that's been removed out from under it.
+- `DEFAULT_COMPONENTS` (`data/defaults.js`) is seeded from the exact
+  sheet/frame/`solid` choices `buildDefaultFloorPlan()`'s local `T` table
+  already uses (floor/wall/counter/stove/fridge/table/plant/etc.) —
+  independent of `T` itself, so editing/importing components can never
+  change what the *default* floor plan renders.
+- `Storage.loadComponents()`/`saveComponents()` store one object —
+  `{ customSprites, components }` — under `waiting-game.components`, a
+  fifth `loadX`/`saveX` pair alongside plan/guests/npcs/menu.
+  `Storage.pickImage()` is `pickJSON()`'s sibling: same hidden-`<input
+  type=file>` trick, `accept="image/*"`, resolves via
+  `FileReader.readAsDataURL` instead of `readAsText`+`JSON.parse`.
+- `core/ComponentSprites.js` bridges a CustomSprite's `dataURL` into an
+  actual Phaser texture, shared by `ComponentEditor.js`, `FloorPlanEditor.js`,
+  and `Game.js` so none of them duplicate the `addBase64` dance:
+  - `registerCustomSprite(scene, customSprite)` — `scene.textures.addBase64(key,
+    dataURL)` **returns before the browser finishes decoding the image** —
+    confirmed empirically (no prior usage in this repo to go on): the
+    texture manager's `'addtexture'` event fires once it's actually
+    ready, so this wraps the call in a Promise that resolves on that event
+    rather than the next line after `addBase64()`. A module-level `pending`
+    map dedupes concurrent registration attempts for the same key across
+    scenes — Phaser's `TextureManager` is shared game-wide, so a texture
+    registered from one scene already `exists()` in every other.
+  - `componentTextureRef(component)` resolves either sprite source to
+    `{key, frame}`. Custom sprites get `frame: undefined` deliberately —
+    an `addBase64` texture has one unnamed default frame, and passing an
+    explicit numeric index that might not exist would throw where omitting
+    it (`this.add.image(x,y,key)` with no frame arg, same convention used
+    everywhere else in this codebase) just works. `JSON.stringify` drops
+    `undefined` properties entirely, so a custom tile round-trips through
+    save/export as `{s: "custom_<id>"}` with no `f` key at all — loading it
+    back and calling `setTexture(s, f)` with `f === undefined` behaves
+    identically.
+  - `customTexKey`/`isCustomTexKey`/`customIdFromTexKey` — the `custom_<id>`
+    texture-key convention both `FloorPlanEditor.js` and `Game.js` scan for.
+- **Floor Plan Editor wiring**: `create()` loads `this.componentData =
+  Storage.loadComponents()`, falling back to `DEFAULT_COMPONENTS` with an
+  empty custom-sprite library, and fires `registerCustomSprites()` (not
+  awaited — textures
+  load progressively in the background, same tolerance the editor already
+  has for slow sheets; a picker swatch or painted tile for a not-yet-loaded
+  custom sprite just falls back to no icon / stays undrawn until it
+  resolves). `applyTool()`'s `'component'` case writes
+  `plan.objects[i] = {s: ref.key, f: ref.frame}` and
+  `plan.solids[i] = comp.solid` — no changes needed to `renderCell()`
+  itself, since it already just checks `textures.exists(cell.s)` before
+  drawing.
+- **Gameplay wiring**: `Game.js`'s `ensureCustomComponentSprites()` (called
+  alongside `ensurePlanSheets()`/`ensureMenuSheets()` in `create()`) scans
+  `plan.ground`/`plan.objects` for `custom_<id>` keys not yet loaded, looks
+  each one up in `Storage.loadComponents()?.customSprites`, and registers
+  it — same shape and same tolerance as `ensurePlanSheets()`: a key with no
+  matching saved custom sprite is skipped, not fatal, and
+  `renderFloor()`'s existing `textures.exists()` guard just leaves that
+  tile undrawn. This is the piece that specifically needs testing with a
+  genuinely fresh page load (not just a scene switch) — Phaser's
+  `TextureManager` is shared game-wide, so an already-registered texture
+  from a previous scene visit will mask a bug in this path if you don't
+  clear it first.
+
 ## Floor Plan Editor
 
 Wide screens: toolbar row 1 is sheet selector + paint tools + Menu/Import/
@@ -638,8 +726,15 @@ rebuild-on-resize" below.
     Kitchen/Bar.
   - **Runner** = a food-runner idle post (`plan.runnerPosts`, an array like
     Bench — click again on the same tile to remove it).
+  - **Component** — paints a Components-catalog entry's sprite AND applies
+    its `solid` default in one click, instead of Ground/Object + a separate
+    Solid toggle. Row 2's **Cmpnt: `<label>`** button opens a modal grid to
+    choose which (row 2's buttons are too short — 22-26px — to show a
+    sprite icon, so this is a full-screen picker like the appearance-slot
+    modal in GuestEditor, not an inline swatch row like Table/Station use).
+    See "Components" below for where the catalog itself comes from.
 
-The 17-button tool row and the Layers/Size/Table/Station row are each a
+The 18-button tool row and the Layers/Size/Table/Station/Component row are each a
 horizontally-scrollable strip (`buildHScroll()`) — fixed, comfortably
 tappable button sizes rather than shrinking illegibly to fit; overflow
 scrolls via wheel (vertical wheel motion scrolls the strip horizontally too,
@@ -651,9 +746,9 @@ this was built; if a new strip mysteriously doesn't render, check this first.
 
 If the index fails to load, the editor falls back to the sheets Boot preloaded.
 
-### Responsive rebuild-on-resize (Floor Plan Editor, Guests & Staff Editor, Menu Editor)
+### Responsive rebuild-on-resize (Floor Plan Editor, Components, Guests & Staff Editor, Menu Editor)
 
-All three editor scenes listen for `this.scale.on('resize', ...)`, debounce
+All four editor scenes listen for `this.scale.on('resize', ...)`, debounce
 ~120-150ms (`this.time.delayedCall`, cancelling any pending one), and then
 call a scene-specific `build()` that: tears down every display object
 (`this.children.removeAll(true)`) and manually-tracked input listener/mask
@@ -668,9 +763,10 @@ explicitly `this.cameras.remove()`'d in `teardown()` and recreated in
 freshly computed layout. Below a
 width breakpoint each editor drops from its normal side-by-side panels to a
 single full-width column with its own small tab switcher (Character/List/
-Form in the Guests & Staff Editor and Menu Editor; Palette/Grid in the Floor
-Plan Editor) — only one panel visible at a time, toggled without a full
-rebuild since that's a frequent, latency-sensitive interaction.
+Form in the Guests & Staff Editor; Sprite/List/Form in Menu Editor and
+Components; Palette/Grid in the Floor Plan Editor) — only one panel visible
+at a time, toggled without a full rebuild since that's a frequent,
+latency-sensitive interaction.
 
 Frequent in-panel interactions (typing in a form field, picking an
 appearance layer, clicking a list row) deliberately do **not** go through

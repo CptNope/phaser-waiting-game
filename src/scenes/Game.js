@@ -9,6 +9,7 @@ import { DEFAULT_FLOOR_PLAN, DEFAULT_GUESTS, DEFAULT_NPCS } from '../data/defaul
 import { loadMenuItems } from '../data/menu.js';
 import { MobileControls } from '../core/MobileControls.js';
 import { bakeAppearanceTextures } from '../core/AppearanceCompositor.js';
+import { isCustomTexKey, customIdFromTexKey, registerCustomSprite } from '../core/ComponentSprites.js';
 
 // Custom (generator-built) guests/staff resolve to the same {idle, sit} shape
 // as charKeys() so every setTexture() call site below stays untouched. Boot.js
@@ -88,6 +89,10 @@ export class GameScene extends Phaser.Scene {
     // sheet, not just 'kitchen'. Default items are all preloaded already,
     // so this only does real work for custom items on other sheets.
     this.ensureMenuSheets();
+    // A tile painted with the Components editor's Component tool can point
+    // at a user-uploaded image instead of a pack sheet — those need their
+    // own registration step since they don't exist in the asset index at all.
+    this.ensureCustomComponentSprites();
 
     // Game state — initialized BEFORE setupHUD() since updateHUD() reads these.
     this.guests = [];
@@ -150,6 +155,36 @@ export class GameScene extends Phaser.Scene {
     for (const key of needed) {
       const sheet = index.sheets.find(s => s.key === key);
       if (sheet) loads.push(ensureSheetTexture(this, sheet).catch(() => null));
+    }
+    if (!loads.length) return;
+    await Promise.all(loads);
+    if (this.scene.isActive()) this.renderFloor();
+  }
+
+  /**
+   * Loads any user-uploaded component sprite the floor plan references
+   * (custom_<id> texture keys, painted via the Components editor's
+   * Component tool) that isn't already registered. Same tolerance as
+   * ensurePlanSheets(): a key with no matching saved custom sprite (deleted,
+   * or the components catalog was never saved) is skipped, not fatal —
+   * renderFloor()'s existing textures.exists() guard just leaves that tile
+   * undrawn.
+   */
+  async ensureCustomComponentSprites() {
+    const needed = new Set();
+    for (const list of [this.plan.ground, this.plan.objects]) {
+      for (const cell of list) {
+        if (cell?.s && isCustomTexKey(cell.s) && !this.textures.exists(cell.s)) needed.add(cell.s);
+      }
+    }
+    if (!needed.size) return;
+
+    const saved = Storage.loadComponents();
+    const customSprites = saved?.customSprites || [];
+    const loads = [];
+    for (const key of needed) {
+      const cs = customSprites.find(c => c.id === customIdFromTexKey(key));
+      if (cs) loads.push(registerCustomSprite(this, cs).catch(() => null));
     }
     if (!loads.length) return;
     await Promise.all(loads);

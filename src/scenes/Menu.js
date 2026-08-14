@@ -19,6 +19,7 @@ export class MenuScene extends Phaser.Scene {
     const buttons = [
       { label: 'Play Shift',        action: () => this.scene.start('Game') },
       { label: 'Floor Plan Editor', action: () => this.scene.start('FloorPlanEditor') },
+      { label: 'Components',        action: () => this.scene.start('ComponentEditor') },
       { label: 'Guests & Staff',    action: () => this.scene.start('GuestEditor') },
       { label: 'Menu Editor',       action: () => this.scene.start('MenuEditor') }
     ];

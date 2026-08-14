@@ -337,6 +337,35 @@ function buildDefaultNPCs() {
   ];
 }
 
+// Named, reusable tile/prop building blocks for the Floor Plan Editor's
+// Component tool: a sprite + a collision default instead of hand-picking a
+// sheet/frame and re-toggling Solid every time. Seeded from the exact
+// sheet/frame choices `T` above already uses (independent of it — this list
+// doesn't feed buildDefaultFloorPlan(), so editing/importing components can
+// never change what the default floor plan itself renders). `solid` mirrors
+// how each tile is actually used above: floors never set `solids[]`,
+// everything else (walls, appliances, tables, decor, seating) does.
+function buildDefaultComponents() {
+  return [
+    { id: 'floor_dining',  label: 'Dining Floor',  category: 'floor',     solid: false, custom: false, sheet: 'room_floors', frame: 34, tint: null },
+    { id: 'floor_kitchen', label: 'Kitchen Floor', category: 'floor',     solid: false, custom: false, sheet: 'room_floors', frame: 30, tint: null },
+    { id: 'floor_waiting', label: 'Waiting Floor', category: 'floor',     solid: false, custom: false, sheet: 'room_floors', frame: 38, tint: null },
+    { id: 'wall',          label: 'Wall',           category: 'wall',      solid: true,  custom: false, sheet: 'room_walls',  frame: 0,  tint: null },
+    { id: 'wall_3d',       label: 'Wall (3D)',      category: 'wall',      solid: true,  custom: false, sheet: 'room_3d',     frame: 8,  tint: null },
+    { id: 'counter',       label: 'Counter',        category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 32, tint: null },
+    { id: 'counter_alt',   label: 'Counter (alt)',  category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 48, tint: null },
+    { id: 'stove',         label: 'Stove',          category: 'appliance', solid: true,  custom: false, sheet: 'kitchen',     frame: 82, tint: null },
+    { id: 'fridge',        label: 'Fridge',         category: 'appliance', solid: true,  custom: false, sheet: 'kitchen',     frame: 80, tint: null },
+    { id: 'table',         label: 'Table',          category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 44, tint: null },
+    { id: 'table_alt',     label: 'Table (alt)',    category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 46, tint: null },
+    { id: 'plant',         label: 'Plant',          category: 'decor',     solid: true,  custom: false, sheet: 'generic',     frame: 78, tint: null },
+    { id: 'host_stand',    label: 'Host Stand',     category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 48, tint: null },
+    { id: 'bench',         label: 'Bench',          category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 44, tint: null },
+    { id: 'dish_rack',     label: 'Dish Rack',      category: 'furniture', solid: true,  custom: false, sheet: 'kitchen',     frame: 354, tint: null },
+  ];
+}
+
 export const DEFAULT_FLOOR_PLAN = buildDefaultFloorPlan();
 export const DEFAULT_GUESTS = buildDefaultGuests();
 export const DEFAULT_NPCS = buildDefaultNPCs();
+export const DEFAULT_COMPONENTS = buildDefaultComponents();

@@ -37,7 +37,14 @@ Or any static server will do (`npx serve`, `php -S`, etc.).
   The grid itself renders on its own camera, so it's zoomable and pannable on
   every screen size — mouse wheel or the +/−/Fit buttons to zoom, right-click-drag
   or two-finger touch drag to pan, pinch to zoom on touch — independent of the
-  toolbar and palette around it.
+  toolbar and palette around it. Its **Component** tool paints a saved
+  Components-catalog sprite and its collision default in one click, instead
+  of hand-picking a frame and re-toggling Solid every time.
+- **Components** — define named, reusable tile/prop presets (a sprite plus
+  attributes like collision) that the Floor Plan Editor's Component tool
+  paints with. Sprites come from any of the 31 pack sheets, or upload your
+  own image — custom art is stored as embedded image data, so it round-trips
+  through Export/Import and survives a reload with no separate asset files.
 - **Guests & Staff Editor** — a Guests tab and a Staff tab share one
   appearance picker: 20 named preset characters, or a custom look on the
   **Custom** tab (body/eyes/outfit/hairstyle/accessory, layered from the
@@ -51,10 +58,11 @@ Or any static server will do (`npx serve`, `php -S`, etc.).
   picked from any sprite sheet, an optional tint, a kitchen station (food),
   and allergens. The Guests & Staff Editor's order dropdowns pull from this
   list.
-- **Import / Export** — share floor plans, guest rosters, staff rosters, and
-  menus as JSON, from Export/Import buttons inside each editor. No backend,
-  no account, no localStorage dependency for sharing. The default menu
-  itself ships as `game-assets/default-menu.json`.
+- **Import / Export** — share floor plans, guest rosters, staff rosters,
+  menus, and component catalogs (including any uploaded custom sprites) as
+  JSON, from Export/Import buttons inside each editor. No backend, no
+  account, no localStorage dependency for sharing. The default menu itself
+  ships as `game-assets/default-menu.json`.
 
 ## Assets
 
@@ -91,9 +99,9 @@ manifest.json           PWA manifest
 sw.js                   Service worker (cache-first)
 src/
   main.js               Phaser config + scene registration + SW registration
-  scenes/               Boot, Menu, FloorPlanEditor, GuestEditor (Guests & Staff), MenuEditor, Game
+  scenes/               Boot, Menu, FloorPlanEditor, ComponentEditor, GuestEditor (Guests & Staff), MenuEditor, Game
   data/                 catalog, defaults, assetIndex loader, characterGenerator, menu
-  core/                 Storage, Palette, AppearanceCompositor
+  core/                 Storage, Palette, AppearanceCompositor, ComponentSprites
 tools/
   index_assets.py       Asset index + docs generator
 docs/

@@ -2,10 +2,11 @@ import * as Phaser from 'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.
 import { TILE, SHEETS, STATION_KEYS } from '../data/catalog.js';
 import { Storage } from '../core/Storage.js';
 import { Palette } from '../core/Palette.js';
-import { DEFAULT_FLOOR_PLAN } from '../data/defaults.js';
+import { DEFAULT_FLOOR_PLAN, DEFAULT_COMPONENTS } from '../data/defaults.js';
 import {
   loadAssetIndex, loadSheetDetail, ensureSheetTexture, nonEmptyFrames, describeFrame
 } from '../data/assetIndex.js';
+import { componentTextureRef, registerCustomSprites } from '../core/ComponentSprites.js';
 
 const PALETTE_W = 208;
 const NARROW_BREAKPOINT = 700;
@@ -35,7 +36,8 @@ const TOOLS = [
   { id: 'table',   label: 'Table' },
   { id: 'station', label: 'Station' },
   { id: 'dish',    label: 'Dish' },
-  { id: 'runner',  label: 'Runner' }
+  { id: 'runner',  label: 'Runner' },
+  { id: 'component', label: 'Component' }
 ];
 
 // Marker tools that auto-paint the selected object tile when placed.
@@ -84,6 +86,15 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     // Kitchen stations/dish area/runner posts — newer feature, same fallback.
     this.plan.stations = this.plan.stations || {};
     this.plan.runnerPosts = this.plan.runnerPosts || [];
+
+    // Component catalog (see the Components editor / ComponentSprites.js):
+    // named sprite+attribute presets the Component tool below paints with.
+    // Custom sprites' textures load progressively in the background — the
+    // tool/picker fall back to a plain swatch for any not registered yet,
+    // same tolerance the rest of this editor already has for slow sheets.
+    this.componentData = Storage.loadComponents() || { customSprites: [], components: JSON.parse(JSON.stringify(DEFAULT_COMPONENTS)) };
+    this.selectedComponentId = this.componentData.components[0]?.id || null;
+    registerCustomSprites(this, this.componentData.customSprites);
 
     // Until the generated index loads, fall back to the sheets Boot preloaded.
     this.sheetList = SHEETS.map(s => ({
@@ -154,6 +165,7 @@ export class FloorPlanEditorScene extends Phaser.Scene {
   /** Destroys every display object + input listener from the previous build so a full rebuild never leaks or duplicates. */
   teardown() {
     this.clearSelection();
+    if (this.componentModal) { this.componentModal.destroy(true); this.componentModal = null; }
     this.teardownHScroll('tools');
     this.teardownHScroll('row2');
     if (this.paletteWheel) { this.input.off('wheel', this.paletteWheel); this.paletteWheel = null; }
@@ -512,6 +524,14 @@ export class FloorPlanEditorScene extends Phaser.Scene {
     this.refreshStationKeyBtns();
     x2 += STATION_KEYS.length * 44 + 12;
 
+    // Opens a modal grid (buildComponentGrid) rather than inline swatches
+    // like Table/Station above — this thin strip can't show a meaningful
+    // tile icon, and a sprite catalog needs to show the actual sprite.
+    addLabel('Component');
+    x2 += 74;
+    this.componentBtn = this.makeStripBtn(container, x2, 0, 150, h, this.componentButtonLabel(), () => this.openComponentPicker(), 10);
+    x2 += 150 + 12;
+
     this.row2ContentWidth = x2;
   }
 
@@ -591,6 +611,92 @@ export class FloorPlanEditorScene extends Phaser.Scene {
       b.bg.setFillStyle(on ? 0x4a4a5e : 0x2b2b39);
       b.txt.setColor(on ? '#ffe9a8' : '#e6e6f0');
     });
+  }
+
+  // ---------------------------------------------------------- component tool
+
+  componentButtonLabel() {
+    const comp = this.componentData.components.find(c => c.id === this.selectedComponentId);
+    return 'Cmpnt: ' + (comp ? comp.label : 'none');
+  }
+
+  refreshComponentBtnLabel() {
+    this.componentBtn?.txt.setText(this.componentButtonLabel());
+  }
+
+  /**
+   * Full-screen modal grid of component swatches — the same shape as
+   * GuestEditor's appearance-slot picker, adapted here because the row2
+   * strip's buttons are only 22-26px tall (fine for text labels like Table/
+   * Station use, too short to show a meaningful tile icon).
+   */
+  openComponentPicker() {
+    const { width, height } = this.scale;
+    const modal = this.add.container(0, 0).setDepth(300);
+    const backdrop = this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0).setInteractive();
+    const panel = this.add.rectangle(40, 40, width - 80, height - 80, 0x23232c).setStrokeStyle(2, 0x4a4a5e).setOrigin(0);
+    const title = this.add.text(56, 52, 'Choose Component', { fontFamily: 'system-ui', fontSize: '16px', color: '#ffe9a8' });
+    const closeBtn = this.makeBtn(width - 110, 48, 54, 26, 'Close', () => this.closeComponentPicker());
+    modal.add([backdrop, panel, title, closeBtn.bg, closeBtn.txt]);
+    this.componentModal = modal;
+
+    this.buildComponentGrid(modal, 56, 88, width - 112, height - 140);
+    this.syncCameraOwnership(); // new top-level modal objects default to visible on every camera
+  }
+
+  buildComponentGrid(modal, gx, gy, gw, gh) {
+    const cellW = 64, cellH = 84, pad = 6;
+    const cols = Math.max(1, Math.floor(gw / (cellW + pad)));
+    const grid = this.add.container(gx, gy).setDepth(301);
+    const list = this.componentData.components;
+
+    list.forEach((comp, i) => {
+      const cx = (i % cols) * (cellW + pad), cy = Math.floor(i / cols) * (cellH + pad);
+      const selected = comp.id === this.selectedComponentId;
+      const bg = this.add.rectangle(cx, cy, cellW, cellH, selected ? 0x4a4a5e : 0x2b2b39)
+        .setOrigin(0, 0).setStrokeStyle(1, 0x4a4a5e).setInteractive({ useHandCursor: true });
+      grid.add(bg);
+      try {
+        const ref = componentTextureRef(comp);
+        if (this.textures.exists(ref.key)) {
+          const img = this.add.image(cx + cellW / 2, cy + cellH - 26, ref.key, ref.frame).setDisplaySize(40, 40);
+          if (comp.tint != null) img.setTint(comp.tint);
+          grid.add(img);
+        }
+      } catch { /* sprite not loaded yet — swatch just shows its label below */ }
+      const label = this.add.text(cx + cellW / 2, cy + cellH - 8, comp.label, {
+        fontFamily: 'system-ui', fontSize: '9px', color: '#8fb6ff'
+      }).setOrigin(0.5);
+      grid.add(label);
+      bg.on('pointerdown', () => this.selectComponent(comp.id));
+    });
+
+    const maskShape = this.make.graphics();
+    maskShape.fillStyle(0xffffff, 1).fillRect(gx, gy, gw, gh);
+    grid.setMask(maskShape.createGeometryMask());
+
+    const contentH = Math.ceil(list.length / cols) * (cellH + pad);
+    const wheelHandler = (pointer) => {
+      if (pointer.x < gx || pointer.x > gx + gw || pointer.y < gy || pointer.y > gy + gh) return;
+      const minY = gh - contentH;
+      grid.y = Phaser.Math.Clamp(grid.y - Math.sign(pointer.event.deltaY) * 50, gy + Math.min(0, minY), gy);
+    };
+    this.input.on('wheel', wheelHandler);
+    modal.once('destroy', () => { this.input.off('wheel', wheelHandler); maskShape.destroy(); });
+    modal.add(grid);
+  }
+
+  selectComponent(id) {
+    this.selectedComponentId = id;
+    this.setTool('component');
+    this.closeComponentPicker();
+    this.refreshComponentBtnLabel();
+  }
+
+  closeComponentPicker() {
+    if (!this.componentModal) return;
+    this.componentModal.destroy(true);
+    this.componentModal = null;
   }
 
   /** Assign the current palette selection as the tile for a marker type. */
@@ -1153,6 +1259,12 @@ export class FloorPlanEditorScene extends Phaser.Scene {
         this.plan.runnerPosts.push({ x, y });
         this.autoPaintMarker('runner', x, y);
       }
+    } else if (t === 'component') {
+      const comp = this.componentData.components.find(c => c.id === this.selectedComponentId);
+      if (!comp) { this.setStatus('pick a component first (Component button, row 2)'); return; }
+      const ref = componentTextureRef(comp);
+      this.plan.objects[i] = { s: ref.key, f: ref.frame };
+      this.plan.solids[i] = comp.solid;
     }
     this.renderCell(x, y);
   }
